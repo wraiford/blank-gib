@@ -1,0 +1,57 @@
+<div id="project-component" class="">
+    <div id="project-header" class="project-header panel-header">
+        <div id="project-header-tabs" class="project-header-tabs panel-header">
+            <!-- project child ibgibs' tabs generated here -->
+        </div>
+
+
+        <!-- add button and popover options -->
+        <button id="project-header-add-btn" class="tab-btn" popovertarget="add-popover"><span>+</span></button>
+        <div class="add-button-container">
+            <div id="add-popover" class="add-popover" popover>
+                <div class="add-popover-option" data-option="text">Text</div>
+                <div class="add-popover-option" data-option="minigame">Minigame for Active Tab</div>
+                <!-- <div class="add-popover-option" data-option="minigame">Minigame Active Tab - Fill-in-the-blank</div> -->
+                <!-- Add more opts later, ultimately dynamically generated? -->
+            </div>
+        </div>
+
+        <!-- ... button and popover options -->
+        <button id="project-header-ellipsis-btn" class="tab-btn"
+            popovertarget="ellipsis-popover"><span>…</span></button>
+        <div class="ellipsis-button-container">
+            <div id="ellipsis-popover" class="ellipsis-popover" popover>
+                <div class="ellipsis-popover-option" data-option="chat-active-tab">Chat in Active Tab</div>
+                <div class="ellipsis-popover-option" data-option="copy-project-address">Copy Project Address</div>
+                <div class="ellipsis-popover-option" data-option="copy-active-tab-address">Copy Active Tab Address</div>
+                <div class="ellipsis-popover-option" data-option="export-project">Export Project</div>
+                <div class="ellipsis-popover-option" data-option="export-project-gzip">Export Project (gzip)</div>
+                <div class="ellipsis-popover-option" data-option="export-active-tab">Export Active Tab</div>
+                <div class="ellipsis-popover-option" data-option="export-active-tab-gzip">Export Active Tab (gzip)</div>
+                <!-- used for click handler -->
+                <a id="export-ibgib-anchor" style="display: none">download</a>
+                <!-- Add more opts later, ultimately dynamically generated? -->
+            </div>
+        </div>
+    </div>
+
+    <div id="project-content">
+
+
+    </div>
+
+    <div id="project-footer" class="project-footer">
+        <div id="ibgib-lens-bar">
+            <button id="raw-lens-btn" data-mode="raw" class="panel-tab-button lens-button active">
+                <span>Raw&nbsp;</span>
+                <span style="font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif">{}</span>
+            </button>
+            <button id="text-lens-btn" data-mode="text" class="panel-tab-button lens-button">
+                <span>Text 📝</span>
+            </button>
+            <button id="minigame-lens-btn" data-mode="minigame" class="panel-tab-button lens-button">
+                <span>Minigame ⌨️</span>
+            </button>
+        </div>
+    </div>
+</div>

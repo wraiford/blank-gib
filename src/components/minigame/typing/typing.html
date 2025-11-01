@@ -1,0 +1,358 @@
+<dialog id="typing-fullscreen-dialog" class="fullscreen-dialog">
+    <!-- language list used by multiple elements -->
+    <datalist id="typing-fullscreen-dialog-language-list">
+        <option value="en-GB" label="English (UK)">
+        <option value="en-US" label="English (US)">
+        <option value="fr-FR" label="French (France)">
+        <option value="de-DE" label="German (Germany)">
+        <option value="el-GR" label="Greek (Greece)">
+        <option value="grc" label="Greek (Ancient)"></option>
+        <option value="he-IL" label="Hebrew (Israel)">
+        <option value="hbo" label="Hebrew (Ancient)">
+        <option value="it-IT" label="Italian (Italy)">
+        <option value="pt-BR" label="Portuguese (Brazil)">
+        <option value="pt-PT" label="Portuguese (Portugal)">
+        <option value="ru-RU" label="Russian (Russia)">
+        <option value="es-ES" label="Spanish (Spain)">
+        <option value="es-MX" label="Spanish (Mexico)">
+        <option value="es-CU" label="Spanish (Cuba)">
+    </datalist>
+    <!-- focus template used in the add stimuli dialog -->
+    <template id="focus-template">
+        <div class="focus-template-div">
+            <div id="focus-template-section-focus-text" class="focus-template-section">
+                <button id="focus-template-delete-btn">❌</button>
+                <b>
+                    <i>
+                        <p id="focus-template-focus-text"> <!--focus text will here--> </p>
+                    </i>
+                </b>
+            </div>
+            <!-- parrot (visible by default) -->
+            <div id="focus-template-stimuli-details-parrot" class="focus-template-stimuli-details" style="display:flex">
+                <label for="focus-template-stimuli-details-parrot">Parrot: </label>
+                <!-- <label for="focus-template-stimuli-details-parrot-text">Expected Response: </label> -->
+                <p id="focus-template-stimuli-details-parrot-text">
+                    <!-- focus text will be loaded here -->
+                </p>
+                <button id="focus-template-details-parrot-add-btn" class="focus-template-add-btn">➕</button>
+            </div>
+            <!-- fill-in-the-blank (hidden) --> <div
+            id="focus-template-stimuli-details-fitb"
+            class="focus-template-stimuli-details" style="display:flex">
+                <label for="focus-template-stimuli-details-fitb">Fill-in-the-blank: </label>
+                <div class="labeled-control">
+                    <label for="focus-template-stimuli-details-fitb-numblanks">Number of blanks:</label>
+                    <input id="focus-template-stimuli-details-fitb-numblanks" type="number" min="0" max="3" step="1"
+                        value="1" />
+                </div>
+                <p id="focus-template-stimuli-details-fitb-blanked-text">
+                    <!-- focus text will be loaded here -->
+                </p>
+                <p id="focus-template-stimuli-details-fitb-expected">
+                    <!-- blanked out texts will be loaded here -->
+                </p>
+                <button id="focus-template-details-fitb-add-btn" class="focus-template-add-btn">➕</button>
+            </div>
+            <!-- translate (hidden) -->
+            <div id="focus-template-stimuli-details-translate" class="focus-template-stimuli-details"
+                style="display:text">
+                <label for="focus-template-stimuli-details-translate">Transation(s):</label>
+                <div class="focus-template-stimuli-details-translate-options">
+                    <a id="focus-text-translate-link" target="_blank" href=""> (G/文)</a>
+                    <button id="focus-template-details-translate-regen-btn">♻️</button>
+                </div>
+                <div id="focus-template-language-directions">
+                    <div class="focus-template-translate-direction-div">
+                        <textarea id="stimulus-gen-translated-focus-text"></textarea>
+                    </div>
+                    <div class="focus-template-translate-direction-div">
+                        <div class="labeled-control">
+                            <input type="checkbox" id="focus-option-target-native" name="target-native"
+                                value="target-native" checked>
+                            <label id="stimulus-gen-target-native" for="focus-option-target-native">target ->
+                                native</label>
+                        </div>
+                        <!-- <button id="focus-template-details-translate-add-btn-target-native"
+                            class="focus-template-add-btn">➕</button> -->
+                    </div>
+                    <div class="focus-template-translate-direction-div">
+                        <div class="labeled-control">
+                            <input type="checkbox" id="focus-option-native-target" name="native-target"
+                                value="native-target" checked>
+                            <label id="stimulus-gen-native-target" for="focus-option-native-target">native -> target
+                            </label>
+                        </div>
+                        <!-- <button id="focus-template-details-translate-add-btn-native-target"
+                            class="focus-template-add-btn">➕</button> -->
+                    </div>
+                    <button id="focus-template-translate-add-btn" class="focus-template-add-btn"
+                        title="add all transation stimuli">➕</button>
+                </div>
+            </div>
+
+            <!-- <div id="focus-template-stimuli-details-define" class="focus-template-stimuli-details" style="display:none">
+            </div> -->
+            <!-- <div id="focus-template-section-btns" class="focus-template-section">
+            </div> -->
+        </div>
+    </template>
+    <div id="typing-fullscreen-dialog-content" class="fullscreen-dialog-content">
+        <div id="typing-fullscreen-dialog-header" class="fullscreen-dialog-header">
+            <h2 id="typing-fullscreen-dialog-title">Add Stimuli</h2>
+        </div>
+        <!-- Dialog body (for message or prompt) -->
+        <div id="typing-fullscreen-dialog-body" class="fullscreen-dialog-body">
+            <!-- errors (if any) -->
+            <div id="typing-fullscreen-dialog-errors" class="error fullscreen-dialog-section" style="display:none;">
+            </div>
+
+            <!-- src text/comment ibgib -->
+            <div id="typing-fullscreen-dialog-src-div" class="fullscreen-dialog-section">
+                <div id="typing-fullscreen-dialog-src-label-div" class="fullscreen-dialog-section-label">
+                    <label for="typing-fullscreen-dialog-src-div">Source Text:</label>
+                    <button id="typing-fullscreen-dialog-src-info-btn" class="round-btn"
+                        title="What is the source text? More info...">ⓘ</button>
+                </div>
+                <input id="typing-fullscreen-dialog-src-addr" type="text"
+                    placeholder="comment SomeAddress^ABC123HASH" />
+                <textarea id="typing-fullscreen-dialog-src-text"></textarea>
+                <div id="typing-fullscreen-dialog-src-text"></div>
+            </div>
+
+            <!-- language settings -->
+            <div id="typing-fullscreen-dialog-language-div" class="fullscreen-dialog-section">
+                <div id="typing-fullscreen-dialog-language-label-div" class="fullscreen-dialog-section-label">
+                    <input type="checkbox" id="typing-fullscreen-dialog-language-options-checkbox">
+                    <label for="typing-fullscreen-dialog-language-options-checkbox">Auto-Translate:</label>
+                    <button id="typing-fullscreen-dialog-language-info-btn" class="round-btn"
+                        title="Language Options? More info...">ⓘ</button>
+                </div>
+
+                <div id="typing-fullscreen-dialog-language-details">
+                    <div>
+                        <label for="typing-fullscreen-dialog-text-language-input" title="SOURCE TEXT language">
+                            Source:</label>
+                        <input id="typing-fullscreen-dialog-text-language-input"
+                            list="typing-fullscreen-dialog-language-list" value="">
+                    </div>
+                    <div>
+                        <label for="typing-fullscreen-dialog-native-language-input"
+                            title="Learner's NATIVE language for these stimuli.">
+                            Your Native:</label>
+                        <input id="typing-fullscreen-dialog-native-language-input"
+                            list="typing-fullscreen-dialog-language-list" value="en-US">
+                    </div>
+                    <div>
+                        <label for="typing-fullscreen-dialog-target-language-input"
+                            title="Learner's TARGET language for these stimuli.">
+                            Target:</label>
+                        <input id="typing-fullscreen-dialog-target-language-input"
+                            list="typing-fullscreen-dialog-language-list">
+                    </div>
+                    <!--
+                        <div>
+                            <label for="typing-fullscreen-dialog-language" title="">
+                                Target:</label>
+                            <textarea id="typing-fullscreen-dialog-language"></textarea>
+                        </div>
+                    -->
+                </div>
+            </div>
+
+            <!-- focus -->
+            <div id="typing-fullscreen-dialog-focus-div" class="fullscreen-dialog-section">
+                <div id="typing-fullscreen-dialog-focus-label-div" class="fullscreen-dialog-section-label">
+                    <label for="typing-fullscreen-dialog-focus-div">Focuses:</label>
+                    <button id="typing-fullscreen-dialog-focuses-info-btn" class="round-btn"
+                        title="What's a focus? More info...">ⓘ</button>
+                </div>
+
+                <div id="typing-fullscreen-dialog-focus-level-div" class="fullscreen-dialog-subsection">
+                    <label for="typing-fullscreen-dialog-focus-level">Focus Level:</label>
+                    <input id="typing-fullscreen-dialog-focus-number" type="number" min="0" max="99" step="1"
+                        value="1" />
+                    <select id="typing-fullscreen-dialog-focus-level">
+                        <option value="character">Character</option>
+                        <option value="word" selected>Word</option>
+                        <option value="sentence">Sentence</option>
+                        <option value="newline">Line</option>
+                        <option value="paragraph">Paragraph</option>
+                    </select>
+
+                    <div class="labeled-control"
+                        title="if checked, focus(es) generated will be in random order. Otherwise, will always work from start to end, based on existing focuses.">
+                        <input id="typing-fullscreen-dialog-focus-randomize" type="checkbox">
+                        <label for="typing-fullscreen-dialog-focus-randomize">randomize</label>
+                    </div>
+                    <button id="typing-fullscreen-dialog-add-focus-btn" class="round-btn">➕</button>
+                </div>
+
+                <ul id="typing-fullscreen-dialog-focuses-div" class="stimuli-list">
+                    <!-- new focus UI controls added here -->
+                </ul>
+            </div>
+
+            <div id="typing-fullscreen-dialog-output-div" class="fullscreen-dialog-section"
+                title="These stimuli will be added to the minigame if you click OK.">
+                <div id="typing-fullscreen-dialog-output-label-div" class="fullscreen-dialog-section-label">
+                    <label for="typing-fullscreen-dialog-output-div">Stimuli To Add:</label>
+                    <button id="typing-fullscreen-dialog-output-info-btn" class="round-btn"
+                        title="What are these stimuli? More info...">ⓘ</button>
+                </div>
+
+                <!-- <button id="typing-fullscreen-dialog-add-stimuli-btn">➕ (Generate Stimuli)</button> -->
+
+                <ul id="typing-fullscreen-dialog-prompt-new-stimuli-div" class="stimuli-list">
+                    <!-- new stimuli UI controls added here, this will replace the prompt input textarea -->
+                </ul>
+                <!-- <textarea id="typing-fullscreen-dialog-prompt-input"></textarea> -->
+            </div>
+
+        </div>
+        <div id="typing-fullscreen-dialog-footer" class="fullscreen-dialog-footer">
+            <button id="typing-fullscreen-dialog-ok-button" class="dialog-button">OK</button>
+            <button id="typing-fullscreen-dialog-cancel-button" class="dialog-button">Cancel</button>
+        </div>
+    </div>
+</dialog>
+<div id="typing-component" class="">
+    <!-- have these both as panel-header just as a kluge to get the tabs to look
+    decent without bigger rewrite/investigation -->
+    <div id="typing-header" class="typing-header panel-header">
+        <h2 id="typing-name">raw name loading...</h2>
+        <p id="typing-description">raw description loading...</p>
+        <div id="typing-command-bar"></div>
+        <!-- <div id="typing-header-tabs" class="typing-header-tabs panel-header"> -->
+        <!-- looks something like this atow when dynamically added -->
+        <!--
+            <span id="typing-tab-button-{addr}" class="panel-tab-button active" title="untitled">
+                untitled
+            </span>
+            -->
+        <!-- </div> -->
+        <!-- <button id="typing-header-add-btn" class="tab-btn">+</button> -->
+    </div>
+
+    <div id="typing-content">
+        <template id="stimulus-entry-template">
+            <div class="stimulus-entry-template-div">
+
+                <div class="stimulus-entry-template-section stimulus-entry-main-section">
+                    <button id="stimulus-entry-delete-btn" class="round-btn">❌</button>
+                    <button id="stimulus-entry-edit-btn" class="round-btn">✎</button>
+                    <p id="stimulus-entry-text"></p>
+                    <button id="stimulus-entry-expand-btn" class="round-btn">▼</button>
+                </div>
+                <div class="stimulus-entry-template-section stimulus-entry-details-section"
+                    style="max-height:0px;display:none">
+                    <div class="labeled-control">
+                        <label for="stimulus-entry-variant">Variant:</label>
+                        <p class="stimulus-entry-variant"></p>
+                    </div>
+                    <div class="labeled-control">
+                        <label for="stimulus-entry-focus-text">Focus:</label>
+                        <p class="stimulus-entry-focus-text"></p>
+                    </div>
+                    <div class="labeled-control">
+                        <label for="stimulus-entry-language">Language:</label>
+                        <p class="stimulus-entry-language"></p>
+                    </div>
+                    <div class="labeled-control">
+                        <label for="stimulus-entry-expected-response">Expect (<span
+                                class="stimulus-entry-expected-response-type-p"></span>):</label>
+                        <!-- <p class="stimulus-entry-expected-response-type-p"></p> -->
+                        <!-- select is only when edit -->
+                        <select class="stimulus-entry-expected-response-type-select" style="display:none">
+                            <option value="exactly">Exactly</option>
+                            <option value="equivalent">Equivalent</option>
+                            <option value="fill-in-the-blank">Blank(s)</option>
+                            <option value="answer">Answer</option>
+                        </select>
+                        <p class="stimulus-entry-expected-response-text"></p>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <template id="playing-stimulus-template-parrot">
+            <div class="playing-stimulus-template-root">
+                <p>🦜</p>
+                <div class="playing-stimulus-text"></div>
+                <div class="playing-stimulus-diff"></div>
+            </div>
+        </template>
+        <template id="playing-stimulus-template-fitb">
+            <div class="playing-stimulus-template-root">
+                <p>﹍</p>
+                <div class="playing-stimulus-text"></div>
+                <div class="playing-stimulus-diff"></div>
+            </div>
+        </template>
+        <template id="playing-stimulus-template-antiphony">
+            <div class="playing-stimulus-template-root">
+                <p>🙴</p>
+                <div class="playing-stimulus-text"></div>
+                <div class="playing-stimulus-diff"></div>
+            </div>
+        </template>
+        <template id="playing-stimulus-template-translate">
+            <div class="playing-stimulus-template-root">
+                <p>文</p>
+                <div class="playing-stimulus-text"></div>
+                <div class="playing-stimulus-diff"></div>
+            </div>
+        </template>
+
+        <div id="typing-screen-init" class="typing-screen">
+            <h1>⚙️ Game Setup</h1>
+            <p>playable: <i><button id="init-playable"></button></i></p>
+            <p>game type: <i><span id="init-game-type"></span></i></p>
+            <figure>
+                <figcaption>
+                    <h2>All Stimuli<a id="init-translate-link" target="_blank" href=""> (G/文)</a></h2>
+                </figcaption>
+
+                <ul id="init-all-stimuli" class="stimuli-list"></ul>
+                <!-- second ul for add btn just a simple hack for positioning -->
+                <ul class="stimuli-list">
+                    <li><button id="add-stimulus-btn"><span class="green">➕</span></button></li>
+                </ul>
+
+            </figure>
+        </div>
+
+        <div id="typing-screen-ready" class="typing-screen">
+            <h1>Ready!</h1>
+            <p id="ready-countdown"></p>
+        </div>
+
+        <div id="typing-screen-playing" class="typing-screen">
+            <div id="typing-screen-playing-header" class="labeled-control">
+                <label for="typing-stimulus-feedback-debounce-ms">Feedback Delay (ms):</label>
+                <input id="typing-stimulus-feedback-debounce-ms" type="number" min="0" max="999999" step="100"
+                    value="0" />
+            </div>
+            <div id="typing-stimulus">
+            </div>
+        </div>
+
+        <div id="typing-screen-aborted" class="typing-screen">
+            <p>game aborted</p>
+            <p><i>We'll just pretend that never happened</i></p>
+            <p>Hit the restart button to start over.</p>
+        </div>
+
+        <div id="typing-screen-complete" class="typing-screen">
+            <p>game complete</p>
+            <p><i>WTG! Stats should go here</i></p>
+            <p>Hit the restart button to play again.</p>
+            <div id="summary-stats"></div>
+        </div>
+
+    </div>
+
+    <div id="typing-footer" class="typing-footer">
+        <textarea id="typing-input" class="" placeholder="CTRL+Enter to send"></textarea>
+        <button id="typing-input-send-btn" class="send-btn"><b>❯</b></button>
+    </div>
+</div>

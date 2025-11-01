@@ -1,0 +1,233 @@
+:host {
+    /* this is used for styling ibgib components for multi-view coordination, so
+     * that ibgib views that are looking at the same ibgib can be visibly shown
+     * as doing so. */
+    --ibgib-color: #ff00dd;
+    --ibgib-color-translucent: #ff00dd10;
+    --tjp-color: #00ffae;
+    --tjp-color-translucent: #00ffae10;
+}
+
+/* Basic layout and styling for the chronology component */
+#chronology-component {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    /* Use consistent padding */
+    padding: 1%;
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    /* ibgib styling */
+    border: var(--tjp-color) 5px solid;
+    box-shadow: 0 0 5px var(--tjp-color);
+    border-radius: 5px;
+
+    /* Optional: If using flexbox to control vertical alignment */
+    /* justify-content: center;  Align content vertically */
+
+
+    #chronology-header {
+        display: flex;
+        flex-direction: column;
+        font-size: smaller;
+
+        #chronology-name {
+            font-weight: bold;
+            /* font-size: larger; */
+            /* Use variables for spacing? */
+            /* margin-bottom: 0.5em; */
+        }
+
+        #chronology-description {
+            /* Respect newlines */
+            white-space: pre-wrap;
+            font-style: italic;
+        }
+
+        #chronology-description.collapsed {
+            display: none;
+        }
+    }
+
+    /* Styling for each item/section within the content.
+       make this a flexbox column to arrange the text and timestamp. */
+    #chronology-content {
+
+        section {
+            display: flex;
+            flex-direction: column;
+            /* light gray border */
+            border: 1px solid #cccccc;
+            /* small radius for rounded corners */
+            border-radius: 4px;
+            /* padding inside each section */
+            padding: 10px;
+            /* margin between items */
+            margin-bottom: 10px;
+            position: relative;
+
+            div {
+                /* Allow for scrolling within the text content */
+                max-height: 50dvh;
+                overflow-y: auto;
+            }
+
+            /* Timestamp styling */
+            .timestamp {
+                /* small font size */
+                font-size: x-small;
+                /* italicized */
+                font-style: italic;
+                /* different font family */
+                font-family: monospace;
+                /* Align to the right using flexbox */
+                margin-left: auto;
+                margin-top: 0;
+                margin-bottom: 0;
+                /* Hide timestamp by default with max-height for transition */
+                max-height: 0;
+                overflow: hidden;
+                opacity: 0;
+                transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            }
+
+            /* Copy button styling */
+            .copy-button {
+                /* Hide copy button by default with max-height for transition */
+                max-height: 0;
+                overflow: hidden;
+                opacity: 0;
+                transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+
+                /* Remove default button styles */
+                background: none;
+                border: none;
+                /* Small font size */
+                font-size: x-large;
+                /* Positioning in bottom left */
+                position: absolute;
+                bottom: 10px;
+                left: 10px;
+                cursor: pointer;
+                color: var(--button-text-color-base);
+                background-color: transparent;
+                border-radius: 5px;
+            }
+
+
+            /* Hover effect for copy button */
+            .copy-button:hover {
+                color: #555;
+                color: var(--button-hover-text-color);
+                background-color: var(--button-hover-background-color);
+                border: var(--button-hover-text-color) 2px solid;
+                /* Slightly darker text on hover */
+            }
+
+            /* Show timestamp and copy button when show-details class is present */
+            &.show-details .timestamp,
+            &.show-details .copy-button {
+                max-height: 100px;
+                opacity: 1;
+                transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+                /* Add some spacing when visible */
+                margin-top: 5px;
+            }
+
+            &.copied-animation {
+                transition: background-color 0.5s ease-in-out, filter 0.5s ease-in-out;
+                background-color: #e8f5e9;
+                filter: blur(2px);
+            }
+
+            /* Styling for the "Copied!" feedback message */
+            .copied-feedback {
+                /* Small font size */
+                font-size: small;
+                /* Light background color */
+                background-color: white;
+                /* Dark text color */
+                color: #333;
+                /* Padding and rounded corners */
+                padding: 2px 5px;
+                border-radius: 4px;
+                /* Ensure it's on top */
+                z-index: 10;
+            }
+
+        }
+
+        section.human-message .copy-button {
+            background-color: var(--agent-background-color);
+            color: var(--agent-text-color);
+        }
+
+        section.human-message .copy-button:hover {
+            color: var(--agent-background-color);
+            background-color: var(--agent-text-color);
+            border: var(--agent/un-background-color) 2px solid;
+        }
+
+        section.agent-message .copy-button {
+            background-color: var(--human-background-color);
+            color: var(--human-text-color);
+        }
+
+        section.agent-message .copy-button:hover {
+            color: var(--human-background-color);
+            background-color: var(--human-text-color);
+            border: var(--human-background-color) 2px solid;
+        }
+
+        section.agent-message {
+            background-color: var(--agent-background-color);
+            color: var(--agent-text-color);
+        }
+
+        section.human-message {
+            background-color: var(--human-background-color);
+            color: var(--human-text-color);
+        }
+
+        section.code-message {
+            background-color: var(--code-background-color);
+            color: var(--code-text-color);
+        }
+
+        section.function-message {
+            background-color: var(--function-background-color);
+            color: var(--function-text-color);
+        }
+
+        section.unknown-message {
+            background-color: var(--unknown-background-color);
+            color: var(--unknown-text-color);
+        }
+
+        section.agent-message,
+        section.human-message,
+        section.code-message,
+        section.function-message,
+        section.unknown-message {
+
+            .identity-info {
+                width: 100%;
+                background-color: #00000005;
+                font-weight: bold;
+                line-height: 0;
+                margin: 0;
+                padding: 0;
+                border-radius: 5px;
+                border-color: var(--agent-text-color);
+            }
+
+        }
+    }
+
+
+
+}

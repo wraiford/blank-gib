@@ -1,0 +1,141 @@
+.web1-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-self: center;
+
+    height: 100%;
+    /* why didn't I have this before? I thought I took it out for something. */
+    width: 100%;
+    max-width: 800px;
+    padding: 10px;
+
+    overflow-y: auto;
+
+    aside {
+        width: 40%;
+        padding: 5px;
+        padding-left: 0.5rem;
+        margin-left: 0.5rem;
+        float: right;
+        /* box-shadow: inset 5px 0 5px -5px #29627e; */
+        /* box-shadow: inset 5px 0 5px -5px var(--primary-border-color-dark); */
+        box-shadow: inset 5px 0 5px -5px var(--tab-border-color-active);
+        font-style: italic;
+        font-size: larger;
+        color: var(--tab-text-color-active);
+        /* background-color: var(--dialog-backdrop-color); */
+        background-color: var(--tab-background-color-active);
+        border-radius: 5px;
+
+        /* NEW: Blur and fade-in animation */
+        filter: blur(10px);
+        /* Initial blur */
+        opacity: 0.5;
+        /* Initial opacity (slightly transparent) */
+        transition: filter 2s ease-out, opacity 1s ease-out, border-color 2s ease-in-out;
+        /* Smooth transitions */
+        border: 1px solid transparent;
+        /* Initial transparent border */
+
+        /* small screens have text go off screen*/
+        overflow-wrap: break-word;
+        overflow: hidden;
+        min-width: 10ch;
+
+        iframe {
+            max-width: 100%;
+        }
+    }
+
+    aside.unblurred {
+        /* Class to trigger unblur and border animation */
+        filter: blur(0px);
+        /* Remove blur */
+        opacity: 1;
+        /* Fully opaque */
+        border-color: rgba(0, 255, 0, 0.35);
+        /* Start radiating green border */
+        box-shadow: inset 5px 0 5px -5px var(--primary-border-color-dark), 0 0 20px rgba(0, 255, 0, 0.5);
+        /* Add subtle box-shadow glow */
+    }
+
+    aside>p {
+        margin: 0.5rem;
+    }
+
+    article {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 5vh;
+    }
+
+    section {
+        border-width: 1px;
+        border-color: var(--primary-border-color);
+        border-style: solid;
+        border-radius: 5px;
+        background-color: var(--very-light-background-color);
+        padding: 13px;
+        /* transition: border-width var(--highlight-transition-time) ease-in-out, border-color var(--highlight-transition-time) ease-in-out, background-color var(--highlight-transition-time) ease-in-out, padding var(--highlight-transition-time) ease-in-out; */
+        /* transition: border-width var(--highlight-transition-time) ease-in-out,
+            border-color var(--highlight-transition-time) ease-in-out,
+            border-radius var(--highlight-transition-time) ease-in-out,
+            background-color var(--highlight-transition-time) ease-in-out,
+            padding var(--highlight-transition-time) ease-in-out; */
+
+        h2 {
+            margin-top: 0;
+        }
+    }
+}
+
+.thumbnail {
+    max-height: 50% !important;
+    max-width: 100% !important;
+    aspect-ratio: 1/1;
+}
+
+table {
+    border-width: 3px;
+    border-color: var(--primary-border-color-dark);
+    border-style: solid;
+    border-radius: 5px;
+
+    width: 100%;
+
+    background-color: rgba(0, 255, 0, 0.163);
+
+    thead {
+        border-bottom-color: var(--primary-border-color-dark);
+    }
+
+    tr th {
+        border-width: 0px;
+        border-color: var(--primary-border-color);
+        border-style: solid;
+        margin: 0px;
+    }
+
+    th,
+    td {
+        border-width: 1px;
+        border-color: var(--primary-border-color);
+        border-style: solid;
+        border-collapse: collapse;
+    }
+
+    td:nth-child(2n),
+    tr th:nth-child(2n) {
+        background-color: rgba(51, 236, 30, 0.24);
+    }
+}
+
+button {
+    border-width: 2px;
+    border-color: var(--primary-border-color-dark);
+    border-style: solid;
+    border-radius: 5px;
+    background-color: var(--light-background-color);
+}

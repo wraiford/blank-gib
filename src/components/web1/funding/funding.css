@@ -1,0 +1,28 @@
+#web1-page-funding {
+
+    #funding-received-so-far::before {
+        content: "$";
+    }
+
+    #funding-received-so-far {
+        font-weight: bold;
+        color: #042407;
+        text-align: right;
+    }
+
+    /* just debugging */
+    aside {
+        background-color: gold !important;
+    }
+
+    button {
+        color: var(--text-color-base);
+        font-size: xx-large;
+        margin-bottom: 5vh;
+    }
+
+    .financial-section {
+        overflow: auto;
+        max-height: 67vh;
+    }
+}

@@ -1,0 +1,23 @@
+#web1-page-faq {
+
+    /* just debugging */
+    aside {
+        background-color: rgb(255, 247, 0) !important;
+    }
+
+    .qa {
+        margin-bottom: 10px;
+    }
+
+    .question {
+        font-weight: bold;
+
+        ::first-letter {
+            font-size: x-large;
+        }
+    }
+
+    .answer {
+        margin-top: 10px;
+    }
+}

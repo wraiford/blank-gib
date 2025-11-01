@@ -1,0 +1,1238 @@
+/* * { */
+/* if I do this, it screws up other layout issues... */
+/* box-sizing: border-box; */
+/* font-family: 'Courier New', Courier, monospace; */
+/* } */
+
+button {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    color: var(--button-text-color-base);
+    background-color: var(--button-background-color-base);
+    border-color: var(--button-border-color-base);
+    border-radius: var(--button-border-radius-base);
+    border-width: var(--button-border-width-base);
+    padding: var(--button-padding-base);
+    user-select: none;
+}
+
+button:hover {
+    cursor: pointer;
+    border-color: currentColor;
+    border-width: calc(var(--button-border-width-base) + 2px);
+}
+
+textarea {
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+    border: var(--input-border-width) var(--input-border-style) var(--input-border-color);
+    border-radius: var(--input-border-radius);
+    padding: var(--input-padding);
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-family-base);
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    /* Ensure body takes at least full viewport height */
+    min-height: 100vh;
+    min-height: 100dvh;
+    /* Prevent body scrollbars */
+    overflow: hidden;
+}
+
+.app-shell {
+    display: flex;
+    flex-direction: column;
+    /* Take full viewport height */
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow-y: hidden;
+}
+
+.header-panel {
+    height: auto;
+    border-bottom: 1px solid #ccc;
+    border-width: var(--debug-border-width);
+    border-style: var(--debug-border-style);
+    border-color: var(--header-border-color);
+    /* Prevent header panel overflow */
+    overflow: hidden;
+    /* min-height: 5vh; */
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: flex-start;
+
+    #header-panel-header {
+        /* no right margin so the breadcrumb can be closer */
+        /* margin: 10px 0 10px 10px; */
+        margin: 3px 0 3px 0;
+
+        #ibgib-com-title-link {
+            color: var(--text-color-base);
+        }
+    }
+
+    #header-panel-footer {
+        width: auto;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: stretch;
+
+        #header-panel-config-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            span {
+                font-size: large;
+                /* just tweak it to look right...need to be able to adjust text padding but hey*/
+                padding-left: 2px;
+            }
+        }
+
+        /* Add back the relative container for the button and popover */
+        .config-button-container {
+            background-color: transparent;
+            /* position: relative;
+            display: inline-block; */
+        }
+
+        /* Keep the styles for the popover options */
+        .config-popover-option {
+            padding: 8px 15px;
+            margin-bottom: 2px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            background-color: var(--tab-background-color);
+            color: var(--tab-text-color);
+        }
+
+        /* Keep the styles for the popover options */
+        .config-popover-option:hover {
+            /* color: var(--tjp-color-contrast, #f0f0f0); */
+            color: contrast-color(var(--tjp-color, #f0f0f0));
+            background-color: var(--tjp-color, #f0f0f0);
+        }
+
+        /* Use anchor() for positioning */
+        .config-popover {
+            /* bottom: anchor(top); */
+            /* Position the bottom of the popover at the top of the anchor */
+            /* left: anchor(left); */
+            /* Align the left of the popover with the left of the anchor */
+            flex-direction: column;
+            margin: 0px;
+            /* padding: 5px 0; */
+            border-radius: var(--border-radius, 4px);
+            background-color: var(--background-color, #fff);
+            border: 1px solid var(--border-color, #ccc);
+            box-shadow: var(--box-shadow, 0 2px 5px rgba(0, 0, 0, 0.2));
+            z-index: 10;
+            /* Ensure it appears above other content */
+        }
+    }
+}
+
+.right-panel-header.collapsed {
+    rotate: 90deg;
+    /* margin-bottom: auto; */
+    padding-left: 10px;
+}
+
+.left-panel-header.collapsed {
+    rotate: 270deg;
+    direction: rtl;
+    padding-right: 10px;
+    /* margin-bottom: auto; */
+}
+
+.left-panel.collapsed {
+    width: var(--left-panel-header-calculated-height);
+}
+
+.right-panel.collapsed {
+    width: var(--right-panel-header-calculated-height);
+}
+
+.panel-container {
+    /* Arrange left, center, right panels horizontally */
+    display: flex;
+    /* Take recentering vertical space */
+    flex: 1;
+    height: calc(75% + var(--header-calculated-height-loss));
+    /* max-height: 90vh; */
+}
+
+.panel-container.collapsed {
+    max-height: 25vh;
+}
+
+.left-panel {
+    border-width: var(--debug-border-width);
+    border-style: var(--debug-border-style);
+    border-color: var(--left-border-color);
+    width: var(--side-panel-width);
+    /* padding: 10px; */
+    overflow-y: auto;
+}
+
+/* each side panel is a flexbox */
+.left-panel,
+.right-panel {
+    display: flex;
+    flex-direction: column;
+    /*
+     * make left and right panels resizable, right panel has to reverse in order to
+     * put the resize affordance on the left side of the panel.
+     */
+    resize: auto;
+}
+
+/*
+ * "dirty hack" to put the affordance on the left side
+ * see https://stackoverflow.com/a/60633726/3897838
+ */
+.right-panel {
+    direction: rtl;
+
+    /* put it back to normal */
+    .panel-header,
+    .panel-content,
+    .right-panel-footer {
+        direction: ltr;
+    }
+}
+
+#center-panel {
+    border-width: var(--debug-border-width);
+    border-style: var(--debug-border-style);
+    border-color: var(--center-border-color);
+    width: 100%;
+    height: 100%;
+    /* Take remaining horizontal space */
+    flex: 1;
+    display: flex;
+    /* Stack tabs and canvas area vertically */
+    flex-direction: column;
+    /* No idea why this is needed. it's already defined in :root */
+    box-sizing: border-box;
+
+    iframe {
+        height: 100%;
+        width: 100%;
+    }
+
+    overflow-y: auto;
+
+    #center-panel-content {
+        flex: 1;
+        padding: 1%;
+        display: flex;
+        flex-direction: column;
+        /* center horizontally */
+        align-items: center;
+        /* stretch vertically, part of kluge to get scrolling to work with web component */
+        justify-content: stretch;
+        overflow: auto;
+        /* Default opacity - fully visible */
+        opacity: 1;
+        /* Fade-in transition */
+        transition: opacity 1.0s ease-in-out;
+
+        /*
+         * kluge to get links inside an iframe to fill up and scroll properly.
+         * there are two parts to this kluge (no pun intended). the ::part
+         * selector in #center-panel-content (also had to set justify-content to
+         * stretch), and I added hardcoded web1-links-component class to this
+         * file (even though it is component-specific).
+         */
+        ::part(links-page) {
+            height: 100%;
+            width: 100%;
+        }
+    }
+
+    /* Class for fade-out effect */
+    #center-panel-content.fade-out {
+        /* Fully transparent */
+        opacity: 0;
+    }
+}
+
+#canvas {
+    aspect-ratio: 1 / 1;
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    display: block;
+}
+
+.right-panel {
+    border-width: var(--debug-border-width);
+    border-style: var(--debug-border-style);
+    border-color: var(--right-border-color);
+    width: var(--side-panel-width);
+    /* padding: 2px; */
+    overflow-y: auto;
+}
+
+#footer-panel {
+    border-width: var(--debug-border-width);
+    border-style: var(--debug-border-style);
+    border-color: var(--footer-border-color);
+    /* Height will be determined by content (initially collapsded) */
+    /* height: auto; */
+    border-top: 1px solid #ccc;
+    /* box-sizing: border-box; */
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+/* Footer now has a header, and header will contain the buttons */
+.footer-panel .panel-header {
+    /* Don't shrink the header */
+    flex-shrink: 0;
+    /* height: calc(var(--handle-size) * 2); */
+    /* overrides the default .panel-header margin-bottom */
+    margin-bottom: 0px;
+    display: flex;
+    flex-direction: column;
+
+    /* the skinny arrows aren't quite centered, so this is a hack */
+    .panel-expand-handle,
+    .panel-collapse-handle {
+        padding-left: 10px;
+        padding-right: 4px;
+    }
+
+    /* adjust the maximize handle due to above hack */
+    .panel-maximize-handle {
+        padding-left: 7px;
+        padding-right: 7px;
+    }
+}
+
+.footer-panel.collapsed {
+    height: auto;
+    overflow: hidden;
+}
+
+.footer-panel.expanded {
+    height: 20%;
+}
+
+.footer-panel.maximized {
+    height: 80vh;
+    max-height: 80vh;
+    z-index: 100;
+}
+
+#primary-agent-input {
+    flex: 1;
+    /* margin-right: 10px; */
+    margin-right: 0px;
+    width: 100%;
+    min-width: 0;
+    /* height: auto; */
+    height: 100%;
+    flex-grow: 1;
+    resize: vertical;
+    overflow-y: auto;
+    box-sizing: border-box;
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+    border: var(--input-border-width) var(--input-border-style) var(--input-border-color);
+    border-radius: var(--input-border-radius);
+    padding: var(--input-padding);
+    /* font-family: var(--font-family-base); */
+}
+
+.agent-input {
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+    border: var(--input-border-width) var(--input-border-style) var(--input-border-color);
+    border-radius: var(--input-border-radius);
+    padding: var(--input-padding);
+    box-sizing: border-box;
+    margin: 3px 3px 5px 3px;
+    font-family: var(--font-family-base);
+}
+
+.send-btn {
+    min-width: 40px;
+    max-width: 70px;
+    background-color: var(--button-background-color-base);
+    color: var(--button-text-color-base);
+    border: var(--button-border-width-base) var(--button-border-style-base) var(--button-border-color-base);
+    border-radius: var(--button-border-radius-base);
+    padding: var(--button-padding-base);
+}
+
+.send-btn:hover {
+    background-color: var(--button-hover-background-color);
+    color: var(--button-hover-text-color);
+    border-color: var(--button-hover-border-color);
+}
+
+.tab-btn {
+    margin: 2px;
+    border-color: var(--button-border-color-base);
+    background-color: var(--button-background-color-base);
+    color: var(--button-text-color-base);
+    border: var(--button-border-width-base) var(--button-border-style-base) var(--button-border-color-base);
+    border-radius: var(--button-border-radius-base);
+    padding: var(--button-padding-base);
+    /* Added padding */
+    border-width: 1px;
+    width: 50px;
+    border-radius: var(--button-border-radius);
+}
+
+.tab-btn:hover,
+.panel-tab-button:hover {
+    background-color: var(--button-hover-background-color) !important;
+    color: var(--button-hover-text-color) !important;
+    border-color: var(--button-hover-border-color);
+}
+
+#footer-input-container {
+    input-component {
+        width: 100%;
+        height: 100%;
+        flex-grow: 1;
+    }
+
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: stretch;
+
+    textarea {
+        height: 100%;
+        background-color: var(--input-background-color);
+        color: var(--input-text-color);
+        border: var(--input-border-width) var(--input-border-style) var(--input-border-color);
+        border-radius: var(--input-border-radius);
+        padding: var(--input-padding);
+        flex-grow: 1;
+    }
+
+    button {
+        height: 100%;
+        flex-shrink: 0;
+        align-self: center;
+        margin: 2px;
+        background-color: var(--button-background-color-base);
+        color: var(--button-text-color-base);
+        border: var(--button-border-width-base) var(--button-border-style-base) var(--button-border-color-base);
+        border-radius: var(--button-border-radius-base);
+        padding: var(--button-padding-base);
+    }
+
+    #footer-input-container button:hover {
+        background-color: var(--button-hover-background-color);
+        color: var(--button-hover-text-color);
+        border-color: var(--button-hover-border-color);
+    }
+
+    ibgib-input {
+        width: 100%;
+    }
+}
+
+.footer-input-container.collapsed {
+    display: none !important;
+}
+
+/* Basic panel header styling */
+.panel-header {
+    /* Enable Flexbox for header */
+    display: flex;
+    /* Space header text and collapse handle */
+    justify-content: flex-start;
+    /* Vertically align header items */
+    align-items: center;
+    font-weight: bold;
+    margin: 1px 1px 0px 1px;
+    gap: calc(var(--handle-size) / 3);
+    overflow-x: auto;
+    overflow-y: clip;
+    scrollbar-width: none;
+}
+
+.panel-header.collapsed {
+    overflow-x: visible;
+    overflow-y: visible;
+
+    .panel-tab-button.active {
+        margin-right: -5px;
+    }
+}
+
+/* Basic chat log styling (adjust as needed) */
+/* .chat-log {
+    font-size: 0.9em;
+    white-space: pre-wrap;
+    overflow-y: auto;
+    overflow-x: hidden;
+} */
+/* Make the chatlog use all available space. */
+#chronologys-content {
+    height: 100%;
+
+    section {
+        margin-top: 10px;
+
+        p {
+            text-indent: -1%;
+            padding-left: 1%;
+            margin-top: 5px;
+        }
+    }
+}
+
+.panel-collapse-handle,
+.panel-expand-handle,
+.panel-maximize-handle {
+    cursor: pointer;
+    padding: 5px;
+    user-select: none;
+    margin: 0;
+    /* Make handles grow to equal size */
+    flex: 1;
+    /* Center text within handles */
+    text-align: center;
+}
+
+.left-panel-footer.collapsed,
+.right-panel-footer.collapsed {
+    flex-direction: column;
+    gap: calc(var(--handle-size) / 3);
+}
+
+.footer-panel.collapsed .panel-header {
+    flex-direction: row;
+}
+
+/* Styles for collapsed left and right panels */
+.left-panel.collapsed,
+.right-panel.collapsed {
+    /* width handled in custom update via css vars in root selector. see
+     * --left/right-panel-header-calculated-height */
+    /* Hide panel content */
+    overflow: hidden;
+    /* Add transition for smooth animation on collapse */
+    /* Match duration to panel transition */
+    transition: width var(--panel-transition-duration) ease-in-out;
+}
+
+#left-panel-content,
+#right-panel-content {
+    width: 100%;
+    height: 100%;
+}
+
+.panel-collapse-handle.collapsed,
+.panel-expand-handle.collapsed,
+.panel-maximize-handle.collapsed,
+.left-panel.collapsed .project-list,
+.left-panel.collapsed .tag-nav,
+.right-panel.collapsed .chat-log,
+.footer-panel.collapsed .panel-content,
+.left-panel.collapsed .left-panel-footer .panel-collapse-handle,
+.right-panel.collapsed .right-panel-footer .panel-collapse-handle,
+.footer-panel.collapsed .panel-header .panel-collapse-handle,
+.left-panel-content.collapsed,
+.right-panel-content.collapsed {
+    display: none;
+}
+
+/* Style for expanded panel (optional, can adjust as needed) */
+.left-panel.expanded,
+.right-panel.expanded {
+    width: var(--side-panel-width);
+    /* Original expanded width */
+    overflow-y: auto;
+    /* Keep scrollable when expanded */
+    /* Add transition for smooth animation on collapse */
+    /* Match duration to panel transition */
+    transition: width var(--panel-transition-duration) ease-in-out;
+}
+
+/* Style for expanded panel (optional, can adjust as needed) */
+.left-panel.maximized,
+.right-panel.maximized {
+    width: var(--side-panel-width-maximized);
+    /* Keep scrollable when expanded */
+    overflow-y: auto;
+    z-index: 100;
+    /* Add transition for smooth animation on collapse */
+    /* Match duration to panel transition */
+    transition: width var(--panel-transition-duration) ease-in-out;
+}
+
+.left-panel-footer,
+.right-panel-footer {
+    /* Separator line for footers */
+    border-top: 1px solid #eee;
+    padding: 5px;
+    /* Center handles in footer */
+    text-align: center;
+    /* Push footers to the bottom */
+    margin-top: auto;
+    display: flex;
+    /* Distribute items evenly */
+    justify-content: space-around;
+    /* Vertically align items */
+    align-items: center;
+}
+
+/* Show expand handle when collapsed */
+.left-panel.collapsed .left-panel-footer .panel-expand-handle,
+.right-panel.collapsed .right-panel-footer .panel-expand-handle {
+    /* display: inline-block; */
+    margin: 0px;
+}
+
+/* Hide expand handle when expanded */
+.left-panel.expanded .panel-expand-handle,
+.right-panel.expanded .panel-expand-handle,
+.footer-panel.expanded .panel-header .panel-expand-handle {
+    display: none;
+}
+
+/* Hide maximize handle when maximized */
+.left-panel.maximized .panel-maximize-handle,
+.right-panel.maximized .panel-maximize-handle,
+.footer-panel.maximized .panel-header .panel-maximize-handle {
+    display: none;
+}
+
+/* Show footer content when expanded */
+.left-panel.expanded .left-panel-footer,
+.right-panel.expanded .right-panel-footer,
+.left-panel.maximized .left-panel-footer,
+.right-panel.maximized .right-panel-footer {
+    display: block;
+}
+
+.panel-handle {
+    height: var(--handle-size);
+    width: var(--handle-size);
+    min-height: var(--handle-size);
+    min-width: var(--handle-size);
+    border-radius: 50%;
+    background-color: var(--button-background-color-base);
+    /* Use button base background */
+    color: var(--button-text-color-base);
+    /* Use button base text color */
+    border: var(--button-border-width-base) var(--button-border-style-base) var(--button-border-color-base);
+    /* Use button base border */
+    aspect-ratio: 1;
+    /* center text inside handle span's */
+    display: inline-flex;
+    align-items: center;
+    justify-items: center;
+}
+
+.left-panel .panel-handle,
+.right-panel .panel-handle {
+    padding-bottom: 5px;
+}
+
+.panel-handle:hover {
+    background-color: var(--button-hover-background-color);
+    color: var(--button-hover-text-color);
+    border-color: var(--button-hover-border-color);
+    padding-bottom: 5px;
+}
+
+/* General panel content style (applies to both left and right) */
+.panel-content {
+    /* Scrollable content */
+    overflow-y: auto;
+    /* Take all available space within the panel, pushing the footer down */
+    flex-grow: 1;
+    /* what does this do? */
+    min-height: 0;
+    align-self: stretch;
+}
+
+/* Updated tab styles consuming CSS variables */
+.panel-tab-button {
+    /* General tab button styles */
+    background-color: var(--tab-background-color);
+    border: var(--tab-border-width) var(--tab-border-style) var(--tab-border-color);
+    border-bottom-color: transparent !important;
+    padding: var(--tab-padding);
+    cursor: pointer;
+    /* Rounded top corners */
+    border-radius: var(--tab-border-radius);
+    margin-top: calc(var(--tab-border-width) + 2) !important;
+    /* Spacing between tabs */
+    margin-right: 2px;
+    /* margin-bottom: 4px; */
+    font-weight: bold;
+    /* Prevent text selection */
+    user-select: none;
+    color: var(--tab-text-color);
+    transform: translateY(calc(var(--tab-border-width-active) + 5px));
+    text-wrap-mode: nowrap;
+}
+
+.panel-tab-button.active {
+    /* Style for active tab button */
+    background-color: var(--tab-background-color-active);
+    /* Visually "lift" active tab */
+    border: var(--tab-border-width-active) var(--tab-border-style) var(--tab-border-color-active);
+    border-bottom: 5px solid transparent;
+    color: var(--tab-text-color-active);
+    transform: translateY(calc(var(--tab-border-width-active) + 3px));
+    /* don't move the "X" close button span */
+    /* span {
+        transform: inherit;
+    } */
+}
+
+/* Link Styles */
+a {
+    color: var(--link-color);
+    text-decoration: var(--link-text-decoration);
+    display: inline-block;
+}
+
+a:visited {
+    color: var(--link-visited-color);
+}
+
+/* Animation for link hover */
+@keyframes bounce-on-hover {
+    0% {
+        transform: translateX(0px);
+    }
+
+    50% {
+        transform: translateX(6px);
+    }
+
+    100% {
+        transform: translateX(5px);
+    }
+
+    /* End with a slight indentation */
+}
+
+a:hover {
+    color: var(--link-hover-color);
+    text-decoration: var(--link-hover-text-decoration);
+    animation: bounce-on-hover 0.2s ease-in-out;
+    transform: translateX(4px);
+    /* display: inline-block; */
+}
+
+/* General tab content styles */
+.tab-content {
+    width: 100%;
+    height: 100%;
+    /* padding: 10px; */
+    padding: 10px 2px 2px 2px;
+    border: 1px solid #ccc;
+    border-top: none;
+    /* Remove top border to visually connect to tabs */
+    /* background-color: #eee; */
+    /* Optional: Background color for content area */
+    /* debug */
+    background-color: var(--side-panel-tab-content-background-color);
+    box-sizing: border-box;
+
+    /* I had to enclose the a tags with li for formatting */
+    nav {
+        padding-left: 10px;
+
+        ul {
+            display: grid;
+            gap: 10px;
+            padding: 0px;
+
+            li {
+                list-style-type: none;
+            }
+        }
+    }
+}
+
+.tab-content.collapsed {
+    /* Style for collapsed tab content */
+    display: none;
+}
+
+.fullscreen-dialog {
+    /* on thin screens, still show a sliver of green. Doesn't affect
+     * desktop/normal phone screens. */
+    max-width: 85vw;
+    padding: 0px;
+}
+
+/*
+ * Styles for fullscreen dialog. overall the approach is to cover a majority of
+ * the screen with a diffuse blur of the app backdrop.
+ */
+.fullscreen-dialog-content {
+    /* for some reason width 100% causes overflow? */
+    /* width: 100%; */
+    height: 100%;
+    min-width: 50vw;
+    min-height: 50vh;
+    max-width: 80vw;
+    max-height: 80vw;
+    margin: 0;
+    padding: 20px;
+    border: none;
+    /* Semi-transparent background overlay */
+    /* background-color: rgba(203, 236, 199, 0.719); */
+    background-color: var(--background-color-base);
+    color: var(--text-color-base);
+    /* Center dialog content */
+    /* color: var(--text-color-light); */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* Ensure dialog is on top */
+    z-index: 1000;
+    /* Enable scroll if content overflows */
+    overflow: auto;
+}
+
+/* Style the backdrop (behind the dialog) */
+.fullscreen-dialog::backdrop {
+    /* Semi-transparent black backdrop */
+    /* background-color: rgba(0, 0, 0, 0.5); */
+    background-color: var(--dialog-backdrop-color);
+    /* Optional: Apply blur effect to backdrop */
+    backdrop-filter: blur(2px);
+}
+
+/* Style dialog header */
+.fullscreen-dialog-header {
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+/* Style dialog body */
+.fullscreen-dialog-body {
+    width: 95%;
+    padding: 10px 0;
+    margin-bottom: 15px;
+    /* Take available height */
+    flex: 1;
+    /* Enable scroll if message is long */
+    overflow-y: auto;
+    min-height: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-items: center;
+    gap: 5px;
+}
+
+.fullscreen-dialog-message {
+    padding: 10px;
+}
+
+/* Style prompt input field */
+#fullscreen-dialog-prompt-input {
+    background-color: var(--input-background-color);
+    color: var(--input-text-color);
+    border: var(--input-border-width) var(--input-border-style) var(--input-border-color);
+    border-radius: var(--input-border-radius);
+    padding: var(--input-padding);
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    /* margin-top: 10px; */
+    width: 90%;
+    box-sizing: border-box;
+}
+
+/* Hide prompt input when collapsed */
+#fullscreen-dialog-prompt-input.collapsed {
+    display: none;
+}
+
+/* Style dialog footer (button container) */
+.fullscreen-dialog-footer {
+    display: flex;
+    /* Align buttons to the right */
+    justify-content: flex-end;
+    /* Spacing between buttons */
+    gap: 10px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+/* Style for dialog buttons */
+.dialog-button {
+    background-color: var(--button-background-color-base);
+    /* Or create a separate --button-secondary-... */
+    color: var(--button-text-color-base);
+    border: var(--button-border-width-base) var(--button-border-style-base) var(--button-border-color-base);
+    border-radius: var(--button-border-radius-base);
+    padding: var(--button-padding-base);
+    cursor: pointer;
+}
+
+.dialog-button:hover {
+    background-color: var(--button-hover-background-color);
+    color: var(--button-hover-text-color);
+    border-color: var(--button-hover-border-color);
+}
+
+/* Hover effect for buttons */
+.dialog-button:hover {
+    background-color: #ddd;
+}
+
+/*
+ * kluge to get links inside an iframe to fill up and scroll properly.  there
+ * are two parts to this kluge (no pun intended). the ::part selector in
+ * #center-panel-content (also had to set justify-content to stretch), and I
+ * added hardcoded web1-links-component class to this file (even though it is
+ * component-specific).
+ */
+web1-links-component {
+    height: 100%;
+    width: 100%;
+}
+
+#center-panel-content:has(> ibgib-projects) {
+    padding: 0px !important;
+}
+
+/* these are the components. I can't figure out how to get web components to do
+ * this automatically */
+/* i think i can do a :only-child on the center panel content, but I"m holding
+ * off on this atm */
+ibgib-canvas,
+ibgib-projects,
+ibgib-project {
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ibgib-project {
+    overflow: auto;
+} */
+/* used with components that are injected at the page-level (via URL route) */
+.ibgib-page {
+    width: 100%;
+}
+
+h1 {
+    font-size: var(--h1-font-size);
+    font-weight: var(--h1-font-weight);
+    margin: var(--h1-margin);
+}
+
+h2 {
+    font-size: var(--h2-font-size);
+    font-weight: var(--h2-font-weight);
+    margin: var(--h2-margin);
+}
+
+h3 {
+    font-size: var(--h3-font-size);
+    font-weight: var(--h3-font-weight);
+    margin: var(--h3-margin);
+}
+
+/* The main loader container - NOW USES FIXED POSITIONING FOR CENTERING */
+.paramecium-loader {
+    /* --- Viewport Centering --- */
+    position: fixed;
+    /* Position relative to the browser window */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    /* Center the element precisely */
+    z-index: 9999;
+    /* Ensure it stays on top of other content */
+    /* --- Size & Internal Layout --- */
+    width: 150px;
+    /* Container size */
+    height: 150px;
+    display: flex;
+    /* Still useful for centering the body *within* this box */
+    justify-content: center;
+    align-items: center;
+    /* No longer needs 'position: relative' for the text,
+       as 'position: fixed' also creates a positioning context */
+}
+
+/* The paramecium body shape and animation (No changes needed here) */
+.paramecium-body {
+    width: calc(1.1 * 100px);
+    /* Main width */
+    height: calc(3.5 * 60px);
+    /* Main height */
+    /* width: 100px; Main width */
+    /* height: 60px;  Main height */
+    background-color: var(--very-light-background-color);
+    /* A silly green */
+    border: 2px solid var(--border-color-base);
+    /* Darker green border */
+    border-radius: 50% / 45%;
+    /* More squished vertically */
+    position: relative;
+    /* Still needed For positioning the nucleus */
+    box-shadow:
+        inset 0 0 5px rgba(0, 0, 0, 0.1),
+        /* Subtle inner shadow */
+        0 0 10px rgba(160, 232, 160, 0.5);
+    /* Outer glow */
+    animation: wobble-spin 5.5s linear infinite;
+}
+
+/* The little nucleus inside (No changes needed here) */
+.paramecium-nucleus {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background-color: #407040;
+    /* Darker nucleus */
+    border-radius: 50%;
+    top: 20%;
+    left: 40%;
+    transform: translate(-75%, -75%);
+    /* Center it based on its own size */
+    box-shadow: inset 0 0 3px var(--primary-border-color-dark);
+}
+
+/* The "Loading..." text (No changes needed here) */
+.loading-text {
+    position: absolute;
+    /* Positioned relative to .paramecium-loader */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    white-space: nowrap;
+    /* Prevent text wrapping */
+    animation: pulse-text 1.5s ease-in-out infinite alternate;
+}
+
+/* The silly wobble and spin loading animation (currently a paramecium) */
+@keyframes wobble-spin {
+    0% {
+        transform: rotate(0deg) translateX(0px) scale(1);
+    }
+
+    25% {
+        transform: rotate(90deg) translateX(5px) scale(1.25) skewX(-5deg);
+        /* Wobble out */
+    }
+
+    50% {
+        transform: rotate(180deg) translateX(0px) scale(1);
+    }
+
+    75% {
+        transform: rotate(270deg) translateX(-5px) scale(0.75) skewX(5deg);
+        /* Wobble in */
+    }
+
+    100% {
+        transform: rotate(360deg) translateX(0px) scale(1);
+    }
+}
+
+/* Optional text pulsing animation (No changes needed here) */
+@keyframes pulse-text {
+    from {
+        opacity: 0.2;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.info-popover-btn {
+    background-color: var(--button-background-color-base);
+    color: var(--button-text-color-base);
+    border: var(--button-border-width-base) var(--button-border-style-base) var(--button-border-color-base);
+    border-radius: var(--button-border-radius-base);
+}
+
+.info-popover-btn:hover {
+    cursor: pointer;
+    border-color: currentColor;
+    border-width: calc(var(--button-border-width-base) + 2px);
+}
+
+.info-popover {
+    color: var(--text-color-base);
+    background-color: var(--background-color-base);
+    border-color: var(--border-color-base);
+    border-width: var(--border-width-base);
+    border-style: var(--border-style-base);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-base);
+    border-radius: var(--input-border-radius);
+    padding: 2dvw;
+    max-height: 70dvh;
+    max-width: 90dvw;
+    overflow: auto;
+
+    /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
+    /* background: white; */
+    /* Popovers are positioned automatically, but you can override */
+    button {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background-color: rgba(255, 0, 0, 0.7);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
+        font-size: 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+        /* Ensure button is above content */
+    }
+}
+
+/* The browser adds a backdrop for popovers, you can style it */
+.info-popover::backdrop {
+    background-color: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(2px);
+}
+
+.green {
+    color: #1df116;
+    text-decoration-color: #13b90d;
+}
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.error {
+    color: red;
+    border: 1px solid red;
+}
+
+.labeled-control {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    flex-wrap: nowrap;
+
+    label {
+        text-wrap: p;
+    }
+}
+
+/** HAMBURGER (MOBILE) */
+#left-panel-hamburger-btn {
+    display: none;
+    /* Hidden by default */
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+}
+
+#left-panel-close-btn {
+    display: none;
+}
+
+/* Show hamburger on small screens */
+@media (max-width: 768px) {
+    #left-panel-hamburger-btn {
+        display: block;
+    }
+
+    /*
+      In mobile view, the left panel is initially hidden off-screen to the left.
+      We keep it rendered (not display: none) so we can transition it.
+    */
+    .left-panel {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 80%;
+        z-index: 2000;
+        flex-direction: column;
+        background-color: var(--background-color-base);
+        border-right: var(--border-color-base) var(--border-width-base) var(--border-style-base);
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+        /* Hide off-screen by default */
+        transform: translateX(-100%);
+        /* Add transition for a smooth slide-in/out effect */
+        transition: transform var(--panel-transition-duration) ease-in-out;
+    }
+
+    /* correct transitions for mobile view */
+    .left-panel.maximized,
+    .right-panel.maximized,
+    .left-panel.expanded,
+    .right-panel.expanded {
+        transition: transform var(--panel-transition-duration) ease-in-out;
+    }
+
+    /* The .mobile-visible class will now slide the panel into view. */
+    .left-panel.mobile-visible {
+        transform: translateX(0);
+
+        #left-panel-close-btn {
+            display: block;
+        }
+    }
+
+    /* we don't need the footer with the desktop handles in mobile view */
+    .left-panel .left-panel-footer {
+        display: none;
+    }
+
+    /* Only show the close button when the mobile overlay is visible */
+    .left-panel.mobile-visible .close-btn {
+        display: block;
+    }
+}
+
+/** END HAMBURGER (MOBILE) */

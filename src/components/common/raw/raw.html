@@ -1,0 +1,55 @@
+<div id="raw-component" class="">
+    <!-- have these both as panel-header just as a kluge to get the tabs to look
+    decent without bigger rewrite/investigation -->
+    <div id="raw-header" class="raw-header panel-header">
+        <h2 id="raw-name">raw name loading...</h2>
+        <p id="raw-description">raw description loading...</p>
+        <!-- <div id="raw-header-tabs" class="raw-header-tabs panel-header"> -->
+        <!-- looks something like this atow when dynamically added -->
+        <!--
+            <span id="raw-tab-button-{addr}" class="panel-tab-button active" title="untitled">
+                untitled
+            </span>
+            -->
+        <!-- </div> -->
+        <!-- <button id="raw-header-add-btn" class="tab-btn">+</button> -->
+    </div>
+
+    <div id="raw-content">
+
+        <section class="accordion">
+            <section class="accordion-section">
+                <h3 id="accordion-summary-header" class="accordion-header">summary</h3>
+                <div id="accordion-summary-content" class="accordion-content"></div>
+            </section>
+            <section class="accordion-section">
+                <h3 id="accordion-ib-header" class="accordion-header">ib</h3>
+                <div id="accordion-ib-content" class="accordion-content"></div>
+            </section>
+            <section class="accordion-section">
+                <h3 id="accordion-gib-header" class="accordion-header">gib</h3>
+                <div id="accordion-gib-content" class="accordion-content"></div>
+            </section>
+            <section class="accordion-section">
+                <h3 id="accordion-data-header" class="accordion-header">data</h3>
+                <pre id="accordion-data-content" class="accordion-content"></pre>
+            </section>
+            <section class="accordion-section">
+                <h3 id="accordion-rel8ns-header" class="accordion-header">rel8ns</h3>
+                <div id="accordion-rel8ns-content" class="accordion-content"></div>
+            </section>
+            <section class="accordion-section">
+                <h3 id="accordion-raw-json-header" class="accordion-header">raw json</h3>
+                <pre id="raw-json" class="accordion-content"></pre>
+            </section>
+        </section>
+
+
+    </div>
+
+    <div id="raw-footer" class="raw-footer" style="display: none">
+        <!-- <textarea id="raw-agent-input" class="agent-input" placeholder="raw agent loading..."
+            readonly></textarea> -->
+        <!-- <button id="raw-agent-input-send-btn" class="send-btn"><b>❯</b></button> -->
+    </div>
+</div>

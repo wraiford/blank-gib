@@ -1,0 +1,12 @@
+#web1-page-blog {
+
+    /* just debugging */
+    aside {
+        background-color: rgba(235, 88, 240, 0.77) !important;
+    }
+
+    img {
+        width: 100%;
+        aspect-ratio: 1/1;
+    }
+}

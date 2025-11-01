@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "ibgib - blank-gib",
+  "version": "0.0.1",
+  "description": "A sidepanel that uses the entire blank-gib web app.",
+  "permissions": [
+    "sidePanel",
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.mjs",
+    "type": "module"
+  },
+  "action": {
+    "title": "Click to open panel"
+  },
+  "side_panel": {
+    "default_path": "index.sidepanel.ext.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.mjs"],
+      "css": ["content-script.css"]
+    }
+  ]
+}

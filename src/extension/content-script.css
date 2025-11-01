@@ -1,0 +1,48 @@
+.highlight {
+    --fast-highlight-transition-time: 0.3s;
+    --slow-highlight-transition-time: 0.8s;
+    --fast-highlight-transition: border-width var(--fast-highlight-transition-time) ease-in-out,
+        border-color var(--fast-highlight-transition-time) ease-in-out,
+        border-radius var(--fast-highlight-transition-time) ease-in-out,
+        background-color var(--fast-highlight-transition-time) ease-in-out,
+        padding var(--fast-highlight-transition-time) ease-in-out;
+    --slow-highlight-transition: border-width var(--slow-highlight-transition-time) ease-in-out,
+        border-color var(--slow-highlight-transition-time) ease-in-out,
+        border-radius var(--slow-highlight-transition-time) ease-in-out,
+        background-.DS_Store color var(--slow-highlight-transition-time) ease-in-out,
+        padding var(--slow-highlight-transition-time) ease-in-out;
+    border-width: 4px !important;
+    border-style: solid !important;
+    border-color: #fdf741 !important;
+    box-shadow: 0 0 10px #a6fb1eff;
+    /* border-color: rgba(255, 204, 0, 0.363) !important; */
+    border-radius: 10px !important;
+    background-color: rgba(226, 226, 25, 0.515) !important;
+    /* background-color: rgba(255, 242, 0, 0.1) !important; */
+    box-sizing: inherit !important;
+    padding: -4px !important;
+    transition: var(--fast-highlight-transition);
+}
+
+.unhighlight {
+    --fast-highlight-transition-time: 0.3s;
+    --slow-highlight-transition-time: 0.8s;
+    --fast-highlight-transition: border-width var(--fast-highlight-transition-time) ease-in-out,
+        border-color var(--fast-highlight-transition-time) ease-in-out,
+        border-radius var(--fast-highlight-transition-time) ease-in-out,
+        background-color var(--fast-highlight-transition-time) ease-in-out,
+        padding var(--fast-highlight-transition-time) ease-in-out;
+    --slow-highlight-transition: border-width var(--slow-highlight-transition-time) ease-in-out,
+        border-color var(--slow-highlight-transition-time) ease-in-out,
+        border-radius var(--slow-highlight-transition-time) ease-in-out,
+        background-.DS_Store color var(--slow-highlight-transition-time) ease-in-out,
+        padding var(--slow-highlight-transition-time) ease-in-out;
+    border-width: 1px !important;
+    border-style: solid !important;
+    border-color: rgba(255, 204, 0, 0.363) !important;
+    border-radius: 5px !important;
+    background-color: rgba(255, 242, 0, 0.02) !important;
+    box-sizing: inherit !important;
+    padding: -1px !important;
+    transition: var(--slow-highlight-transition);
+}

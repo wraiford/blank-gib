@@ -1,0 +1,173 @@
+:root {
+    /* Scrollbar Styles */
+    --scrollbar-thumb-color: rgba(16, 237, 35, 0.18);
+    /* Example thumb color */
+    --scrollbar-track-color: rgba(134, 5, 132, 0.111);
+    /* Example track color */
+    scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
+    /* Heading Styles */
+    --h1-font-size: 2em;
+    /* Adjust as needed */
+    --h1-font-weight: bold;
+    --h1-margin: 0.5em 0;
+    --h2-font-size: 1.5em;
+    /* Adjust as needed */
+    --h2-font-weight: bold;
+    --h2-margin: 0.4em 0;
+    --h3-font-size: 1.2em;
+    /* Adjust as needed */
+    --h3-font-weight: bold;
+    /* Message Type Colors */
+    --agent-background-color: #e0f7fa;
+    /* Light blue */
+    --agent-text-color: #333;
+    /* Dark gray */
+    --human-background-color: #fff9c4;
+    /* Light yellow */
+    --human-text-color: #333;
+    /* Dark gray */
+    --code-background-color: #f5f5f5;
+    /* Very light gray */
+    --code-text-color: #333;
+    /* Dark gray */
+    --function-background-color: #e8f5e9;
+    /* Light green */
+    --function-text-color: #333;
+    /* Dark gray */
+    --unknown-background-color: #ffAAAA;
+    /* Light red */
+    --unknown-text-color: #333;
+    /* Dark gray */
+    --h3-margin: 0.3em 0;
+    /* Chronology Item Background Colors */
+    --chronology-agent-background-color: #e0f7fa;
+    /* Light blue */
+    --chronology-agent-text-color: #333;
+    /* Dark gray */
+    --chronology-human-background-color: #fff9c4;
+    /* Light yellow */
+    --chronology-human-text-color: #333;
+    /* Dark gray */
+    --chronology-code-background-color: #f5f5f5;
+    /* Very light gray */
+    --chronology-code-text-color: #333;
+    /* Dark gray */
+    --chronology-function-background-color: #e8f5e9;
+    /* Light green */
+    --chronology-function-text-color: #333;
+    /* Dark gray */
+    --chronology-unknown-background-color: #ffAAAA;
+    /* Light red */
+    --chronology-unknown-text-color: #333;
+    --debug-border-width: 1px;
+    --debug-border-style: solid;
+    --header-border-color: lightcoral;
+    --left-border-color: lightseagreen;
+    --center-border-color: rgb(226, 226, 85);
+    --right-border-color: lightsalmon;
+    --footer-border-color: lightskyblue;
+    --text-color-base: black;
+    --background-color-base: white;
+    --border-color-base: #78f87e88;
+    --border-width-base: 1px;
+    --border-style-base: solid;
+    --font-family-base: 'Courier New', Courier, monospace;
+    --font-size-base: 16px;
+    color: var(--text-color-base);
+    background-color: var(--background-color-base);
+    border-color: var(--border-color-base);
+    border-width: var(--border-width-base);
+    border-style: var(--border-style-base);
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-base);
+    /* Button Styles */
+    --button-background-color-base: var(--light-background-color);
+    --button-text-color-base: var(--text-color-base);
+    --button-border-color-base: var(--primary-border-color);
+    --button-border-width-base: 1px;
+    --button-border-style-base: solid;
+    --button-border-radius-base: 20px;
+    --button-padding-base: 8px 15px;
+    --button-hover-background-color: rgba(88, 207, 86, 0.25);
+    --button-hover-text-color: var(--text-color-base);
+    --button-hover-border-color: var(--primary-border-color-dark);
+    /* Input Styles */
+    --input-background-color: var(--background-color-base);
+    /* Use base background color */
+    --input-text-color: var(--text-color-base);
+    /* Use base text color */
+    --input-border-color: var(--border-color-base);
+    /* Use base border color */
+    --input-border-width: 1px;
+    --input-border-style: solid;
+    --input-border-radius: 5px;
+    /* Adjust as needed */
+    --input-padding: 8px;
+    /* Adjust as needed */
+    /* Link Styles */
+    --link-color: blue;
+    --link-visited-color: rgb(13, 117, 35);
+    --link-hover-color: rgb(0, 157, 255);
+    --link-text-decoration: none;
+    --link-hover-text-decoration: underline;
+    /* Tabs */
+    --tab-background-color: #9ff2a86b;
+    --tab-background-color-active: #3d972b;
+    --tab-text-color: #333;
+    --tab-text-color-active: #000;
+    --tab-border-color: #65d961;
+    --tab-border-color-active: #1df116;
+    --tab-border-width: 1px;
+    --tab-border-width-active: 5px;
+    --tab-border-style: solid;
+    /* Rounded top corners */
+    --tab-border-radius: 5px 5px 0 0;
+    --tab-padding: 8px 15px;
+    --side-panel-tab-content-background-color: #6be2621f;
+    --highlight-border-color: rgb(255, 204, 0);
+    --highlight-box-shadow-color: rgb(179, 68, 238);
+    --primary-border-color: rgba(73, 202, 71, 0.274);
+    --primary-border-color-dark: rgba(49, 138, 47, 0.837);
+    --dialog-backdrop-color: rgba(49, 138, 47, 0.58);
+    --header-border-color: var(--primary-border-color);
+    --left-border-color: var(--primary-border-color);
+    --center-border-color: var(--primary-border-color);
+    --right-border-color: var(--primary-border-color);
+    --footer-border-color: var(--primary-border-color);
+    --light-background-color: rgba(88, 207, 86, 0.144);
+    /* --very-light-background-color: rgba(88, 207, 86, 0.032); */
+    --very-light-background-color: #6be2621f;
+    /* 6be2621f */
+    /* size of the button to expand/maximize/collapse panels */
+    --handle-size: 15px;
+    --side-panel-width: 25vw;
+    --side-panel-width-maximized: 85vw;
+    --panel-transition-duration: 0.5s;
+    /* --button-background-color: var(--light-background-color); */
+    /* --button-border-color: var(--primary-border-color); */
+    /* --button-border-radius: 20px; */
+    box-sizing: border-box;
+    /* dymanically calculated pixel height loss of the header when hiding header
+     * per scrolling down */
+    --header-calculated-height-loss: 0px;
+    /* helper var to make the left panel match the panel header height when
+     * collapsed. */
+    --left-panel-header-calculated-height: 5px;
+    /* helper var to make the left panel match the panel header height when
+     * collapsed. */
+    --right-panel-header-calculated-height: 5px;
+    /* used when highlighting elements */
+    --fast-highlight-transition-time: 0.3s;
+    --slow-highlight-transition-time: 0.8s;
+    --fast-highlight-transition: border-width var(--fast-highlight-transition-time) ease-in-out,
+        border-color var(--fast-highlight-transition-time) ease-in-out,
+        border-radius var(--fast-highlight-transition-time) ease-in-out,
+        background-color var(--fast-highlight-transition-time) ease-in-out,
+        padding var(--fast-highlight-transition-time) ease-in-out;
+    --slow-highlight-transition: border-width var(--slow-highlight-transition-time) ease-in-out,
+        border-color var(--slow-highlight-transition-time) ease-in-out,
+        border-radius var(--slow-highlight-transition-time) ease-in-out,
+        background-.DS_Store color var(--slow-highlight-transition-time) ease-in-out,
+        padding var(--slow-highlight-transition-time) ease-in-out;
+}
+

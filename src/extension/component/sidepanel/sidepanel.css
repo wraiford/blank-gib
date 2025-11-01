@@ -1,0 +1,314 @@
+    .collapsed {
+        display: none !important;
+    }
+
+    /* DUPLICATED not DRY */
+    .highlight {
+        --fast-highlight-transition-time: 0.3s;
+        --slow-highlight-transition-time: 0.8s;
+        --fast-highlight-transition: border-width var(--fast-highlight-transition-time) ease-in-out,
+            border-color var(--fast-highlight-transition-time) ease-in-out,
+            border-radius var(--fast-highlight-transition-time) ease-in-out,
+            background-color var(--fast-highlight-transition-time) ease-in-out,
+            padding var(--fast-highlight-transition-time) ease-in-out;
+        --slow-highlight-transition: border-width var(--slow-highlight-transition-time) ease-in-out,
+            border-color var(--slow-highlight-transition-time) ease-in-out,
+            border-radius var(--slow-highlight-transition-time) ease-in-out,
+            background-.DS_Store color var(--slow-highlight-transition-time) ease-in-out,
+            padding var(--slow-highlight-transition-time) ease-in-out;
+        border-width: 4px !important;
+        border-style: solid !important;
+        border-color: #fdf741 !important;
+        box-shadow: 0 0 10px #a6fb1eff;
+        /* border-color: rgba(255, 204, 0, 0.363) !important; */
+        border-radius: 10px !important;
+        background-color: rgba(226, 226, 25, 0.515) !important;
+        /* background-color: rgba(255, 242, 0, 0.1) !important; */
+        box-sizing: inherit !important;
+        padding: -4px !important;
+        transition: var(--fast-highlight-transition);
+    }
+
+    /* DUPLICATED not DRY */
+    .unhighlight {
+        --fast-highlight-transition-time: 0.3s;
+        --slow-highlight-transition-time: 0.8s;
+        --fast-highlight-transition: border-width var(--fast-highlight-transition-time) ease-in-out,
+            border-color var(--fast-highlight-transition-time) ease-in-out,
+            border-radius var(--fast-highlight-transition-time) ease-in-out,
+            background-color var(--fast-highlight-transition-time) ease-in-out,
+            padding var(--fast-highlight-transition-time) ease-in-out;
+        --slow-highlight-transition: border-width var(--slow-highlight-transition-time) ease-in-out,
+            border-color var(--slow-highlight-transition-time) ease-in-out,
+            border-radius var(--slow-highlight-transition-time) ease-in-out,
+            background-.DS_Store color var(--slow-highlight-transition-time) ease-in-out,
+            padding var(--slow-highlight-transition-time) ease-in-out;
+        border-width: 1px !important;
+        border-style: solid !important;
+        border-color: rgba(255, 204, 0, 0.363) !important;
+        border-radius: 5px !important;
+        background-color: rgba(255, 242, 0, 0.02) !important;
+        box-sizing: inherit !important;
+        padding: -1px !important;
+        transition: var(--slow-highlight-transition);
+    }
+
+
+    #api-availability-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        .overlay-content {
+            background-color: #fff;
+            padding: 2em;
+            border-radius: 5px;
+            text-align: center;
+
+            #api-status-list {
+                list-style: none;
+                padding: 0;
+
+                .status {
+                    font-weight: bold;
+                }
+            }
+
+            #summarizer-download-progress-container {
+                margin-top: 1em;
+            }
+
+        }
+    }
+
+    #sidepanel-component {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+
+        #sidepanel-header {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: stretch;
+            /* flex: 0 0 auto; */
+            margin-bottom: 10px;
+
+            #current-href-div {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: flex-start;
+                margin-bottom: 5px;
+            }
+
+            #sidepanel-phases {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: flex-start;
+
+                .sidepanel-phase {
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: flex-start;
+                    align-items: center;
+                    margin-right: 10px;
+                }
+
+                button {
+                    display: none;
+                }
+
+                .active-phase {
+                    border: 1px dotted var(--node-highlight-color);
+                    border-radius: 10px;
+                    padding: 2px;
+
+                    button {
+                        display: flex;
+                        height: 75%;
+                        aspect-ratio: 1 !important;
+                        border-radius: 50%;
+                        margin: 5px;
+                        padding: 10px;
+                    }
+                }
+            }
+
+            #sidepanel-phases-info {
+                /* width: 100%; */
+                font-style: italic;
+                padding: 2%;
+
+                flex-direction: column;
+                align-items: stretch;
+                gap: 5px;
+
+                p {
+                    margin: 0;
+                }
+            }
+        }
+
+        #sidepanel-content {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+
+            .content-chunk {
+                border: 1px solid #ccc;
+                padding: 10px;
+                border-radius: 5px;
+                cursor: pointer;
+                transition: background-color 0.2s;
+
+                &:hover {
+                    background-color: #f0f0f0;
+                }
+
+                &.highlighted-on-page {
+                    background-color: #dbeafe;
+                    /* A light blue to show its linked on the page */
+                    border-color: #93c5fd;
+                }
+
+                .chunk-text-snippet {
+                    margin: 0 0 8px 0;
+                    font-size: 0.9em;
+                    color: #555;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .chunk-progress {
+                    span {
+                        font-size: 0.8em;
+                        color: #777;
+                    }
+                }
+            }
+
+            #dom-twin-container {
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                /* to force scrollbar on nodes container and keep global commands
+                 * at top when scrolling */
+                height: 100%;
+
+                .root-char {
+                    font-family: impact;
+                    font-size: x-large;
+                }
+
+                #dom-twin-global-commands {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: stretch;
+                    /* Align button to the right */
+                    justify-content: flex-end;
+                    padding: 3px;
+                    margin-bottom: 5px;
+                    border: 1px solid #20c70e17;
+                    border-radius: 5px;
+                    background-color: #f0f0f0;
+
+                    button:disabled {
+                        cursor: not-allowed;
+                        opacity: 0.5;
+                    }
+                }
+
+                #dom-twin-nodes-container {
+                    overflow: auto;
+                }
+
+                .dom-twin-node {
+
+                    &:hover {
+                        border: 2px solid var(--node-highlight-color);
+                    }
+
+                    .node-header {
+                        display: flex;
+                        flex-direction: row;
+                        align-items: center;
+                        justify-content: flex-start;
+                        cursor: pointer;
+
+                        .expand-btn {
+                            width: 1.5em;
+                            aspect-ratio: 1;
+                            border-radius: 50%;
+                            padding: 3px;
+                        }
+
+                        .node-text-preview {
+                            margin-left: 5px;
+                            font-style: italic;
+                            color: #655050;
+                            white-space: nowrap;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            flex-grow: 1;
+                            /* Allow preview to take available space */
+                        }
+
+                        .node-commands {
+                            display: flex;
+                            flex-direction: row;
+                            gap: 0;
+                            margin-left: auto;
+                            /* Pushes commands to the right */
+
+                            button {
+                                background: none;
+                                border: none;
+                                cursor: pointer;
+                                font-size: 1.2em;
+                                padding: 0 5px;
+                            }
+
+                            button:hover {
+                                border: 2px dotted var(--node-highlight-color);
+                            }
+
+                            /* .make-root-btn {
+                                font-family: impact;
+                            } */
+
+                            .delete-node-btn {
+                                border-color: red !important;
+                            }
+                        }
+                    }
+
+                    .node-children-container {
+                        margin-left: 10px;
+                        border-width: 0 0 0 1px;
+                        border-color: #12d21c45;
+                        border-style: dashed;
+                    }
+                }
+            }
+        }
+
+        #sidepanel-footer {
+            flex: 0 0 auto;
+            text-align: center;
+        }
+    }

@@ -1,0 +1,44 @@
+<div id="projects-component" class="">
+    <!-- have these both as panel-header just as a kluge to get the tabs to look
+    decent without bigger rewrite/investigation -->
+    <div id="projects-header" class="projects-header panel-header">
+
+        <div id="projects-header-tabs" class="projects-header-tabs panel-header">
+            <!-- looks something like this atow when dynamically added -->
+            <!--
+            <span id="projects-tab-button-{addr}" class="panel-tab-button active" title="untitled">
+                untitled
+            </span>
+            -->
+        </div>
+
+        <button id="projects-header-add-btn" class="tab-btn"><span>+</span></button>
+
+        <!-- ... button and popover options -->
+        <button id="projects-header-ellipsis-btn" class="tab-btn" popovertarget="ellipsis-popover"><span>…</span></button>
+        <div class="ellipsis-button-container">
+            <div id="ellipsis-popover" class="ellipsis-popover" popover>
+                <a id="export-ibgib-anchor" style="display: none">download</a>
+                <div class="ellipsis-popover-option" data-option="copy-active-project-address">
+                    Copy Active Project Tab Address
+                </div>
+                <div class="ellipsis-popover-option" data-option="export-project">Export Project</div>
+                <div class="ellipsis-popover-option" data-option="export-project-gzip">Export Project (gzip)</div>
+                <div class="ellipsis-popover-option" data-option="import-project">Import Project</div>
+                <!-- Add more opts later, ultimately dynamically generated? -->
+            </div>
+        </div>
+    </div>
+
+    <div id="projects-content">
+
+        <!-- todo: insert projects-content depending on which tab is active -->
+        <!-- <canvas id="ibgib-canvas" width="1000" height="1000"></canvas> -->
+
+    </div>
+
+    <div id="projects-footer" class="projects-footer">
+        <!-- <textarea id="projects-agent-input" class="agent-input" placeholder="loading..." readonly></textarea>
+        <button id="projects-agent-input-send-btn" class="send-btn"><b>❯</b></button> -->
+    </div>
+</div>

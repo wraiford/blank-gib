@@ -1,0 +1,27 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": false,
+    "rootDir": "./src",
+    "composite": true,
+    "outDir": "./dist",
+    "module": "ESNext",
+    "lib": [
+      "DOM",
+      "WebWorker"
+    ]
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.mts",
+    "src/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.respec.mts",
+    "./dist/**/*",
+    "./build/**/*"
+  ]
+}

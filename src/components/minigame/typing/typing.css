@@ -1,0 +1,505 @@
+:host {
+    /* this is used for styling ibgib components for multi-view coordination, so
+     * that ibgib views that are looking at the same ibgib can be visibly shown
+     * as doing so. */
+    --ibgib-color: #ff00dd;
+    --ibgib-color-translucent: #ff00dd10;
+    --tjp-color: #00ffae;
+    --tjp-color-translucent: #00ffae10;
+    width: 100%;
+    height: 100%;
+}
+
+.round-btn {
+    border-radius: 50%;
+    width: 10px;
+    height: auto;
+    border-style: solid;
+}
+
+.stimuli-list {
+    display: flex;
+    flex-direction: column;
+    row-gap: 5px;
+
+    list-style-type: none;
+
+    li {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+        column-gap: 5px;
+
+        border: 1px gold dotted;
+        padding: 2px;
+        border-radius: 5px;
+
+        button {
+            width: 25px;
+            border-radius: 50%;
+            border-width: 2px;
+            border-style: solid;
+        }
+
+        button:hover {
+            border-width: 2px;
+            background-color: var(--button-hover-background-color);
+            color: var(--button-hover-text-color);
+            border-color: var(--button-hover-border-color);
+        }
+
+        .stimulus-entry-template-div {
+            display: flex;
+            flex-direction: column;
+            row-gap: 5px;
+            width: 100%;
+
+            .stimulus-entry-template-section {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .stimulus-entry-main-section {
+                flex-direction: row;
+                justify-content: flex-start;
+                align-items: center;
+                column-gap: 5px;
+            }
+
+            .stimulus-entry-details-section {
+
+                .labeled-control {
+                    gap: 5px;
+
+                    label {
+                        width: 25%;
+                        flex-grow: 0;
+                    }
+                }
+
+                transition: max-height 1000ms ease-in-out;
+            }
+        }
+    }
+}
+
+#typing-fullscreen-dialog {
+
+    .focus-template-div {
+        display: flex;
+        flex-direction: column;
+        row-gap: 5px;
+        width: 100%;
+        border-width: var(--border-width-base);
+        border-width: 3px;
+        border-color: var(--border-color-base);
+        border-color: red;
+        border-style: var(--border-style-base);
+        box-sizing: border-box;
+
+        .focus-template-section {
+            display: flex;
+            flex-direction: column;
+            row-gap: 1px;
+            width: 100%;
+            border-width: var(--border-width-base);
+            border-width: 1px;
+            border-color: var(--border-color-base);
+            border-color: pink;
+            border-style: dotted;
+            box-sizing: border-box;
+            padding: 2px;
+        }
+
+        #focus-template-section-btns {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: center;
+            column-gap: 3px;
+            flex-wrap: wrap;
+        }
+
+        #focus-template-section-focus-text {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: center;
+            column-gap: 3px;
+            flex-wrap: wrap;
+
+            #focus-template-delete-btn {
+                margin-right: 5px;
+            }
+        }
+
+        #focus-template-language-directions {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: center;
+            column-gap: 5px;
+            flex-wrap: wrap;
+
+            /* <div class="focus-template-translate-direction-div">
+                        <div class="labeled-control">
+                            <input type="checkbox" id="focus-option-native-target" name="native-target"
+                                value="native-target" checked>
+                            <label for="focus-option-native-target">native -> target</label>
+                        </div>
+                        <textarea id="stimulus-gen-native-target"></textarea>
+                    </div> */
+            .focus-template-translate-direction-div {
+                display: flex;
+                flex-direction: column;
+                row-gap: 2px;
+                width: 100%;
+
+                /* show a line between each entry */
+                border-color: gold;
+                border-width: 0px 0px 3px 0px;
+                border-style: solid;
+
+                :last-child {
+                    border-width: 0px;
+                }
+
+                textarea {
+                    height: auto;
+                    max-height: calc(2 * 1.5em + var(--input-padding) * 2 + 2px);
+                    overflow-y: auto;
+                    /* no idea why important is needed. nothing else overrides this. */
+                    border: var(--input-border-color) 1px solid !important;
+                    margin-bottom: 2px;
+                    box-sizing: border-box;
+                }
+
+            }
+        }
+
+        .focus-template-stimuli-details {
+            display: flex;
+            flex-direction: column;
+            border: var(--input-border-color) 1px solid !important;
+            border-radius: 5px;
+            padding: 1px 1px 1px 4px;
+            margin: 2px;
+        }
+
+        #focus-template-stimuli-details-fitb {
+            #focus-template-stimuli-details-parrot-text {
+                margin-left: 5px;
+            }
+        }
+
+        .focus-template-stimuli-details-translate-options {
+            display: flex;
+            flex-direction: row;
+            gap: 5px;
+        }
+
+    }
+
+    #typing-fullscreen-dialog-focuses-div {
+        margin: 0px;
+        padding-left: 5px;
+    }
+
+    #typing-fullscreen-dialog-body {
+        width: 100%;
+        height: 100%;
+
+        .fullscreen-dialog-section {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 5px;
+            border-width: var(--border-width-base);
+            border-width: 3px;
+            border-color: var(--border-color-base);
+            border-color: red;
+            border-style: var(--border-style-base);
+            box-sizing: border-box;
+            padding: 5px;
+        }
+
+        .fullscreen-dialog-subsection {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 5px;
+            box-sizing: border-box;
+            padding: 5px;
+        }
+
+        .fullscreen-dialog-section-label {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 5px;
+
+            label {
+                flex: 1;
+            }
+
+        }
+
+        #typing-fullscreen-dialog-language-div {
+            flex-direction: column;
+            align-items: stretch;
+
+            label {
+                width: 25%;
+            }
+
+            #typing-fullscreen-dialog-language-details {
+                display: flex;
+                flex-direction: row;
+                align-items: flex-start;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+        }
+
+        /* #typing-fullscreen-dialog-prompt-new-stimuli-div {
+
+            li {
+                display: flex;
+                flex-direction: row;
+                justify-content: flex-start;
+                align-items: center;
+
+                list-style-type: none;
+            }
+        } */
+
+        textarea {
+            /* width should be controlled by parent flex stretch */
+            /* width: 90%; */
+            height: 15dvh;
+            flex-grow: 1;
+        }
+
+    }
+
+}
+
+
+/* Basic layout and styling for the typing component */
+#typing-component {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    box-sizing: border-box;
+    /* Use consistent padding */
+    padding: 1%;
+
+    /* ibgib styling */
+    /* border: var(--tjp-color) 5px solid; */
+    border: var(--border-color-base) var(--border-width-base) var(--border-style-base);
+    /* box-shadow: 0 0 10px var(--tjp-color); */
+    border-radius: 5px;
+
+    /* Optional: If using flexbox to control vertical alignment */
+    /* justify-content: center;  Align content vertically */
+
+    #typing-header {
+        /* display: flex; */
+        /* flex-direction: column; */
+        /* feeling my way here...if this works, just delete other styles for the
+         * header or comment them out whatever. */
+        display: none;
+
+        #typing-name {
+            font-weight: bold;
+            /* font-size: larger; */
+            /* Use variables for spacing? */
+            /* margin-bottom: 0.5em; */
+        }
+
+        #typing-description {
+            /* Respect newlines */
+            white-space: pre-wrap;
+            font-style: italic;
+        }
+
+        #typing-description.collapsed {
+            display: none;
+        }
+    }
+
+    #typing-content {
+        width: 100%;
+        height: 50%;
+        box-sizing: border-box;
+        padding: 0px;
+        margin: 0px;
+
+        .typing-screen {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+
+            /* default to flex column */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        #typing-screen-init {
+
+            figure {
+                display: table;
+                width: 100%;
+
+                figcaption {
+                    display: table-caption;
+                    caption-side: top;
+                    text-align: center;
+
+                    a {
+                        font-size: small;
+                    }
+                }
+            }
+
+        }
+
+        #typing-screen-playing {
+            width: 100%;
+            height: 100%;
+
+            display: flex;
+            flex-direction: column;
+
+            #typing-screen-playing-header {
+                height: 5%;
+            }
+
+            #typing-stimulus {
+                display: flex;
+                flex-direction: column;
+
+                width: 100%;
+                height: 95%;
+                box-sizing: border-box;
+                /* not technically input, but we want it to match. */
+                padding: var(--input-padding);
+
+                font-family: var(--font-family-base);
+                font-size: var(--font-size-base);
+
+                border-color: var(--border-color-base);
+                border-width: var(--border-width-base);
+                border-style: var(--border-style-base);
+                /* dev */
+                /* border-color: pink; */
+                /* dev */
+                /* border-width: 10px; */
+
+                .playing-stimulus-template-root {
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+
+                    .playing-stimulus-text,
+                    .playing-stimulus-diff {
+                        width: 100%;
+                        height: 45%;
+                        overflow-y: auto;
+                    }
+
+                }
+
+                /* .playing-stimulus-template-root:first-child {
+                    width: 100%;
+                    height: 10%;
+                } */
+
+                p {
+                    padding: 0px 0px 2px 0px;
+                }
+            }
+
+        }
+
+        /* #typing-screen-aborted {} */
+
+        /* #typing-screen-complete {} */
+
+
+    }
+
+    #typing-footer {
+
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        gap: 2px;
+        justify-content: stretch;
+        width: 100%;
+        height: 50%;
+        box-sizing: border-box;
+        overflow-y: hidden;
+        padding: 1%;
+
+        /* dev */
+        /* border-color: purple; */
+        /* dev */
+        /* border-width: 10px; */
+
+        textarea {
+
+            /* height: 100%; */
+            height: auto;
+            width: 100px;
+            background-color: var(--input-background-color);
+            /* border: var(--input-border-width) var(--input-border-style) var(--input-border-color); */
+            border-radius: var(--input-border-radius);
+            padding: var(--input-padding);
+            flex-grow: 1;
+
+            font-family: var(--font-family-base);
+            font-size: var(--font-size-base);
+
+            /* ibgib styling */
+            border: var(--tjp-color) 1px solid;
+            box-shadow: 0 0 3px var(--tjp-color);
+            /* border-radius: 5px; */
+
+            color: var(--input-text-color);
+            background-color: var(--input-background-color);
+            border-color: var(--input-border-color);
+            border-width: var(--input-border-width);
+            border-style: var(--input-border-style);
+            border-radius: var(--input-border-radius);
+            /* dev */
+            /* border-color: blue; */
+            /* dev */
+            /* border-width: 15px; */
+        }
+
+        textarea:focus {
+            outline: none !important;
+            border-radius: calc(var(--input-border-radius) + 1px);
+            /* box-shadow: 0 0 10px var(--highlight-box-shadow-color); */
+            box-shadow: 0 0 10px var(--highlight-border-color);
+            /* background-color: var(--background-color-base); */
+        }
+
+    }
+
+}

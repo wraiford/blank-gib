@@ -1,0 +1,74 @@
+{
+  "name": "@ibgib/blank-gib",
+  "private": false,
+  "version": "0.14.22",
+  "description": "new UX that starts with a blank canvas and heavily relies on AI models per renderable object to create more dynamic, JIT-compiled layouts, scenes, compositions, etc.",
+  "funding": {
+    "type": "individual",
+    "url": "https://paypal.me/ibGib"
+  },
+  "main": "dist/index.mjs",
+  "scripts": {
+    "//_clean": "~~ CLEAN ~~",
+    "clean": "rm -rf ./dist ./dist-ext ./build/dist",
+    "//_generate": "~~ GENERATE ~~",
+    "generate:src:version": "node ./generate-version-file.js",
+    "//_build": "~~ BUILD ~~",
+    "prebuild": "npm run generate:src:version && npm run clean",
+    "build": "npm run build:build-scripts && npm run build:app && npm run build:ext",
+    "build:build-scripts": "tsc -p ./build/tsconfig.json",
+    "build:app": "node ./build/dist/build-app.mjs",
+    "build:ext": "node ./build/dist/build-ext.mjs",
+    "postbuild": "npm run copy:linkgib:mac",
+    "//_helpers": "~~ HELPERS (e.g. postbuild) ~~",
+    "copy:linkgib": "cp ../link-gib/dist -r ./dist/apps/web1/gib/link-gib",
+    "copy:linkgib:mac": "cp -r ../link-gib/dist ./dist/apps/web1/gib/link-gib",
+    "//_serve": "~~ SERVE / DEV ~~",
+    "serve": "npx http-server -c=-1 -p=8000 ./dist",
+    "build:serve": "npm run build:app && npm run serve",
+    "start": "npm run build:serve",
+    "//_test": "~~ TEST ~~",
+    "build:test": "npm run clean && tsc -b tsconfig.test.json --force",
+    "test": "npm run test:both",
+    "test:both": "npm run build:test && npm run test:node:nobuild && npm run test:browser:nobuild",
+    "pretest:node": "npm run build:test",
+    "test:node": "node dist/respec-gib.node.mjs --inspect",
+    "test:node:nobuild": "node dist/respec-gib.node.mjs --inspect",
+    "test:browser": "npm run build:test && echo \"not implemented yet\"",
+    "test:browser:nobuild": "echo \"not implemented yet\"",
+    "test:browser:serve": "npm run build:test && echo \"not implemented yet\"",
+    "test:browser:serve:nobuild": "\"not implemented yet\"",
+    "//_publish": "~~ PUBLISH ~~",
+    "prepare:publish": "npm run clean && npm version patch && npm run build && npm run pack",
+    "pack": "npm pack --pack-destination=\"./published\"",
+    "relink": "npm link @ibgib/helper-gib @ibgib/ts-gib @ibgib/core-gib",
+    "sync": "ibgib b2-sync game-gib --to=default_syncspace"
+  },
+  "type": "module",
+  "keywords": [
+    "ibgib",
+    "word game",
+    "word games",
+    "canvas"
+  ],
+  "author": "William Raiford",
+  "license": "ISC",
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "@ibgib/core-gib": "^0.1.3",
+    "@ibgib/encrypt-gib": "^0.2.32",
+    "@ibgib/helper-gib": "^0.0.31",
+    "@ibgib/ts-gib": "^0.5.24"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.12",
+    "@types/node": "^20.2.1",
+    "esbuild": "^0.25.10"
+  },
+  "engines": {
+    "node": ">=19.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,52 @@
+<div id="minigame-component" class="">
+    <div id="minigame-header" class="minigame-header panel-header">
+        <span id="minigame-name"></span>
+        <span id="minigame-description"></span>
+        <span id="minigame-timer">00:00</span>
+
+        <!-- add button and popover options -->
+        <button id="minigame-header-play-btn" title="start playing this game"><span>▶</span></button>
+        <button id="minigame-header-restart-btn"
+            title="restart this game from the beginning"><span><b>↺</b></span></button>
+        <!-- <button id="minigame-header-play-pause-toggle-btn"><span>⏯</span></button> -->
+        <button id="minigame-header-pause-btn" title="pause this game temporarily"><span>⏸</span></button>
+        <button id="minigame-header-abort-btn" title="stop playing this game"><span>⏹</span></button>
+        <button id="minigame-header-next-btn" title="skip to the next GAME"><span>⏭</span></button>
+        <button id="minigame-instructions-btn"
+            title="game's name, description and instructions on how to play">ⓘ</button>
+        <button id="maximize-btn" class=""
+            title="maximize this game's view (most browsers also have an F11 command for fullscreen)"><b>⛶</b></button>
+
+        <div id="metronome-controls" class="minigame-metronome-controls">
+            <label for="metronome-bpm">BPM:</label>
+            <input type="number" id="metronome-bpm" name="metronome-bpm" min="1" max="400" value="60">
+            <button id="metronome-play-pause-btn" title="play/pause metronome">🎶⏳</button>
+        </div>
+
+    </div>
+
+    <div id="minigame-content">
+
+        <div id="minigame-pause-screen">
+            <div id="minigame-pause-screen-content" class="minigame-pause-screen-content">
+                <div id="minigame-pause-screen-header" class="minigame-pause-screen-header">
+                    <h2 id="minigame-pause-screen-title">⏸ game paused ⏸</h2>
+                </div>
+                <div id="minigame-pause-screen-body" class="minigame-pause-screen-body">
+                    <p>The game is currently paused.</p>
+                    <!-- todo: other stats of paused game? -->
+                </div>
+                <div id="minigame-pause-screen-footer" class="minigame-pause-screen-footer">
+                </div>
+            </div>
+        </div>
+
+        <div id="minigame-component-div">
+            loading...
+        </div>
+
+    </div>
+
+    <div id="minigame-footer" class="minigame-footer">
+    </div>
+</div>

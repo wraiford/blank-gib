@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+  <meta name="ibgib-app-id" content="8d6217327e6490650169be9cb22a0b25" />
+  <!-- <link rel="manifest" href="manifest.json" crossorigin="use-credentials"> -->
+  <title>🚧 ibgib.com 🚧</title>
+  <link rel="stylesheet" type="text/css" href="/root.css">
+  <link rel="stylesheet" type="text/css" href="/styles.css">
+  <script type="module" src="index.mjs" defer></script>
+  <!-- <script type="module" src="bootstrap.mjs" defer></script> -->
+</head>
+
+<body>
+  <dialog id="fullscreen-dialog" class="fullscreen-dialog">
+    <div id=" fullscreen-dialog-content" class="fullscreen-dialog-content">
+    <div id="fullscreen-dialog-header" class="fullscreen-dialog-header">
+      <h2 id="fullscreen-dialog-title"></h2>
+    </div>
+    <!-- Dialog body (for message or prompt) -->
+    <div id="fullscreen-dialog-body" class="fullscreen-dialog-body">
+      <div id="fullscreen-dialog-message" class="fullscreen-dialog-message"></div>
+      <!-- NEW: Prompt input (initially collapsed) -->
+      <input type="text" id="fullscreen-dialog-prompt-input" class="collapsed">
+    </div>
+    <div id="fullscreen-dialog-footer" class="fullscreen-dialog-footer">
+      <button id="fullscreen-dialog-ok-button" class="dialog-button">OK</button>
+      <button id="fullscreen-dialog-cancel-button" class="dialog-button">Cancel</button>
+    </div>
+    </div>
+  </dialog>
+
+  <div id="app-shell" class="app-shell">
+
+    <div id="header-panel" class="header-panel">
+      <div id="header-panel-header" class="panel-header">
+        <button id="left-panel-hamburger-btn" class="hamburger-btn collapsed">☰</button>
+        <span title="🚧website under active contruction!🚧"> 🚧 </span><a id="ibgib-com-title-link"
+          href="#/apps/web1/gib/home.html" title="navigate to ibgib.com web 1.0 home">ibgib.com</a>
+      </div>
+      <div id="header-panel-content" class="header-panel-content panel-content">
+
+      </div>
+      <div id="header-panel-footer" class="panel-footer">
+        <!-- <span id="header-panel-config" class="header-panel-icon">⚙</span> -->
+
+        <!-- config button and popover options (gear icon is ⚙️)-->
+        <button id="header-panel-config-btn" class="tab-btn" popovertarget="config-popover"><span>⚙️</span></button>
+        <div class="config-button-container">
+          <div id="config-popover" class="config-popover" popover>
+            <div class="config-popover-option" data-option="gemini-api-key">Gemini API Key</div>
+            <!-- Add more opts later, ultimately dynamically generated? -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="panel-container" class="panel-container">
+      <div id="left-panel" class="left-panel expanded">
+        <div id="left-panel-header" class="left-panel-header panel-header">
+          <span id="web10-tab-button" class="panel-tab-button active" title="Web 1.0 Navigation">
+            Web1
+          </span>
+          <span id="project-explorer-tab-button" class="panel-tab-button" title="Project Explorer">
+            Projects
+          </span>
+          <button id="left-panel-close-btn" class="close-btn">❌</button>
+          <!-- <span id="tag-explorer-tab-button" class="panel-tab-button" title="Tag Explorer">
+            Tags
+          </span> -->
+        </div>
+        <div id="left-panel-content" class="left-panel-content panel-content">
+
+          <!-- Tab content - web 1.0 -->
+          <div id="web10-tab-content" class="tab-content">
+            <nav id="web1-nav" class="web1-nav">
+              <ul>
+                <li><a href="#/apps/web1/gib/home.html">Home</a></li>
+                <li><a href="#/apps/web1/gib/funding.html">Funding</a></li>
+                <li><a href="#/apps/web1/gib/faq.html">FAQ</a></li>
+                <li><a href="#/apps/web1/gib/links.html">Links</a></li>
+                <li><a href="#/apps/web1/gib/blog.html">Blog</a></li>
+                <li><a href="#/apps/web1/gib/about.html">About</a></li>
+                <li><a href="#/apps/web1/gib/contact.html">Contact</a></li>
+              </ul>
+            </nav>
+          </div>
+
+          <!-- Tab content - project list blank-gib canvas -->
+          <div id="project-explorer-tab-content" class="tab-content collapsed">
+          </div>
+
+          <!-- Tab content - user's tags -->
+          <div id="tag-explorer-tab-content" class="tab-content collapsed">
+            <nav id="tag-nav" class="tag-nav">
+              <p>loading...</p>
+              <!-- tag nav anchors are populated at runtime here during
+            blank-canvas app init tags -->
+            </nav>
+          </div>
+
+        </div>
+        <div id="left-panel-footer" class="left-panel-footer">
+          <span id="left-panel-collapse-handle" class="panel-collapse-handle panel-handle" title="Collapse Panel">
+            <!-- collapse -->
+            ⭠
+          </span>
+          <span id="left-panel-maximize-handle" class="panel-maximize-handle panel-handle" title="Maximize Panel">
+            <!-- 🗖 -->
+            ⛶
+          </span>
+          <span id="left-panel-expand-handle" class="panel-expand-handle collapsed panel-handle" title="Expand Panel">
+            <!-- ⭢ -->
+            ⤢
+          </span>
+        </div>
+      </div>
+
+      <div id="center-panel" class="center-panel">
+        <div id="center-panel-header" class="panel-header">
+          <!-- not used atow 04/2025 -->
+        </div>
+        <main id="center-panel-content" class="center-content panel-content">
+          <!-- dynamically injected on nav to projects -->
+          <!-- <canvas id="canvas" width="600" height="600"></canvas> -->
+
+          <div class="paramecium-loader">
+            <div class="paramecium-body">
+              <div class="paramecium-nucleus"></div>
+            </div>
+            <div class="loading-text">Loading...</div>
+          </div>
+
+        </main>
+        <div class="center-panel-footer panel-footer"></div>
+      </div>
+
+      <div id="right-panel" class="right-panel expanded">
+        <div id="right-panel-header" classs="right-panel-header panel-header">
+          <span id="chronologys-tab-button" class="panel-tab-button active"
+            title="Chronologies/timelines are often 'chats'. These are _views_ of the projects/ibgibs themselves.">
+            Chats
+          </span>
+        </div>
+        <div id="right-panel-content" class="right-panel-content panel-content">
+          <div id="chronologys-content" class="tab-content"></div>
+        </div>
+        <div id="right-panel-footer" class="right-panel-footer">
+          <span id="right-panel-maximize-handle" class="panel-maximize-handle panel-handle" title="Maximize Panel">
+            <!-- 🗖 -->
+            ⛶
+          </span>
+          <span id="right-panel-expand-handle" class="panel-expand-handle collapsed panel-handle" title="Expand Panel">
+            <!-- ⭠ -->
+            ⤢
+          </span>
+          <span id="right-panel-collapse-handle" class="panel-collapse-handle panel-handle" title="Collapse Panel">
+            <!-- collapse -->
+            ⭢
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div id="footer-panel" class="footer-panel">
+      <div class="panel-header">
+        <span id="footer-panel-collapse-handle" class="panel-collapse-handle panel-handle" title="Collapse Panel">
+          ↓
+        </span>
+        <span id="footer-panel-expand-handle" class="panel-expand-handle panel-handle collapsed" title="Expand Panel">
+          <!-- ↑ -->
+          ⤢
+        </span>
+        <span id="footer-panel-maximize-handle" class="panel-maximize-handle panel-handle" title="Maximize Panel">
+          <!-- 🗖 -->
+          ⛶
+        </span>
+      </div>
+      <div id="footer-input-container" class="panel-content footer-input-container">
+        <textarea id="primary-agent-input" class="agent-input" placeholder="agent loading..." readonly></textarea>
+        <button id="primary-agent-input-send-btn" class="send-btn"><b>❯</b></button>
+      </div>
+    </div>
+
+  </div>
+</body>
+
+</html>

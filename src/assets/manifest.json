@@ -1,0 +1,30 @@
+{
+    "name": "blank-gib",
+    "short_name": "blank-gib",
+    "start_url": "/",
+    "display": "browser",
+    "background_color": "#fff",
+    "theme_color": "#007bff",
+    "icons": [
+        {
+            "src": "/icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "file_handlers": [
+        {
+            "action": "/apps/web1/gib/",
+            "extensions": [ ".html" ],
+            "type": "text/html"
+        },
+        {
+            "action": "/index.html",
+            "type": "text/html"
+        },
+        {
+            "action": "/styles.css",
+            "type": "text/css"
+        }
+    ]
+}

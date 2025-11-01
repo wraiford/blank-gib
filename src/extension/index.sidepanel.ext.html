@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>ibgib</title>
+  <link rel="stylesheet" type="text/css" href="root.css">
+  <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+
+<body>
+  <dialog id="fullscreen-dialog" class="fullscreen-dialog">
+    <div id="fullscreen-dialog-content" class="fullscreen-dialog-content">
+      <div id="fullscreen-dialog-header" class="fullscreen-dialog-header">
+        <h2 id="fullscreen-dialog-title"></h2>
+      </div>
+      <div id="fullscreen-dialog-body" class="fullscreen-dialog-body">
+        <div id="fullscreen-dialog-message" class="fullscreen-dialog-message"></div>
+        <input type="text" id="fullscreen-dialog-prompt-input" class="collapsed">
+      </div>
+      <div id="fullscreen-dialog-footer" class="fullscreen-dialog-footer">
+        <button id="fullscreen-dialog-ok-button" class="dialog-button">OK</button>
+        <button id="fullscreen-dialog-cancel-button" class="dialog-button">Cancel</button>
+      </div>
+    </div>
+  </dialog>
+  <!-- root div is where the primary side panel component is injected -->
+  <div id="root"></div>
+  <script src="index.sidepanel.ext.mjs" type="module"></script>
+</body>
+
+</html>

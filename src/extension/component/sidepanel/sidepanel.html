@@ -1,0 +1,89 @@
+<div id="api-availability-overlay" class="collapsed">
+    <div class="overlay-content">
+        <h2>Waiting for APIs...</h2>
+        <p>This extension requires the following built-in APIs to be available. Please wait for them to be ready. If
+            this seems to be taking a long time, you may need to enable them in your browser settings.</p>
+        <ul id="api-status-list">
+            <li id="summarizer-status">Summarizer API: <span class="status">Checking...</span></li>
+        </ul>
+        <div id="summarizer-download-progress-container" class="collapsed">
+            <label for="summarizer-download-progress">Download Progress:</label>
+            <progress id="summarizer-download-progress" max="100" value="0"></progress>
+        </div>
+        <button id="retry-api-check">Retry</button>
+    </div>
+</div>
+
+<div id="sidepanel-component">
+    <div id="sidepanel-header">
+        <div id="sidepanel-options" style="display:none">
+            <select id="projects-dropdown"></select>
+            <select id="scope-dropdown">
+                <option value="selection">Selected Text</option>
+                <option value="page">Page</option>
+            </select>
+            <button id="show-thinking-log-btn" style="display:none;">Log</button>
+        </div>
+        <div id="current-href-div">
+            <label for="current-href">URL:</label>
+            <h1 id="current-href"></h1>
+        </div>
+        <div id="sidepanel-phases">
+            <div id="begin-phase-div" class="sidepanel-phase active-phase">
+                <span>1. Begin ⛏️</span>
+                <button id="break-it-down-btn">➡️</button>
+            </div>
+            <div id="prepare-phase-div" class="sidepanel-phase">
+                <span id="prepare-span" style="display:none;">2. Prepare ✂️</span>
+                <button id="prepare-done-btn">➡️</button>
+            </div>
+            <div id="polish-phase-div" class="sidepanel-phase">
+                <span id="polish-span" style="display:none;">3. Polish ✨</span>
+                <button id="polish-done-btn">➡️</button>
+            </div>
+            <div id="digest-phase-div" class="sidepanel-phase">
+                <span id="digest-span" style="display:none;">4. Digest 🧠</span>
+                <!-- todo: some sort of ibgib export/save workflow in the future  -->
+            </div>
+        </div>
+        <div id="sidepanel-phases-info" style="display:none;">
+            <!-- info for phases goes here -->
+        </div>
+    </div>
+    <div id="sidepanel-content">
+        <div id="title-container" class="collapsed">
+            <label for="title-input">Title:</label>
+            <input type="text" id="title-input" />
+        </div>
+
+        <div id="dom-twin-container" class="collapsed">
+            <div id="dom-twin-global-commands" class="collapsed">
+                <button id="make-root-global-btn"><span class="root-char">√</span> Make Root</button>
+                <button id="delete-selected-nodes-btn">❌ Delete Selected</button>
+                <!-- <button id="auto-chunk-btn">🤖 Auto Chunk</button> -->
+            </div>
+            <div id="dom-twin-nodes-container"></div>
+        </div>
+        <div id="rabbit-hole-container" style="display:none">
+        </div>
+    </div>
+    <div id="sidepanel-footer" style="display:none">
+    </div>
+</div>
+
+<!-- Updated template for a single interactive node in the DOM twin explorer -->
+<template id="dom-twin-node-template">
+    <div class="dom-twin-node">
+        <div class="node-header">
+            <button class="expand-btn">›</button>
+            <input type="checkbox" class="node-select-checkbox">
+            <span class="node-tag-name"></span>
+            <span class="node-text-preview"></span>
+            <div class="node-commands">
+                <button class="make-root-btn"><span class="root-char">√</span></button>
+                <button class="delete-node-btn">❌</button>
+            </div>
+        </div>
+        <div class="node-children-container collapsed"></div>
+    </div>
+</template>

@@ -1,0 +1,73 @@
+:host {
+    /* this is used for styling ibgib components for multi-view coordination, so
+     * that ibgib views that are looking at the same ibgib can be visibly shown
+     * as doing so. */
+    --ibgib-color: #ff00dd;
+    --ibgib-color-translucent: #ff00dd10;
+    --tjp-color: #00ffae;
+    --tjp-color-translucent: #00ffae10;
+}
+
+#input-component {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 2px;
+    justify-content: stretch;
+    width: 100%;
+    height: 100%;
+    overflow-y: hidden;
+    box-sizing: border-box;
+    padding: 1%;
+
+    textarea {
+        /* height: 100%; */
+        height: auto;
+        width: 100px;
+        background-color: var(--input-background-color);
+        color: var(--input-text-color);
+        /* border: var(--input-border-width) var(--input-border-style) var(--input-border-color); */
+        border-radius: var(--input-border-radius);
+        padding: var(--input-padding);
+        flex-grow: 1;
+
+        /* ibgib styling */
+        border: var(--tjp-color) 1px solid;
+        box-shadow: 0 0 3px var(--tjp-color);
+        /* border-radius: 5px; */
+        background-color: var(--tjp-color-translucent);
+    }
+
+    textarea:focus {
+        outline: none !important;
+        border-radius: calc(var(--input-border-radius) + 1px);
+        /* box-shadow: 0 0 10px var(--highlight-box-shadow-color); */
+        box-shadow: 0 0 10px var(--tjp-color);
+        background-color: var(--background-color-base);
+    }
+
+    button {
+        height: 100%;
+        flex-shrink: 0;
+        align-self: center;
+        margin: 2px;
+        background-color: var(--button-background-color-base);
+        /* color: var(--button-text-color-base); */
+        color: var(--tjp-color);
+        border: var(--button-border-width-base) var(--button-border-style-base) var(--button-border-color-base);
+        border-radius: var(--button-border-radius-base);
+        padding: var(--button-padding-base);
+
+        border: var(--tjp-color) 3px solid;
+        background-color: var(--tjp-color-translucent)
+    }
+
+    button:hover {
+        /* background-color: var(--button-hover-background-color); */
+        background-color: var(--tjp-color);
+        color: var(--button-hover-text-color);
+        /* border-color: var(--button-hover-border-color); */
+        box-shadow: 0 0 10px var(--tjp-color);
+    }
+
+}

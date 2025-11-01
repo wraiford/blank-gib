@@ -1,0 +1,21 @@
+.ibgib
+# .vscode
+node_modules
+# src
+# ibgib_cmds.md
+*.private
+# tsconfig*
+
+# i have the dist node_modules staying intact for publishing purposes
+# !dist/node_modules
+# i'm ignoring dist because the package size is getting too big and the dist
+# kluge is getting too big of course.
+dist
+!dist-assets
+dist-ext
+src/assets/images
+published
+
+tmp.md
+tmp2.md
+*.tsbuildinfo

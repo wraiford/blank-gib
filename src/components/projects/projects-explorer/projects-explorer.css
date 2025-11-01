@@ -1,0 +1,122 @@
+/* :host { */
+/* this is used for styling ibgib components for multi-view coordination, so
+     * that ibgib views that are looking at the same ibgib can be visibly shown
+     * as doing so. */
+/* --ibgib-border-color: #00ccff; */
+/* } */
+
+#projects-explorer-component {
+    --footer-panel-background-color: var(--button-background-color);
+    --footer-panel-border-color: var(--button-border-color);
+    --footer-panel-border-radius: 4px;
+
+    /* debug add border style */
+    border-width: 2px;
+    border-color: var(--primary-border-color-dark);
+    border-style: solid;
+    border-radius: 2px;
+    padding: 1%;
+
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+
+    #projects-explorer-header {
+        height: 5%;
+        overflow: hidden;
+        /* flex-shrink: initial; */
+
+        button {
+            width: auto;
+            height: 75%;
+            aspect-ratio: 1/1 !important;
+
+        }
+
+        button:hover {
+            /* cursor: pointer; */
+            /* border-color: var(--button-hover-border-color); */
+            border-width: 2px;
+        }
+
+
+        /* Add back the relative container for the button and popover */
+        .add-button-container,
+        .ellipsis-button-container {
+            background-color: transparent;
+            /* position: relative;
+                display: inline-block; */
+        }
+
+        /* Keep the styles for the popover options */
+        .add-popover-option,
+        .ellipsis-popover-option {
+            padding: 8px 15px;
+            margin-bottom: 2px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            background-color: var(--tab-background-color);
+            color: var(--tab-text-color);
+        }
+
+        /* Keep the styles for the popover options */
+        .add-popover-option:hover,
+        .ellipsis-popover-option:hover {
+            /* color: var(--tjp-color-contrast, #f0f0f0); */
+            color: contrast-color(var(--tjp-color, #f0f0f0));
+            background-color: var(--tjp-color, #f0f0f0);
+        }
+
+        /* Use anchor() for positioning */
+        .add-popover,
+        .ellipsis-popover {
+            /* bottom: anchor(top); */
+            /* Position the bottom of the popover at the top of the anchor */
+            /* left: anchor(left); */
+            /* Align the left of the popover with the left of the anchor */
+            flex-direction: column;
+            margin: 0px;
+            /* padding: 5px 0; */
+            border-radius: var(--border-radius, 4px);
+            background-color: var(--background-color, #fff);
+            border: 1px solid var(--border-color, #ccc);
+            box-shadow: var(--box-shadow, 0 2px 5px rgba(0, 0, 0, 0.2));
+            z-index: 10;
+            /* Ensure it appears above other content */
+        }
+    }
+
+    #projects-explorer-content {
+        display: flex;
+        flex-direction: column;
+        height: 95%;
+        width: 100%;
+        align-items: stretch;
+        overflow: auto;
+
+
+        #project-list-filter {
+            width: 90%;
+            align-self: center;
+        }
+
+        /* overflow-y: auto; */
+        #project-list {
+            display: flex;
+            flex-direction: column;
+
+            padding: 2px 2px 2px 5px;
+
+            li:not(:first-child) {
+                margin-top: 3px;
+            }
+
+        }
+    }
+
+    #projects-explorer-footer {
+        display: none;
+    }
+}

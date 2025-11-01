@@ -1,0 +1,29 @@
+<div id="rabbit-hole-comment-component">
+    <!-- The header now contains the expand button, text, and the command bar -->
+    <div id="rabbit-hole-comment-header">
+        <button id="expand-btn">›</button>
+        <p id="comment-text"></p>
+        <!-- The command bar is moved inside the header and given a class for styling -->
+
+        <div id="command-bar" class="node-commands">
+            <div class="button-group">
+            <button id="highlight-btn">🌟</button>
+            </div>
+            <div id="view-type-group" class="button-group">
+                <button id="key-points-btn" data-view-type="children">️️⛏️</button>
+                <button id="tldr-btn" data-view-type="tldr">tl;dr</button>
+            </div>
+            <div id="view-length-group" class="button-group collapsed">
+                <button id="short-btn" data-view-length="short">Short</button>
+                <button id="long-btn" data-view-length="long">Long</button>
+            </div>
+        </div>
+    </div>
+    <!-- The content area is now the children/view container, and it's collapsed by default -->
+    <div id="rabbit-hole-comment-content" class="collapsed">
+        <div id="view-container">
+            <!-- Children view is static, summary views are dynamic -->
+            <div id="children-view" class="view"></div>
+        </div>
+    </div>
+</div>

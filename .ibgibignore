@@ -1,0 +1,30 @@
+# start any line with ! to make it an include operation instead of exclude
+
+# npm
+node_modules
+
+# other folders
+dist
+platforms
+plugins
+www
+.git
+published
+
+
+# common extensions
+regexp js ^.*\.(tmp|tgz|DS_Store|sw[mnpcod]|log)$
+regexp js ^.*\.tmp\.*$
+regexp js ^.*npm-debug\.log\.*$
+
+# js/angular/ionic/etc
+regexp js ^.*\.(idea|ionic|sass-cache|sourcemaps|versions|coverage)$
+
+# typescript
+regexp js ^.*\.(tsbuildinfo)$
+
+# apps/libraries will be in their own branches
+regexp js ^.*forks/.*$
+
+# private
+regexp js ^.*\.(secret|private)(\..+)?$
