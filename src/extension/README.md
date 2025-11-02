@@ -6,6 +6,11 @@
 
 It is designed to aid users in understanding content by breaking down pages into semantic chunks and providing a simple interface for "too long; didn't read" (tldr) summaries.
 
+## Videos
+
+* [Original Submission Demo Video](https://youtu.be/0RFCvLFI5ME)
+  * Eesh!
+
 ## Features
 
 *   **Dynamic Table of Contents**: Automatically generates a hierarchical outline of any webpage's content.
