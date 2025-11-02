@@ -2,6 +2,10 @@
 
 WIP
 
+## hackathon people
+
+The entry for the [Google Chrome Built-in API Hackathon 2025](https://googlechromeai2025.devpost.com/) is the extension found. I've also created a `hackathon_entry` tag. Please refer to the [extension README.md] for details in addition to the Build section found below. I've also created a `hackathon_entry` tag that I believe to be the src at time of submission.
+
 ## src notes
 
 ### *.ext.mts, *.web.mts, *.app.mts
@@ -67,5 +71,3 @@ The framework consists of three main parts:
 3.  **The Component Instance (`IbGibDynamicComponentInstance`):** This is the component itself - an actual `HTMLElement` web component that gets rendered in the DOM. It contains the UI logic, event handling, and maintains a live link to its corresponding `ibgib` data. It uses a `LiveProxyIbGib` to automatically update the UI when the underlying data changes.
 
 This architecture allows for a highly dynamic and modular UI where components can be loaded, unloaded, and updated in response to changes in the `ibgib` knowledge graph. For a more detailed technical breakdown, see the `README.md` in the `apps/blank-gib/src/extension` directory.
-
-

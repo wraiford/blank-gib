@@ -31,11 +31,11 @@ For the extension to function, you must enable the necessary feature flags in Ch
     ```sh
     npm install
     ```
-3.  To build the extension:
+3.  To build the extension, first build the entire project which outputs the extension into `dist-ext`:
     ```sh
-    npm run build:ext
+    npm run build
     ```
-    * _note: this will first compile the build scripts and then build both blank-gib app into `dist` and the extension into `dist-ext`_
+    * _note: Subsequent builds can be done with just `npm run build:ext`_
 4.  Open Chrome and navigate to `chrome://extensions`.
 5.  Enable **Developer mode** in the top-right corner.
 6.  Click **Load unpacked**.
