@@ -1,8 +1,8 @@
-# extension-gib - A Dynamic Table of Contents for the Web
+# Living Map Extension - Dynamic Website Maps for the Future of Web Collaboration
 
 ## Overview
 
-`ibgib` is a Chrome Extension that acts as a "living map" for any webpage. It uses Chrome's built-in, on-device AI to help you digest long articles and complex information by transforming content into a dynamic and interactive table of contents.
+Living Map Extension is a Chrome Extension that acts as a "living map" for any webpage. It uses Chrome's built-in, on-device AI to help you digest long articles and complex information by transforming content into a dynamic and interactive table of contents.
 
 It is designed to aid users in understanding content by breaking down pages into semantic chunks and providing a simple interface for "too long; didn't read" (tl;dr) summaries.
 
