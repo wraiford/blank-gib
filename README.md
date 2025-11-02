@@ -6,7 +6,7 @@ WIP
 
 The entry for the [Google Chrome Built-in API Hackathon 2025](https://googlechromeai2025.devpost.com/) is the extension. Please refer to the [extension README.md] for details in addition to the Build section found below.
 
-I've also created a `hackathon_entry` tag that I believe to be the src at time of submission.
+I've also created a `hackathon_entry` tag that I believe to be the src at time of submission. _Note however, the build command should first be `npm run build` and not ~~`npm run build:ext`~~, but the tag was made before that correction._
 
 ## src notes
 
