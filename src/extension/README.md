@@ -2,9 +2,11 @@
 
 ## Overview
 
-Living Map Extension is a Chrome Extension that acts as a "living map" for any webpage. It uses Chrome's built-in, on-device AI to help you digest long articles and complex information by transforming content into a dynamic and interactive table of contents.
+Living Map Extension is a Chrome Extension that acts as a "living map" for any webpage utilizing on-device AI via Chrome's built-in AI + ibgib's paradigm-shifting protocol.
 
-It is designed to aid users in understanding content by breaking down pages into semantic chunks and providing a simple interface for "too long; didn't read" (tl;dr) summaries.
+Right now it can help you digest long articles and complex information by creating a dynamic and interactive table of contents, as well as providing an interface to summarize complex chunks into tl;dr summaries.
+
+In the future, it will enable a new paradigm for collaboration among humans and AI, changing surfing the web from a passive consuming process, to a more dynamic collaboration.
 
 ## Videos
 
