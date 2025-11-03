@@ -27,6 +27,8 @@ import { updateThinkingEntry } from './thinking-log.mjs';
 import {
     CHUNK_REL8N_NAME_DEFAULT_DELIMITER, CHUNK_REL8N_NAME_PREFIX, CHUNK_ATOM,
     PROJECT_TJP_ADDR_PROPNAME,
+    SUMMARY_TEXT_ATOM,
+    TRANSLATION_TEXT_ATOM,
 } from './constants.mjs';
 import { DOMElementInfo, PageContentInfo } from './page-analyzer/page-analyzer-types.mjs';
 import { ProjectIbGib_V1 } from '../common/project/project-types.mjs';
@@ -249,11 +251,49 @@ export function getSummarizerInfo({
 export function getSummaryTextKeyForIbGib({
     type,
     length,
+    delimiter = '_',
 }: {
     type: SummarizerType,
     length: SummarizerLength,
+    /**
+     * @default '_' (single underscore)
+     */
+    delimiter?: string,
 }): string {
-    return `text_${type}_${length}`;
+    delimiter ??= '_';
+    return [
+        SUMMARY_TEXT_ATOM, type, length
+    ].join(delimiter);
+}
+
+/**
+ * Builds the key for a translation text that will be stored on an ibGib.data.
+ *
+ * @example `translationtext__text__es` or `translationtext__summarytext_tldr_short__en-US`
+ */
+export function getTranslationTextKeyForIbGib({
+    dataKey,
+    targetLanguage,
+    delimiter = '__',
+}: {
+    /**
+     * This is the key/path into ibGib.data that contains the text we are
+     * referring to for our translation text.
+     *
+     * implementation should anticipate that both of the args {@link dataKey}
+     * AND {@link targetLanguage} may contain SINGLE underscores.
+     */
+    dataKey: string,
+    targetLanguage: string,
+    /**
+     * @default '__' (double underscore)
+     */
+    delimiter?: string,
+}): string {
+    delimiter ??= '__';
+    return [
+        TRANSLATION_TEXT_ATOM, dataKey, targetLanguage
+    ].join(delimiter);
 }
 
 export async function getSummary({

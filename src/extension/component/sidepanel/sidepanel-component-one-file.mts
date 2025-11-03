@@ -127,6 +127,9 @@ interface SidepanelElements extends ElementsBase {
     summarizerStatus: HTMLLIElement;
     summarizerDownloadProgressContainer: HTMLDivElement;
     summarizerDownloadProgress: HTMLProgressElement;
+    translatorStatus: HTMLLIElement;
+    translatorDownloadProgressContainer: HTMLDivElement;
+    translatorDownloadProgress: HTMLProgressElement;
     retryApiCheckBtn: HTMLButtonElement;
 
     // header
@@ -231,6 +234,10 @@ export class SidepanelComponentInstance
             const summarizerStatus = shadowRoot_getElementById<HTMLLIElement>(this.shadowRoot, 'summarizer-status');
             const summarizerDownloadProgressContainer = shadowRoot_getElementById<HTMLDivElement>(this.shadowRoot, 'summarizer-download-progress-container');
             const summarizerDownloadProgress = shadowRoot_getElementById<HTMLProgressElement>(this.shadowRoot, 'summarizer-download-progress');
+            const translatorStatus = shadowRoot_getElementById<HTMLLIElement>(this.shadowRoot, 'translator-status');
+            const translatorDownloadProgressContainer = shadowRoot_getElementById<HTMLDivElement>(this.shadowRoot, 'translator-download-progress-container');
+            const translatorDownloadProgress = shadowRoot_getElementById<HTMLProgressElement>(this.shadowRoot, 'translator-download-progress');
+
             const retryApiCheckBtn = shadowRoot_getElementById<HTMLButtonElement>(this.shadowRoot, 'retry-api-check');
             const showThinkingLogBtn = shadowRoot_getElementById<HTMLButtonElement>(this.shadowRoot, 'show-thinking-log-btn');
 
@@ -274,6 +281,9 @@ export class SidepanelComponentInstance
                 summarizerStatus,
                 summarizerDownloadProgressContainer,
                 summarizerDownloadProgress,
+                translatorStatus,
+                translatorDownloadProgressContainer,
+                translatorDownloadProgress,
                 retryApiCheckBtn,
                 showThinkingLogBtn,
                 phasesInfoEl,
@@ -1392,85 +1402,164 @@ export class SidepanelComponentInstance
 
     // #endregion test kluge
 
+    // #region checkApiAvailabilityAndInit
+
+    private async checkApiAvailabilityAndInit_summarizer(availability: ChromeAIAvailability): Promise<boolean> {
+        const lc = `${this.lc}[checkApiAvailabilityAndInit_summarizer]`;
+        if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements is falsy.`); }
+        const { summarizerStatus, summarizerDownloadProgress, summarizerDownloadProgressContainer } = this.elements;
+        const statusSpan = summarizerStatus.querySelector<HTMLElement>('.status');
+        if (!statusSpan) { throw new Error(`(UNEXPECTED) summarizer statusSpan is falsy.`); }
+
+        switch (availability) {
+            case ChromeAIAvailability.available:
+                statusSpan.textContent = 'Available';
+                statusSpan.style.color = 'green';
+                summarizerDownloadProgressContainer.classList.add('collapsed');
+                return true;
+
+            case ChromeAIAvailability.downloading:
+                statusSpan.textContent = 'Downloading...';
+                statusSpan.style.color = 'orange';
+                summarizerDownloadProgressContainer.classList.remove('collapsed');
+                // We monitor the download and then throw a specific error to signal that the parent
+                // function needs to restart the entire availability check process from the top.
+                await Summarizer.create({ monitor: (p) => p.addEventListener('downloadprogress', (e) => { summarizerDownloadProgress.value = e.loaded * 100; }) });
+                throw new Error('RESTART_CHECK');
+
+            case ChromeAIAvailability.downloadable:
+                statusSpan.textContent = 'Download Required';
+                statusSpan.style.color = 'orange';
+                return false;
+
+            default: // unavailable
+                statusSpan.textContent = 'Not Available';
+                statusSpan.style.color = 'red';
+                summarizerDownloadProgressContainer.classList.add('collapsed');
+                return false;
+        }
+    }
+
+    private async checkApiAvailabilityAndInit_translator(availability: ChromeAIAvailability): Promise<boolean> {
+        const lc = `${this.lc}[checkApiAvailabilityAndInit_translator]`;
+        if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements is falsy.`); }
+        const { translatorStatus, translatorDownloadProgress, translatorDownloadProgressContainer } = this.elements;
+        const statusSpan = translatorStatus.querySelector<HTMLElement>('.status');
+        if (!statusSpan) { throw new Error(`(UNEXPECTED) translator statusSpan is falsy.`); }
+
+        switch (availability) {
+            case ChromeAIAvailability.available:
+                statusSpan.textContent = 'Available';
+                statusSpan.style.color = 'green';
+                translatorDownloadProgressContainer.classList.add('collapsed');
+                return true;
+
+            case ChromeAIAvailability.downloading:
+                statusSpan.textContent = 'Downloading...';
+                statusSpan.style.color = 'orange';
+                translatorDownloadProgressContainer.classList.remove('collapsed');
+                // We monitor the download and then throw a specific error to signal that the parent
+                // function needs to restart the entire availability check process from the top.
+                await Translator.create({ sourceLanguage: 'en', targetLanguage: 'es', monitor: (p) => p.addEventListener('downloadprogress', (e) => { translatorDownloadProgress.value = e.loaded * 100; }) });
+                throw new Error('RESTART_CHECK');
+
+            case ChromeAIAvailability.downloadable:
+                statusSpan.textContent = 'Download Required';
+                statusSpan.style.color = 'orange';
+                return false;
+
+            default: // unavailable
+                statusSpan.textContent = 'Not Available';
+                statusSpan.style.color = 'red';
+                translatorDownloadProgressContainer.classList.add('collapsed');
+                return false;
+        }
+    }
+
+
     private async checkApiAvailabilityAndInit(): Promise<void> {
         const lc = `${this.lc}[${this.checkApiAvailabilityAndInit.name}]`;
         try {
             if (logalot) { console.log(`${lc} starting...`); }
+            if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements is falsy.`); }
 
-            if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements is falsy. (E: 1b7a2d3b2c3c4b2a8e3e3e3e3e3e3e3e)`); }
+            const { apiAvailabilityOverlay, retryApiCheckBtn, breakItDownBtn } = this.elements;
 
-            const {
-                apiAvailabilityOverlay, summarizerStatus, retryApiCheckBtn, breakItDownBtn,
-                summarizerDownloadProgress, summarizerDownloadProgressContainer
-            } = this.elements;
+            // First, get the current availability status of both APIs.
+            const [summarizerAvailability, translatorAvailability] = await Promise.all([
+                Summarizer.availability().catch(e => {
+                    console.error(`${lc} Summarizer.availability() failed: ${extractErrorMsg(e)}`);
+                    return ChromeAIAvailability.unavailable;
+                }),
+                Translator.availability({ sourceLanguage: 'en', targetLanguage: 'es' }).catch(e => {
+                    console.warn(`${lc} Translator.availability() check failed: ${extractErrorMsg(e)}`);
+                    return ChromeAIAvailability.unavailable;
+                })
+            ]);
 
-            const summarizerAvailability = await Summarizer.availability();
-            // summarizerAvailability = ChromeAIAvailability.downloadable as ChromeAIAvailability;
-            // console.log(`${lc} setting summarizerAvailability manually for testing (W: 5b0f5789a6c82b7a0a18d1181badc425)`)
+            // The sub-methods handle UI updates and trigger downloads. A 'RESTART_CHECK' error
+            // is thrown by a sub-method if a download completes, signaling a full re-check is needed.
+            const [isSummarizerReady, isTranslatorReady] = await Promise.all([
+                this.checkApiAvailabilityAndInit_summarizer(summarizerAvailability),
+                this.checkApiAvailabilityAndInit_translator(translatorAvailability),
+            ]);
 
-            const summarizerStatusSpan = summarizerStatus.querySelector<HTMLElement>('.status');
-            if (!summarizerStatusSpan) { throw new Error(`(UNEXPECTED) statusSpan is falsy. (E: 2b8a2d3b2c3c4b2a8e3e3e3e3e3e3e3e)`); }
-
-            switch (summarizerAvailability) {
-                case ChromeAIAvailability.available:
-                    summarizerStatusSpan.textContent = 'Available';
-                    summarizerStatusSpan.style.color = 'green';
-                    apiAvailabilityOverlay.classList.add('collapsed',);
-                    breakItDownBtn.disabled = false;
-                    summarizerDownloadProgressContainer.classList.add('collapsed');
-                    break;
-                case ChromeAIAvailability.downloading:
-                    summarizerStatusSpan.textContent = 'Downloading...';
-                    summarizerStatusSpan.style.color = 'orange';
-                    apiAvailabilityOverlay.classList.remove('collapsed');
-                    breakItDownBtn.disabled = true;
-                    // Downloading is in progress, monitor it.
-                    summarizerDownloadProgressContainer.classList.remove('collapsed');
-                    /**
-                     * ignores created summarizer, this is only to trigger
-                     * downloading the model
-                     */
-                    await Summarizer.create({
-                        monitor: (progress) => {
-                            progress.addEventListener('downloadprogress', (e) => {
-                                summarizerDownloadProgress.value = e.loaded * 100;
-                            });
-                        }
-                    });
-                    // after download completes, re-check availability
-                    await this.checkApiAvailabilityAndInit();
-                    break;
-                case ChromeAIAvailability.downloadable:
-                    summarizerStatusSpan.textContent = 'Download Required';
-                    summarizerStatusSpan.style.color = 'orange';
-                    apiAvailabilityOverlay.classList.remove('collapsed');
-                    breakItDownBtn.disabled = true;
-                    // User activation is required to trigger the download.
-                    // We'll use the retry button for this.
-                    retryApiCheckBtn.textContent = 'Download Model';
-                    retryApiCheckBtn.onclick = async () => {
-                        retryApiCheckBtn.disabled = true;
-                        await this.checkApiAvailabilityAndInit();
-                    }
-                    break;
-                case ChromeAIAvailability.unavailable:
-                default:
-                    summarizerStatusSpan.textContent = 'Not Available';
-                    summarizerStatusSpan.style.color = 'red';
-                    apiAvailabilityOverlay.classList.remove('collapsed');
-                    breakItDownBtn.disabled = true;
-                    summarizerDownloadProgressContainer.classList.add('collapsed');
-                    break;
+            // If both APIs are ready, we can hide the overlay and enable the app.
+            if (isSummarizerReady && isTranslatorReady) {
+                apiAvailabilityOverlay.classList.add('collapsed');
+                breakItDownBtn.disabled = false;
+                return; // All good, we are done.
             }
 
-            retryApiCheckBtn.addEventListener('click', () => this.checkApiAvailabilityAndInit());
-        } catch (error) {
-            console.error(`${lc} ${extractErrorMsg(error)}`);
-            throw error;
+            // If we reach here, at least one API is not ready. Show the overlay.
+            apiAvailabilityOverlay.classList.remove('collapsed');
+            breakItDownBtn.disabled = true;
+
+            const isSummarizerDownloadable = summarizerAvailability === ChromeAIAvailability.downloadable;
+            const isTranslatorDownloadable = translatorAvailability === ChromeAIAvailability.downloadable;
+
+            // Configure the button to either trigger downloads or a simple retry.
+            if (isSummarizerDownloadable || isTranslatorDownloadable) {
+                retryApiCheckBtn.textContent = 'Download Models';
+                retryApiCheckBtn.onclick = async () => {
+                    retryApiCheckBtn.textContent = 'Starting Download...';
+                    retryApiCheckBtn.disabled = true;
+                    // We only need to call create() to trigger the download. The 'downloading'
+                    // case in the sub-methods will handle monitoring on the subsequent check.
+                    if (isSummarizerDownloadable) { Summarizer.create().catch(e => console.error(`${lc} Error triggering summarizer download: ${extractErrorMsg(e)}`)); }
+                    if (isTranslatorDownloadable) { Translator.create({ sourceLanguage: 'en', targetLanguage: 'es' }).catch(e => console.error(`${lc} Error triggering translator download: ${extractErrorMsg(e)}`)); }
+                    // Give a moment for the download to start before re-checking.
+                    setTimeout(() => this.checkApiAvailabilityAndInit(), 500);
+                };
+            } else {
+                retryApiCheckBtn.textContent = 'Retry API Check';
+                retryApiCheckBtn.onclick = () => this.checkApiAvailabilityAndInit();
+            }
+
+        } catch (error: any) {
+            if (error.message === 'RESTART_CHECK') {
+                // This is our signal to re-run the entire check from the beginning.
+                if (logalot) { console.log(`${lc} Restarting check after download completion.`); }
+                setTimeout(() => this.checkApiAvailabilityAndInit(), 250); // Short delay allows API state to settle.
+            } else {
+                // Handle unexpected errors.
+                console.error(`${lc} ${extractErrorMsg(error)}`);
+                if (this.elements) {
+                    this.elements.apiAvailabilityOverlay.classList.remove('collapsed');
+                    const summarizerStatusSpan = this.elements.summarizerStatus.querySelector<HTMLElement>('.status');
+                    if (summarizerStatusSpan) { summarizerStatusSpan.textContent = 'Error checking APIs.'; }
+                    const translatorStatusSpan = this.elements.translatorStatus.querySelector<HTMLElement>('.status');
+                    if (translatorStatusSpan) { translatorStatusSpan.textContent = 'See console for details.'; }
+                }
+            }
         } finally {
             if (logalot) { console.log(`${lc} complete.`); }
         }
     }
+
+
+    // #endregion checkApiAvailabilityAndInit
+
 
     private async getFilteredProjects(): Promise<ProjectIbGib_V1[]> {
         const lc = `${this.lc}[${this.getFilteredProjects.name}]`;

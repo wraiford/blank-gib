@@ -3,7 +3,8 @@ export const CHUNK_REL8N_NAME_DEFAULT_DELIMITER = '___';
 export const CHUNK_REL8N_NAME_PREFIX = CHUNK_ATOM;
 export const CHUNK_REL8N_NAME_DEFAULT_CONTEXT_SCOPE = 'default';
 
-
+export const SUMMARY_TEXT_ATOM = 'summarytext';
+export const TRANSLATION_TEXT_ATOM = 'translationtext';
 
 /**
  * property in ibgib.data that maps a "soft link" (soft rel8n as opposed to being put in ibgib.rel8ns) to the root comment that generated it.

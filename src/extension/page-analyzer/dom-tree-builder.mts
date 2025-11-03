@@ -9,7 +9,7 @@ const logalot = true;
  * DOM tree.
  */
 const BLACKLISTED_TAGS = [
-    'style', 'script', 'noscript', 'link', 'meta', 'img',
+    'style', 'script', 'noscript', 'link', 'meta', 'img', 'aside'
 ];
 /**
  * The name of the custom data attribute used to link a DOM element to its

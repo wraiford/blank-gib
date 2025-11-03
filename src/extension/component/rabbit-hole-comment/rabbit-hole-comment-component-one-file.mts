@@ -8,14 +8,14 @@ import { IbGibAddr } from "@ibgib/ts-gib/dist/types.mjs";
 import { IbGib_V1 } from "@ibgib/ts-gib/dist/V1/types.mjs";
 import { getGibInfo, } from '@ibgib/ts-gib/dist/V1/index.mjs';
 import { CommentIbGib_V1 } from '@ibgib/core-gib/dist/common/comment/comment-types.mjs';
-import { getLatestTimelineIbGibDto_nonLocking } from '@ibgib/core-gib/dist/timeline/timeline-api.mjs';
+import { getLatestTimelineIbGibDto_nonLocking, mut8Timeline } from '@ibgib/core-gib/dist/timeline/timeline-api.mjs';
 import { fnObs } from '@ibgib/core-gib/dist/common/pubsub/observer/observer-helper.mjs';
 import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.mjs';
 
 import { GLOBAL_LOG_A_LOT } from '../../../constants.mjs';
 import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from '../../../ui/component/ibgib-dynamic-component-bases.mjs';
 import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "../../../ui/component/component-types.mjs";
-import { getGlobalMetaspace_waitIfNeeded, getSummaryTextKeyForIbGib, getTitleFromSummarizer, getTocHeader_FromIbGib, isChunkCommentIb, } from '../../helpers.mjs';
+import { getGlobalMetaspace_waitIfNeeded, getSummaryTextKeyForIbGib, getTitleFromSummarizer, getTocHeader_FromIbGib, getTranslationTextKeyForIbGib, isChunkCommentIb, } from '../../helpers.mjs';
 import { getChunkRel8nName } from '../../helpers.mjs';
 import { promptForConfirm, shadowRoot_getElementById } from '../../../helpers.web.mjs';
 import { CHUNK_REL8N_NAME_DEFAULT_CONTEXT_SCOPE, PROJECT_TJP_ADDR_PROPNAME, } from '../../constants.mjs';
@@ -33,7 +33,9 @@ const logalot = GLOBAL_LOG_A_LOT || true;
 export const RABBIT_HOLE_COMMENT_COMPONENT_NAME = 'rabbit-hole-comment';
 
 export type SummaryFlavor = `${SummarizerType}_${SummarizerLength}`;
-export type CommentViewMode = 'original' | 'children' | SummaryFlavor;
+export type TranslationFlavor = `translation_${string}`; // e.g., translation_es, translation_fr
+export type CommentViewMode = 'original' | 'children' | SummaryFlavor | TranslationFlavor;
+export type ViewType = 'children' | 'tldr' | 'translation';
 
 export class RabbitHoleCommentComponentMeta extends IbGibDynamicComponentMetaBase {
     protected override lc: string = `[${RabbitHoleCommentComponentMeta.name}]`;
@@ -96,11 +98,15 @@ interface RabbitHoleCommentElements extends ElementsBase {
      */
     keyPointsBtn: HTMLButtonElement;
     tldrBtn: HTMLButtonElement;
+    translateBtn: HTMLButtonElement;
+
 
     viewLengthGroup: HTMLDivElement;
     shortBtn: HTMLButtonElement;
     longBtn: HTMLButtonElement;
 
+    translationGroup: HTMLDivElement;
+    languageDropdown: HTMLSelectElement;
     // #endregion command bar elements
 
     // view container
@@ -124,6 +130,7 @@ export class RabbitHoleCommentComponentInstance
     protected override lc: string = `[${RabbitHoleCommentComponentInstance.name}]`;
 
     // #region state properties
+    private _breakingDown = false;
     private isThinking: boolean = false;
     /**
      *
@@ -135,13 +142,20 @@ export class RabbitHoleCommentComponentInstance
      * This acts as the state for the view type radio button group.
      * @default undefined
      */
-    private selectedType?: 'children' | 'tldr';
+    private selectedType?: ViewType;
     /**
      * The user's desired summary *length*, if selected.
      * This acts as the state for the view length radio button group.
      * @default undefined
      */
     private selectedLength?: SummarizerLength;
+    /**
+     * The user's desired translation language, if selected.
+     * This acts as the state for the language dropdown.
+     * @default 'en-US'
+     */
+    private selectedTranslationLanguage: string = 'en-US';
+
     /**
      * The actual view being displayed.
      * This is derived from `selectedType` and `selectedLength`.
@@ -286,8 +300,9 @@ export class RabbitHoleCommentComponentInstance
             // Set up event listeners
             const {
                 headerEl, expandBtn, highlightBtn,
-                keyPointsBtn, tldrBtn, shortBtn, longBtn
-
+                keyPointsBtn, tldrBtn, shortBtn, longBtn,
+                translateBtn,
+                languageDropdown,
             } = this.elements;
             headerEl.addEventListener('click', () => this.handleClick_header());
             expandBtn.addEventListener('click', (event) => this.handleClick_expandBtn(event));
@@ -297,6 +312,9 @@ export class RabbitHoleCommentComponentInstance
             tldrBtn.addEventListener('click', () => this.handleClick_viewType('tldr'));
             shortBtn.addEventListener('click', () => this.handleClick_viewLength('short'));
             longBtn.addEventListener('click', () => this.handleClick_viewLength('long'));
+
+            translateBtn.addEventListener('click', () => this.handleClick_viewType('translation'));
+            languageDropdown.addEventListener('change', (e) => this.handleChange_languageDropdown(e));
 
             // Perform an initial render to get the component on the screen.
             await this.renderUI();
@@ -371,6 +389,7 @@ export class RabbitHoleCommentComponentInstance
             const {
                 textEl, contentEl, commandBar, keyPointsBtn, tldrBtn,
                 shortBtn, longBtn,
+                translateBtn,
                 headerEl, highlightBtn,
             } = this.elements;
 
@@ -401,21 +420,24 @@ export class RabbitHoleCommentComponentInstance
                 // reset active states
                 keyPointsBtn.classList.remove('active');
                 tldrBtn.classList.remove('active');
+                translateBtn.classList.remove('active'); // new
                 shortBtn.classList.remove('active');
                 longBtn.classList.remove('active');
 
-                // Set active class on the correct type button, if one is selected
+                // Set active class on the correct type button
                 if (this.selectedType === 'children') {
                     keyPointsBtn.classList.add('active');
                 } else if (this.selectedType === 'tldr') {
                     tldrBtn.classList.add('active');
+                } else if (this.selectedType === 'translation') { // new
+                    translateBtn.classList.add('active'); // new
                 }
 
                 // The length group is ONLY visible when 'tldr' has been chosen.
-                const viewLengthGroup = this.elements.viewLengthGroup;
+                const { viewLengthGroup, translationGroup, languageDropdown } = this.elements; // new
                 if (this.selectedType === 'tldr') {
                     viewLengthGroup.classList.remove('collapsed');
-                    // Set active class on the correct length button, if one is selected
+                    // Set active class on the correct length button
                     if (this.selectedLength === 'short') {
                         shortBtn.classList.add('active');
                     } else if (this.selectedLength === 'long') {
@@ -424,8 +446,17 @@ export class RabbitHoleCommentComponentInstance
                 } else {
                     viewLengthGroup.classList.add('collapsed');
                 }
+
+                // The translation group is ONLY visible when 'translation' has been chosen. (new)
+                if (this.selectedType === 'translation') { // new
+                    translationGroup.classList.remove('collapsed'); // new
+                    languageDropdown.value = this.selectedTranslationLanguage; // new
+                } else { // new
+                    translationGroup.classList.add('collapsed'); // new
+                }
             }
             // #endregion
+
 
             await this.renderUI_highlightBtn();
 
@@ -503,6 +534,8 @@ export class RabbitHoleCommentComponentInstance
             if (logalot) { console.log(`${lc} complete.`); }
         }
     }
+
+    // #region handleClick
 
     private async handleClick_expandBtn(event: MouseEvent): Promise<void> {
         const lc = `${this.lc}[${this.handleClick_expandBtn.name}]`;
@@ -587,41 +620,6 @@ export class RabbitHoleCommentComponentInstance
     }
 
     /**
-     * Handles clicks on the view type buttons (e.g., Children, TLDR).
-     */
-    private async handleClick_viewType(type: 'children' | 'tldr'): Promise<void> {
-        const lc = `${this.lc}[${this.handleClick_viewType.name}]`;
-        try {
-            if (logalot) { console.log(`${lc} starting... type: ${type}`); }
-
-            // Hide any previous views when switching types.
-            if (this.elements) {
-                this.elements.viewContainer.querySelectorAll<HTMLDivElement>('.view')
-                    .forEach(v => v.classList.add('collapsed'));
-            }
-
-            this.selectedType = type;
-            this.selectedLength = undefined; // Reset length selection
-
-            if (type === 'children') {
-                if (this.hasChildren) {
-                    // Children exist, just show them.
-                    await this.switchToView({ view: 'children' });
-                } else {
-                    // No children exist, so we initiate the breakdown process.
-                    await this.breakItDown();
-                }
-            } else { // type === 'tldr'
-                // User selected TLDR. Don't trigger a task yet.
-                // Just re-render the UI to show the length options.
-                await this.renderUI();
-            }
-        } catch (error) {
-            console.error(`${lc} ${extractErrorMsg(error)}`);
-        }
-    }
-
-    /**
      * Handles clicks on the view length buttons (e.g., Short, Long).
      * This is the final step that triggers a summary task.
      */
@@ -658,6 +656,69 @@ export class RabbitHoleCommentComponentInstance
         }
     }
 
+    /**
+     * Handles clicks on the view type buttons (e.g., Children, TLDR).
+     */
+    private async handleClick_viewType(type: ViewType): Promise<void> {
+        const lc = `${this.lc}[${this.handleClick_viewType.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting... type: ${type}`); }
+
+            // Hide any previous views when switching types.
+            if (this.elements) {
+                this.elements.viewContainer.querySelectorAll<HTMLDivElement>('.view')
+                    .forEach(v => v.classList.add('collapsed'));
+            }
+
+            this.selectedType = type;
+            this.selectedLength = undefined; // Reset length selection on type change
+
+            if (type === 'children') {
+                if (this.hasChildren) {
+                    await this.switchToView({ view: 'children' });
+                } else {
+                    await this.breakItDown();
+                }
+            } else if (type === 'tldr') {
+                // Just re-render to show the length options. Don't trigger AI yet.
+                await this.renderUI();
+            } else if (type === 'translation') {
+                // Construct the viewMode from state and switch to it.
+                this.viewMode = `translation_${this.selectedTranslationLanguage}`;
+                await this.switchToView({ view: this.viewMode });
+            }
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+        }
+    }
+
+
+    private async handleChange_languageDropdown(event: Event): Promise<void> {
+        const lc = `${this.lc}[${this.handleChange_languageDropdown.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting...`); }
+            const target = event.target as HTMLSelectElement;
+            const newLanguage = target.value;
+            this.selectedTranslationLanguage = newLanguage;
+
+            if (this.selectedType === 'translation') {
+                // If we are already in translation mode, switching the language should
+                // immediately trigger a new translation.
+                this.viewMode = `translation_${this.selectedTranslationLanguage}`;
+                await this.switchToView({ view: this.viewMode });
+            } else {
+                // If not in translation mode, we don't need to do anything besides
+                // updating the state, which we've already done.
+                await this.renderUI();
+            }
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+        }
+    }
+
+
+    // #endregion handleClick
+
     private async scrollToGib(): Promise<void> {
         const lc = `${this.lc}[${this.scrollToGib.name}]`;
         try {
@@ -685,6 +746,7 @@ export class RabbitHoleCommentComponentInstance
         }
     }
 
+    // #region switchToView
     private async switchToView({ view }: { view: CommentViewMode }): Promise<void> {
         const lc = `${this.lc}[${this.switchToView.name}]`;
         try {
@@ -699,62 +761,25 @@ export class RabbitHoleCommentComponentInstance
             const allViews = viewContainer.querySelectorAll<HTMLDivElement>('.view');
             allViews.forEach(v => v.classList.add('collapsed'));
 
-            // 2. Get the container for the target view. This will create it if it doesn't exist.
+            // 2. Get the container for the target view, creating it if it doesn't exist.
             const targetViewEl = this.getOrCreateView(view);
 
-            // 3. Populate the view with content.
+            // 3. Dispatch to the appropriate sub-method to populate the view.
             if (view === 'children') {
-                const childAddrs = this.ibGib.rel8ns?.[getChunkRel8nName({ contextScope: 'default' })] ?? [];
-                // Only re-render children if the count has changed. Avoids DOM thrashing.
-                if (childAddrs.length !== this.childComponents.length) {
-                    await this.renderUI_children({ childAddrs });
-                }
+                await this.switchToView_children({ targetViewEl });
             } else if (view === 'original') {
-                // Populate only if empty to avoid re-rendering.
-                if (targetViewEl.innerHTML === '') {
-                    targetViewEl.innerHTML = `<p>${this.ibGib.data?.text ?? '(No text)'}</p>`;
-                }
+                await this.switchToView_original({ targetViewEl });
+            } else if (view.startsWith('translation_')) {
+                await this.switchToView_translation({ view: view as TranslationFlavor, targetViewEl });
             } else {
-                // This is a summary view.
-                const summaryKey = getSummaryTextKeyForIbGib({ type: view.split('_')[0] as SummarizerType, length: view.split('_')[1] as SummarizerLength });
-                const summaryText = this.ibGib.data?.[summaryKey];
-
-                if (summaryText) {
-                    // Summary exists on the data already, so render it.
-                    this.isThinking = false;
-                    targetViewEl.innerHTML = `<p>${summaryText}</p>`;
-                } else {
-                    // Summary does not exist. Show "Generating..." and enqueue the AI task.
-                    this.isThinking = true;
-                    targetViewEl.textContent = `Generating ${view.replace('_', ' ')}...`;
-
-                    if (this.queuedSummaryTasks[summaryKey]) {
-                        // already started or completed
-                    } else {
-                        // haven't started it yet
-                        this.queuedSummaryTasks[summaryKey] = 'started';
-                        const queueSvc = getPriorityQueueSvc();
-                        queueSvc.enqueue({
-                            type: 'summary',
-                            ibGib: this.ibGib,
-                            priority: SUMMARY_PRIORITY_USER_JUST_CLICKED,
-                            thinkingId: this.getThinkingIdFromTjpGib(),
-                            options: {
-                                text: this.ibGib.data!.text!,
-                                type: view.split('_')[0] as SummarizerType,
-                                length: view.split('_')[1] as SummarizerLength,
-                                isTitle: false,
-                            } as SummaryQueueInfo,
-                        });
-                    }
-
-                }
+                // This is a summary view, e.g., 'tldr_short'
+                await this.switchToView_summary({ view: view as SummaryFlavor, targetViewEl });
             }
 
             // 4. Show the target view.
             targetViewEl.classList.remove('collapsed');
 
-            // 5. Render the component's chrome (header, footer, etc.).
+            // 5. Render the component's chrome (header, buttons, etc.).
             await this.renderUI();
 
         } catch (error) {
@@ -765,6 +790,161 @@ export class RabbitHoleCommentComponentInstance
             if (logalot) { console.log(`${lc} complete.`); }
         }
     }
+
+    private async switchToView_children({
+        targetViewEl,
+    }: {
+        targetViewEl: HTMLDivElement
+    }): Promise<void> {
+        const lc = `${this.lc}[${this.switchToView_children.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting...`); }
+            if (!this.ibGib) { throw new Error(`(UNEXPECTED) this.ibGib falsy?`); }
+
+            const childAddrs = this.ibGib.rel8ns?.[getChunkRel8nName({ contextScope: 'default' })] ?? [];
+            // Only re-render children if the count has changed to avoid DOM thrashing.
+            if (childAddrs.length !== this.childComponents.length) {
+                await this.renderUI_children({ childAddrs });
+            }
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+            throw error;
+        }
+    }
+
+    private async switchToView_original({
+        targetViewEl,
+    }: {
+        targetViewEl: HTMLDivElement
+    }): Promise<void> {
+        const lc = `${this.lc}[${this.switchToView_original.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting...`); }
+            if (!this.ibGib) { throw new Error(`(UNEXPECTED) this.ibGib falsy?`); }
+
+            if (targetViewEl.innerHTML === '') {
+                targetViewEl.innerHTML = `<p>${this.ibGib.data?.text ?? '(No text)'}</p>`;
+            }
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+            throw error;
+        }
+    }
+
+    private async switchToView_summary({
+        view,
+        targetViewEl,
+    }: {
+        view: SummaryFlavor,
+        targetViewEl: HTMLDivElement,
+    }): Promise<void> {
+        const lc = `${this.lc}[${this.switchToView_summary.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting...`); }
+            if (!this.ibGib?.data) { throw new Error(`(UNEXPECTED) ibGib.data is falsy?`); }
+
+            const [type, length] = view.split('_');
+            const summaryKey = getSummaryTextKeyForIbGib({ type: type as SummarizerType, length: length as SummarizerLength });
+            const summaryText = this.ibGib.data[summaryKey];
+
+            if (summaryText) {
+                this.isThinking = false;
+                targetViewEl.innerHTML = `<p>${summaryText}</p>`;
+            } else {
+                this.isThinking = true;
+                targetViewEl.textContent = `Generating ${view.replace('_', ' ')}...`;
+
+                if (!this.queuedSummaryTasks[summaryKey]) {
+                    this.queuedSummaryTasks[summaryKey] = 'started';
+                    const queueSvc = getPriorityQueueSvc();
+                    queueSvc.enqueue({
+                        type: 'summary',
+                        ibGib: this.ibGib,
+                        priority: SUMMARY_PRIORITY_USER_JUST_CLICKED,
+                        thinkingId: this.getThinkingIdFromTjpGib(),
+                        options: {
+                            text: this.ibGib.data.text!,
+                            type: type as SummarizerType,
+                            length: length as SummarizerLength,
+                            isTitle: false,
+                        } as SummaryQueueInfo,
+                    });
+                }
+            }
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+            throw error;
+        }
+    }
+
+    private async switchToView_translation({
+        view,
+        targetViewEl,
+    }: {
+        view: TranslationFlavor,
+        targetViewEl: HTMLDivElement,
+    }): Promise<void> {
+        const lc = `${this.lc}[${this.switchToView_translation.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting...`); }
+            if (!this.ibGib?.data) { throw new Error(`(UNEXPECTED) ibGib.data is falsy?`); }
+
+            const targetLang = view.split('_')[1];
+            // As you specified, for now, we only translate the base .text property.
+            const sourceDataKey = 'text';
+            const translationKey = getTranslationTextKeyForIbGib({ dataKey: sourceDataKey, targetLanguage: targetLang });
+            const translatedText = this.ibGib.data[translationKey];
+
+            if (translatedText) {
+                this.isThinking = false;
+                targetViewEl.innerHTML = `<p>${translatedText}</p>`;
+            } else {
+                this.isThinking = true;
+                targetViewEl.textContent = `Translating to ${targetLang}...`;
+
+                (async () => {
+                    try {
+                        const textToTranslate = this.ibGib!.data![sourceDataKey]!;
+                        if (!textToTranslate) { throw new Error(`Source text at data.${sourceDataKey} is empty.`); }
+
+                        const detector = await LanguageDetector.create();
+                        const langResults = await detector.detect(textToTranslate);
+                        const sourceLang = (langResults[0]?.detectedLanguage) ?? 'en';
+
+                        const optionToHide = this.elements?.languageDropdown.querySelector<HTMLOptionElement>(`option[value="${sourceLang}"]`);
+                        if (optionToHide) { optionToHide.style.display = 'none'; }
+
+                        const translator = await Translator.create({ sourceLanguage: sourceLang, targetLanguage: targetLang });
+                        const translation = await translator.translate(textToTranslate);
+
+                        const metaspace = await getGlobalMetaspace_waitIfNeeded();
+                        const space = await metaspace.getLocalUserSpace({ lock: false });
+                        if (!space) { throw new Error(`(UNEXPECTED) couldn't get default local user space.`); }
+
+                        const dataToAdd = { [translationKey]: translation };
+                        await mut8Timeline({
+                            timeline: this.ibGib,
+                            mut8Opts: { dataToAddOrPatch: dataToAdd },
+                            metaspace,
+                            space,
+                        });
+
+                    } catch (error) {
+                        console.error(`${lc} inline translation failed: ${extractErrorMsg(error)}`);
+                        this.isThinking = false;
+                        if (this.viewMode === view) {
+                            targetViewEl.textContent = `Translation failed. See console for details.`;
+                        }
+                        await this.renderUI();
+                    }
+                })();
+            }
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+            throw error;
+        }
+    }
+    // #endregion switchToView
 
     /**
      * Public method to initiate the chunking process.
@@ -818,7 +998,6 @@ export class RabbitHoleCommentComponentInstance
     //     }
     // }
 
-    private _breakingDown = false;
     public async breakItDown(): Promise<void> {
         const lc = `${this.lc}[${this.breakItDown.name}]`;
         if (this._breakingDown) {
@@ -942,9 +1121,12 @@ export class RabbitHoleCommentComponentInstance
                 viewTypeGroup: shadowRoot_getElementById(this.shadowRoot, 'view-type-group'),
                 keyPointsBtn: shadowRoot_getElementById(this.shadowRoot, 'key-points-btn'),
                 tldrBtn: shadowRoot_getElementById(this.shadowRoot, 'tldr-btn'),
+                translateBtn: shadowRoot_getElementById(this.shadowRoot, 'translate-btn'),
                 viewLengthGroup: shadowRoot_getElementById(this.shadowRoot, 'view-length-group'),
                 shortBtn: shadowRoot_getElementById(this.shadowRoot, 'short-btn'),
                 longBtn: shadowRoot_getElementById(this.shadowRoot, 'long-btn'),
+                translationGroup: shadowRoot_getElementById(this.shadowRoot, 'translation-group'),
+                languageDropdown: shadowRoot_getElementById(this.shadowRoot, 'language-dropdown'),
 
                 // view container and specific views
                 viewContainer: shadowRoot_getElementById(this.shadowRoot, 'view-container'),

@@ -1,29 +1,40 @@
 <div id="rabbit-hole-comment-component">
-    <!-- The header now contains the expand button, text, and the command bar -->
     <div id="rabbit-hole-comment-header">
         <button id="expand-btn">›</button>
         <p id="comment-text"></p>
-        <!-- The command bar is moved inside the header and given a class for styling -->
-
         <div id="command-bar" class="node-commands">
             <div class="button-group">
-            <button id="highlight-btn">🌟</button>
+                <button id="highlight-btn">🌟</button>
             </div>
             <div id="view-type-group" class="button-group">
                 <button id="key-points-btn" data-view-type="children">️️⛏️</button>
-                <button id="tldr-btn" data-view-type="tldr">tl;dr</button>
+                <button id="tldr-btn" data-view-type="tldr"
+                    style="font-family: 'Courier New', Courier, monospace;">tl;dr</button>
+                <button id="translate-btn" data-view-type="translation">Abc文</button>
             </div>
             <div id="view-length-group" class="button-group collapsed">
                 <button id="short-btn" data-view-length="short">Short</button>
                 <button id="long-btn" data-view-length="long">Long</button>
+            </div>
+            <div id="translation-group" class="button-group collapsed">
+                <select id="language-dropdown">
+                    <option value="en">English</option>
+                    <option value="it">Italian</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                    <option value="ja">Japanese</option>
+                    <option value="zh">Chinese</option>
+                </select>
             </div>
         </div>
     </div>
     <!-- The content area is now the children/view container, and it's collapsed by default -->
     <div id="rabbit-hole-comment-content" class="collapsed">
         <div id="view-container">
-            <!-- Children view is static, summary views are dynamic -->
+            <!-- Children view is static (and listed here) -->
             <div id="children-view" class="view"></div>
+            <!-- note: other views like tldr and translation are created/injected dynamically -->
         </div>
     </div>
 </div>

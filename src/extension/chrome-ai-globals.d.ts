@@ -5,13 +5,14 @@
 // Based on the documentation available at:
 // https://developer.chrome.com/docs/ai/built-in
 
-import type { LanguageModel, Summarizer } from './chrome-ai.mjs';
+import type { LanguageModel, Summarizer, Translator, LanguageDetector } from './chrome-ai.mjs';
 
 declare global {
     const Summarizer: Summarizer;
+    /** not yet implemented */
     const LanguageModel: LanguageModel;
-    const LanguageDetector: any;
-    const Translator: any;
+    const Translator: Translator;
+    const LanguageDetector: LanguageDetector;
 }
 
 // We need to export something to make this a module file, but since we're just

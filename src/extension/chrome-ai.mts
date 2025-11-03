@@ -164,3 +164,84 @@ export interface LanguageModelSession {
 }
 
 // #endregion LanguageModel API
+
+// #region Translator API
+// https://developer.chrome.com/docs/ai/built-in/translator-api
+
+export type TranslatorAvailability = ChromeAIAvailability;
+
+export interface TranslatorAvailabilityOptions {
+  sourceLanguage: string;
+  targetLanguage: string;
+}
+
+export interface TranslatorDownloadProgressEvent extends Event {
+    loaded: number; // A percentage from 0 to 1
+}
+
+type TranslatorCallback = (this: TranslatorMonitor, ev: TranslatorDownloadProgressEvent) => any;
+export interface TranslatorMonitor {
+    addEventListener(
+        type: 'downloadprogress',
+        listener: TranslatorCallback | null,
+        options?: AddEventListenerOptions | boolean
+    ): void;
+}
+
+export type TranslatorLanguage = string;
+
+export interface TranslatorCreateOptions {
+    sourceLanguage: TranslatorLanguage;
+    targetLanguage: TranslatorLanguage;
+    monitor?: (monitor: TranslatorMonitor) => void;
+}
+
+export interface Translator {
+    availability(options: TranslatorAvailabilityOptions): Promise<TranslatorAvailability>;
+    create(options: TranslatorCreateOptions): Promise<TranslatorSession>;
+}
+
+export interface TranslatorSession {
+    translate(text: string): Promise<string>;
+    translateStreaming(text: string): AsyncIterable<string>;
+}
+
+// #endregion Translator API
+
+// #region LanguageDetector API
+// https://developer.chrome.com/docs/ai/built-in/language-detector-api
+
+export type LanguageDetectorAvailability = ChromeAIAvailability;
+
+export interface LanguageDetectorDownloadProgressEvent extends Event {
+    loaded: number; // A percentage from 0 to 1
+}
+
+type LanguageDetectorCallback = (this: LanguageDetectorMonitor, ev: LanguageDetectorDownloadProgressEvent) => any;
+export interface LanguageDetectorMonitor {
+    addEventListener(
+        type: 'downloadprogress',
+        listener: LanguageDetectorCallback | null,
+        options?: AddEventListenerOptions | boolean
+    ): void;
+}
+
+export interface LanguageDetectorCreateOptions {
+    monitor?: (monitor: LanguageDetectorMonitor) => void;
+}
+
+export interface LanguageDetectorResult {
+    detectedLanguage: string; // BCP 47 language short code
+    confidence: number; // 0.0 to 1.0
+}
+
+export interface LanguageDetector {
+    availability(): Promise<LanguageDetectorAvailability>;
+    create(options?: LanguageDetectorCreateOptions): Promise<LanguageDetectorSession>;
+}
+
+export interface LanguageDetectorSession {
+    detect(text: string): Promise<LanguageDetectorResult[]>;
+}
+
+// #endregion LanguageDetector API

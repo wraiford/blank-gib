@@ -5,11 +5,16 @@
             this seems to be taking a long time, you may need to enable them in your browser settings.</p>
         <ul id="api-status-list">
             <li id="summarizer-status">Summarizer API: <span class="status">Checking...</span></li>
+            <li id="translator-status">Translator API: <span class="status">Checking...</span></li>
         </ul>
         <div id="summarizer-download-progress-container" class="collapsed">
-            <label for="summarizer-download-progress">Download Progress:</label>
+            <label for="summarizer-download-progress">Summarizer Download Progress:</label>
             <progress id="summarizer-download-progress" max="100" value="0"></progress>
         </div>
+        <div id="translator-download-progress-container" class="collapsed">
+           <label for="translator-download-progress">Translator Download Progress:</label>
+           <progress id="translator-download-progress" max="100" value="0"></progress>
+       </div>
         <button id="retry-api-check">Retry</button>
     </div>
 </div>

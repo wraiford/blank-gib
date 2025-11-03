@@ -168,6 +168,23 @@
             flex-direction: column;
             gap: 12px;
 
+            #title-container {
+                width: auto;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: flex-start;
+
+                label {
+                    flex-grow: 0;
+                    width: auto;
+                }
+
+                input {
+                    flex-grow: 1
+                }
+            }
+
             .content-chunk {
                 border: 1px solid #ccc;
                 padding: 10px;
