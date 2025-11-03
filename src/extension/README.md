@@ -4,9 +4,23 @@
 
 Living Map Extension is a Chrome Extension that acts as a "living map" for any webpage utilizing on-device AI via Chrome's built-in AI + ibgib's paradigm-shifting protocol.
 
-Right now it can help you digest long articles and complex information by creating a dynamic and interactive table of contents, as well as providing an interface to summarize complex chunks into tl;dr summaries.
+Right now it can help you digest long articles and complex information by creating an interactive table of contents, as well as providing an interface to summarize complex chunks into tl;dr summaries.
 
 In the future, it will enable a new paradigm for collaboration among humans and AI, changing surfing the web from a passive consuming process, to a more dynamic collaboration.
+
+## Chrome Built-in APIs
+
+You'll find the most up-to-date list of these in [chrome-ai-globals.d.ts](apps/blank-gib/src/extension/chrome-ai-globals.d.ts), which references [chrome-ai.mts](apps/blank-gib/src/extension/chrome-ai.mts).
+
+```
+declare global {
+    const Summarizer: Summarizer;
+    /** not yet implemented */
+    const LanguageModel: LanguageModel;
+    const Translator: Translator;
+    const LanguageDetector: LanguageDetector;
+}
+```
 
 ## Videos
 
