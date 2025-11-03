@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "ibgib - blank-gib",
-  "version": "0.0.1",
-  "description": "A sidepanel that uses the entire blank-gib web app.",
+  "name": "Living Map",
+  "version": "0.0.2",
+  "description": "A sidepanel that creates a dynamic, living map like a table of contents. Uses on-device AI to enable privacy-enhanced summarization.",
   "permissions": [
     "sidePanel",
     "storage",
