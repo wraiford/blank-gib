@@ -4,6 +4,8 @@ import {
     HEADING_SCORE_H1, HEADING_SCORE_H2, HEADING_SCORE_H3, HEADING_SCORE_H4,
     HEADING_SCORE_H5, HEADING_SCORE_H6,
     MIN_TEXT_LENGTH_TO_CHUNK,
+    TAGNAMES_UPPERCASE_COLLAPSE_BLACKLIST,
+    TAGNAMES_UPPERCASE_UNWRAP_BLACKLIST,
 } from "./page-analyzer-constants.mjs";
 import { DOMElementInfo, NodeHeadingInfo } from "./page-analyzer-types.mjs";
 
@@ -79,6 +81,43 @@ function _isTitleCase(text: string): boolean {
 }
 
 /**
+ * return all direct children in `content` with upperCase tagName of 'P'
+ */
+export function getChildParagraphs(nodeInfo: DOMElementInfo): DOMElementInfo[] {
+    return nodeInfo.content.filter(x =>
+        typeof x !== 'string' && x.tagName?.toUpperCase() === 'P'
+    ) as DOMElementInfo[];
+}
+
+function isDivWithOneHeadingAndOthersOnlyParagraphs(nodeInfo: DOMElementInfo): boolean {
+    const lc = `[${isDivWithOneHeadingAndOthersOnlyParagraphs.name}]`;
+    try {
+        if (logalot) { console.log(`${lc} starting... (I: d8b018cfe7d8ea5a78556f78b3715925)`); }
+
+        if (nodeInfo.content.length < 2) { return false; /* <<<< returns early */ }
+
+        if (nodeInfo.tagName.toUpperCase() !== 'DIV') { return false; /* <<<< returns early */ }
+
+        const firstChild = nodeInfo.content.at(0)!;
+        if (typeof firstChild === 'string') { return false; /* <<<< returns early */ }
+
+        const firstChildIsHeading = !!firstChild.tagName.toUpperCase().match(/^H[1-6]$/i);
+        if (!firstChildIsHeading) { return false; /* <<<< returns early */ }
+
+        const remainingChildren = nodeInfo.content.slice(1);
+        const remainingAreParagraphs =
+            remainingChildren.every(x => typeof x !== 'string' && x.tagName?.toUpperCase() === 'P');
+
+        return remainingAreParagraphs;
+    } catch (error) {
+        console.error(`${lc} ${extractErrorMsg(error)}`);
+        throw error;
+    } finally {
+        if (logalot) { console.log(`${lc} complete.`); }
+    }
+}
+
+/**
  * needs to be changed eventually to a more robust OOP approach. interface with
  * predicates, return undefined if not applicable, etc. The strategy, e.g.
  * "wikipedia" or "markdown", should be there as well. Something to reign in
@@ -128,7 +167,8 @@ export function getHeadingInfo(nodeInfo: DOMElementInfo): NodeHeadingInfo {
                 default:
                     throw new Error(`(UNEXPECTED) all h tags in regexp are covered? tagNameUpper: ${tagNameUpper} (E: bcc8195fc848696798220f68584d8825)`);
             }
-            headingText = nodeInfo.content.filter(x => typeof x === 'string').join(' ').trim();
+            // headingText = nodeInfo.content.filter(x => typeof x === 'string').join(' ').trim();
+            headingText = getNodeTextContent_keepspaces(nodeInfo).trim();
         } else if (nodeInfo.content &&
             tagNameUpper === 'DIV' &&
             nodeInfo.content.length === 2 &&
@@ -151,6 +191,37 @@ export function getHeadingInfo(nodeInfo: DOMElementInfo): NodeHeadingInfo {
                     scoringLog.push(emsg);
                 }
             }
+        } else if (isDivWithOneHeadingAndOthersOnlyParagraphs(nodeInfo)) {
+            // treat the div itself as a heading? unwrap somehow?
+            // for now, we'll try returning the heading's heading info itself
+            /** start with the inner heading as the headingInfo */
+            const innerHeadingInfo = getHeadingInfo(nodeInfo.content[0] as DOMElementInfo);
+            score = innerHeadingInfo.headingScore;
+            headingText = innerHeadingInfo.headingText;
+            if (!headingText) {
+                console.error(`${lc} (UNEXPECTED) div with one heading and multi p tags has no headingText? Using substring of text, but this is unexpected. (E: 8cc2e8b230d8b6f1b8331b34a9ac0825)`);
+                headingText = getNodeTextContent_keepspaces(nodeInfo).substring(0, 32);
+            }
+            spilledContent =
+                getChildParagraphs(nodeInfo).map(p => getNodeTextContent_keepspaces(p)).join('\n\n');
+        } else if (tagNameUpper === 'DIV' &&
+            nodeInfo.content.length >= 2 &&
+            nodeInfo.content.every(x => typeof x === 'object' && x.tagName?.toUpperCase() === 'P')
+        ) {
+            // div containing only child paragraphs, so this div is a
+            // pseudo-heading. No way to know what type of heading though, so
+            // we'll just do the lowest for now, and consider the child
+            // paragraphs as spilled content.
+            score = HEADING_SCORE_H6;
+            headingText = nodeInfo.content.find(x => typeof x === 'string')?.trim();
+            if (!headingText) {
+                headingText =
+                    getNodeTextContent_keepspaces(nodeInfo.content.at(0)! as DOMElementInfo);
+            }
+            // shorten it just in case
+            headingText = headingText.substring(0, 32);
+            const paragraphs = getChildParagraphs(nodeInfo);
+            spilledContent = paragraphs.map(p => getNodeTextContent_keepspaces(p)).join('\n\n');
         } else if (tagNameUpper === 'P') {
             // debugger; // examine the p tag in hackathon at runtime
             // 3. Hackathon-style headings in <p> tags
@@ -196,7 +267,6 @@ export function getHeadingInfo(nodeInfo: DOMElementInfo): NodeHeadingInfo {
                     }
                 }
 
-                // ** NEW SPILLED CONTENT LOGIC **
                 // Check for a text node immediately following the heading-containing element (the <strong> or <span>).
                 const potentialSpillNode = nodeInfo.content?.[1];
                 if (typeof potentialSpillNode === 'string' && potentialSpillNode.trim() !== '') {
@@ -431,6 +501,11 @@ function unwrapSingleChildNodes(node: DOMElementInfo): DOMElementInfo {
         return node;
     }
 
+    if (TAGNAMES_UPPERCASE_UNWRAP_BLACKLIST.includes(node.tagName.toUpperCase())) {
+        // node is a DOMElementInfo but on the blacklist
+        return node;
+    }
+
     // Recursive step: First, process all children of the current node.
     node.content = node.content.map(child => {
         if (typeof child === 'string') {
@@ -460,7 +535,6 @@ function unwrapSingleChildNodes(node: DOMElementInfo): DOMElementInfo {
     return node;
 }
 
-
 /**
  * Traverses a DOM info tree and if a node's total text content is less than
  * MIN_TEXT_LENGTH_TO_CHUNK, it replaces its complex `content` array with a
@@ -468,43 +542,12 @@ function unwrapSingleChildNodes(node: DOMElementInfo): DOMElementInfo {
  *
  * NOTE: This is a post-order traversal. It processes children before their parents.
  */
-// function collapseSmallNodesRecursive(node: DOMElementInfo | string): DOMElementInfo | string {
-//     if (!node || typeof node === 'string') {
-//         return node;
-//     }
-
-//     // if the content is only a single string, then we collapse this node to
-//     // just that string
-//     if (node.content.length === 1 && typeof node.content[0] === 'string') {
-//         return node.content[0]; /* <<<< returns early */
-//     }
-
-//     // First, recurse on all children that are DOMElementInfo objects.
-//     const processedContent =
-//         node.content.map(child => collapseSmallNodesRecursive(child));
-//     node.content = processedContent.filter(x => {
-//         if (typeof x === 'string' && x === '') {
-//             return false;
-//         } else {
-//             return true;
-//         }
-//     });
-
-//     // Now, check the *current* node's text length.
-//     const textContent = getNodeTextContent_keepspaces(node);
-
-//     // if text is below our threshold, then just return this node as a string
-//     if (textContent.length > 0 && textContent.length < MIN_TEXT_LENGTH_TO_CHUNK) {
-//         // The node's content is small. Flatten its entire content array
-//         // into a single string entry.
-//         node.content = [textContent];
-//     }
-
-//     return node;
-// }
-
 function collapseSmallNodesRecursive(node: DOMElementInfo | string): DOMElementInfo | string {
     if (!node || typeof node === 'string') {
+        return node;
+    }
+
+    if (TAGNAMES_UPPERCASE_COLLAPSE_BLACKLIST.includes(node.tagName.toUpperCase())) {
         return node;
     }
 
@@ -577,7 +620,7 @@ export function autoChunkByHeadings(domInfoTree: DOMElementInfo): DOMElementInfo
     const firstPassChunkedRoot: DOMElementInfo = {
         tagName: 'body',
         gibId: 'ibgib',
-        headingInfo: { headingScore: 0 },
+        headingInfo: { headingScore: 110 },
         content: firstPassContent,
     };
 

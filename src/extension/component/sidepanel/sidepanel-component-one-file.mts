@@ -600,14 +600,16 @@ export class SidepanelComponentInstance
             rabbitHoleContainer.style.display = 'flex';
             rabbitHoleContainer.innerHTML = '<h1>a few moments later...</h1>';
 
-            // #region create the src comment and project ibgibs
-            let srcCommentIbGib = await this.createRootCommentIbGib({
-                title,
-                href,
+            // create the root src comment ibgib from the dom root
+            if (!this._currentDomRoot) { throw new Error(`(UNEXPECTED) this._currentDomRoot falsy? (E: 697b45590a88301589f6eae864338825)`); }
+            let [srcCommentIbGib] = await createChunkCommentIbGibs({
+                domNodesOrStrings: this._currentDomRoot,
                 metaspace,
                 space,
+                recursive: false,
             });
 
+            // now we can create the project based off this root ibgib
             let project: ProjectIbGib_V1;
             project = await this.createNewProject({
                 title,
@@ -631,7 +633,6 @@ export class SidepanelComponentInstance
                 space,
                 skipLock: true, // newly created timeline that no one knows about
             });
-            // #endregion create the src comment and project ibgibs
 
             project = await appendToTimeline({
                 timeline: project,
@@ -683,10 +684,6 @@ export class SidepanelComponentInstance
                 componentToInject: commentComponent,
             });
 
-            commentComponent.breakItDown(); // spin off
-
-
-
             // // FINALLY, UPDATE THE UI
             // await this.renderUI_projectsDropdown();
 
@@ -704,151 +701,6 @@ export class SidepanelComponentInstance
             throw error;
         } finally {
             if (logalot) { console.log(`${lc} complete.`); }
-        }
-    }
-
-    private async OLD_handleBreakItDownClick(): Promise<void> {
-        const lc = `${this.lc}[${this.OLD_handleBreakItDownClick.name}]`;
-        let thinkingId: string | undefined;
-        try {
-            // if (logalot) { console.log(`${lc} starting...`); }
-            // thinkingId = addThinkingEntry('Breaking it down...');
-
-            // // #region init/validate
-            // if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements falsy?`); }
-            // // #endregion init/validate
-
-            // const { scopeDropdown, projectsDropdown, contentEl } = this.elements;
-            // const scope = scopeDropdown.value as BreakItDownScope;
-            // updateThinkingEntry(thinkingId, `Getting content from page (${scope})...`);
-            // // #region extract the source text content to break down
-            // const projectAction = projectsDropdown.value;
-            // // const href = await getCurrentTabURL();
-            // const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            // const href = tab.url ?? window.location.href;
-            // if (!href) { throw new Error(`(UNEXPECTED) href falsy? couldn't get from tab.url or window.location.href? (E: genuuid)`); }
-            // const pageContentInfo = await this.handleBreakItDownClick_getContentInfo({ tab });
-
-            // let content: string;
-            // if (scope === 'selection') {
-            //     if (!pageContentInfo.selection?.text) {
-            //         const msg = `You chose \"selection\", but no text is currently selected. Please select text on the page and try again.`;
-            //         console.warn(`${lc} ${msg}`);
-            //         updateThinkingEntry(thinkingId, msg, true, true);
-            //         return; /* <<<< returns early */
-            //     }
-            //     content = pageContentInfo.selection.text;
-            // } else { // scope is 'page'
-            //     content = getAllText({ scoredText: pageContentInfo.bestCandidate });
-            // }
-            // const metaspace = await getGlobalMetaspace_waitIfNeeded();
-            // const space = await metaspace.getLocalUserSpace({ lock: false });
-            // if (!space) { throw new Error(`(UNEXPECTED) couldn't get space? couldn't get default local user space?`); }
-
-            // const title = await getProjectTitleFromPageOrContent({ pageContentInfo, content, thinkingId });
-
-            // // confirm if we've autoextracted
-            // if (scope === 'page') {
-            //     const confirmContent = await promptForConfirm({
-            //         msg: [`We've extracted the following text with title:`, `## ${title}`, content, `Does this look right?`].join('\n\n'),
-            //         yesLabel: `YES, break it down!`,
-            //         noLabel: `NO, I'll manually select it`,
-            //     });
-            //     if (!confirmContent) {
-            //         if (logalot) { console.log(`${lc} user cancelled when confirming page scope extract text.`); }
-            //         updateThinkingEntry(thinkingId, 'Operation cancelled by user.', true, true);
-            //         return; /* <<<< returns early */
-            //     }
-            // }
-            // // #endregion extract the source text to break down
-
-            // updateThinkingEntry(thinkingId, 'Creating project and text ibgibs...');
-            // // #region create the src comment and project ibgibs
-            // let srcCommentIbGib = await this.OLD_handleBreakItDownClick_createRootCommentIbGib({
-            //     title,
-            //     content,
-            //     pageContentInfo,
-            //     href,
-            //     thinkingId,
-            //     space,
-            //     metaspace,
-            // });
-
-            // // THIRD, CREATE THE PROJECT ITSELF
-            // let project: ProjectIbGib_V1;
-            // if (projectAction === SIDEPANEL_AUTONEWPROJECT_TEXT) {
-            //     project = await this.handleBreakItDownClick_createAutoNewProject({
-            //         title,
-            //         href,
-            //         srcCommentIbGib,
-            //         metaspace,
-            //         space,
-            //         thinkingId,
-            //     });
-            //     updateThinkingEntry(thinkingId, `Successfully created new project: ${project.data!.name}`);
-            // } else {
-            //     throw new Error(`existing project not implemented yet`);
-            // }
-
-            // // add a soft link back from the comment to the project
-            // const projectTjpAddr = getTjpAddr({ ibGib: project, defaultIfNone: 'incomingAddr' });
-            // if (!projectTjpAddr) { throw new Error(`(UNEXPECTED) projectTjpAddr falsy? (E: 951fd86d451aaf5028f635f89e781825)`); }
-            // srcCommentIbGib = await mut8Timeline({
-            //     timeline: srcCommentIbGib,
-            //     mut8Opts: {
-            //         dataToAddOrPatch: {
-            //             [PROJECT_TJP_ADDR_PROPNAME]: projectTjpAddr,
-            //         }
-            //     }, // also adding title to ibgib data
-            //     metaspace,
-            //     space,
-            //     skipLock: true, // newly created timeline that no one knows about
-            // });
-            // // #endregion create the src comment and project ibgibs
-
-            // updateThinkingEntry(thinkingId, `initializing project...`);
-            // const srcCommentAddr = getIbGibAddr({ ibGib: srcCommentIbGib });
-
-            // // FIFTH, RELATE THE SRC COMMENT TO THE PROJECT
-            // project = await appendToTimeline({
-            //     timeline: project,
-            //     rel8nInfos: [{
-            //         rel8nName: getChunkRel8nName({
-            //             contextScope: 'default'
-            //         }),
-            //         ibGibs: [srcCommentIbGib],
-            //     }],
-            //     metaspace,
-            //     space,
-            //     skipLock: false,
-            // }) as ProjectIbGib_V1;
-
-            // // create and inject the comment component corresponding to the
-            // // newSrcCommentIbGib
-            // const componentSvc = await getComponentSvc();
-            // const commentComponent =
-            //     await componentSvc.getComponentInstance({
-            //         path: RABBIT_HOLE_COMMENT_COMPONENT_NAME,
-            //         ibGibAddr: srcCommentAddr,
-            //         useRegExpPrefilter: true,
-            //     }) as RabbitHoleCommentComponentInstance;
-            // if (!commentComponent) { throw new Error(`(UNEXPECTED) commentComponent falsy? couldn't get a commentComponent? (E: genuuid)`); }
-            // await componentSvc.inject({
-            //     parentEl: contentEl,
-            //     componentToInject: commentComponent,
-            // });
-
-            // commentComponent.breakItDown(); // spin off
-
-            // // FINALLY, UPDATE THE UI
-            // await this.renderUI_projectsDropdown();
-
-            // updateThinkingEntry(thinkingId, `Break it down complete...tho it's just getting started really`, /*isComplete*/ true);
-        } catch (error) {
-            console.error(`${lc} ${extractErrorMsg(error)}`);
-            if (thinkingId) {
-                updateThinkingEntry(thinkingId, `Error: ${extractErrorMsg(error)}`, true, true);
-            }
         }
     }
 
@@ -1777,66 +1629,6 @@ export class SidepanelComponentInstance
             if (firstExpandBtn) { firstExpandBtn.click(); }
 
             if (logalot) { console.log(`${lc} Auto-chunking complete. DOM re-rendered.`); }
-
-        } catch (error) {
-            console.error(`${lc} ${extractErrorMsg(error)}`);
-            throw error;
-        } finally {
-            if (logalot) { console.log(`${lc} complete.`); }
-        }
-    }
-
-    private async createRootCommentIbGib({
-        title,
-        href,
-        space,
-        metaspace,
-    }: {
-        title: string,
-        href: string,
-        space: IbGibSpaceAny,
-        metaspace: MetaspaceService,
-    }): Promise<CommentIbGib_V1> {
-        const lc = `${this.lc}[${this.createRootCommentIbGib.name}]`;
-        try {
-            if (logalot) { console.log(`${lc} starting... (I: b6cca86a26c8143e5881c2481eb25925)`); }
-
-            if (!this._currentDomRoot) { throw new Error(`(UNEXPECTED) this._currentDomRoot falsy? (E: 697b45590a88301589f6eae864338825)`); }
-
-            debugger; // what does the content look like? is this getNodeTextContent function acting like I think it does, where it gets the equivalent of "innerText", but built up via the twin DOM nodes?
-
-            let [srcCommentIbGib] = await createChunkCommentIbGibs({
-                domNodesOrStrings: this._currentDomRoot,
-                metaspace,
-                space,
-                recursive: false,
-            });
-
-            // const content = getNodeTextContent_keepspaces(this._currentDomRoot);
-
-            // const srcCommentText = `${title}\n\n${content}`;
-            // const resCommentIbGib = await createCommentIbGib({
-            //     text: srcCommentText,
-            //     addlMetadataText: undefined,
-            //     saveInSpace: true,
-            //     space,
-            // });
-            // let srcCommentIbGib = resCommentIbGib.newIbGib as CommentIbGib_V1;
-            // await metaspace.registerNewIbGib({ ibGib: srcCommentIbGib, space });
-            // srcCommentIbGib = await mut8Timeline({
-            //     timeline: srcCommentIbGib,
-            //     mut8Opts: {
-            //         dataToAddOrPatch: {
-            //             href,
-            //             title,
-            //             domInfo: this._currentDomRoot,
-            //         }
-            //     }, // also adding title to ibgib data
-            //     metaspace,
-            //     space,
-            //     skipLock: true, // newly created timeline that no one knows about
-            // });
-            return srcCommentIbGib;
 
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);

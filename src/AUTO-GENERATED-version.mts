@@ -11,4 +11,4 @@
 /**
  * this is the version of this package, auto-updated in the build process
  */
-export const AUTO_GENERATED_VERSION = '0.14.23';
+export const AUTO_GENERATED_VERSION = '0.15.1';

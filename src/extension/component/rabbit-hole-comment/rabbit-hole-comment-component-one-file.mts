@@ -15,8 +15,8 @@ import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.
 import { GLOBAL_LOG_A_LOT } from '../../../constants.mjs';
 import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from '../../../ui/component/ibgib-dynamic-component-bases.mjs';
 import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "../../../ui/component/component-types.mjs";
-import { getGlobalMetaspace_waitIfNeeded, getSummaryTextKeyForIbGib, getTitleFromSummarizer, getTocHeader_FromIbGib, getTranslationTextKeyForIbGib, isChunkCommentIb, } from '../../helpers.mjs';
-import { getChunkRel8nName } from '../../helpers.mjs';
+import { getChunkRel8nName, getGlobalMetaspace_waitIfNeeded, getSummaryTextKeyForIbGib, getTitleFromSummarizer, getTocHeader_FromIbGib, } from '../../helpers.mjs';
+import { debounce } from '../../../helpers.mjs';
 import { promptForConfirm, shadowRoot_getElementById } from '../../../helpers.web.mjs';
 import { CHUNK_REL8N_NAME_DEFAULT_CONTEXT_SCOPE, PROJECT_TJP_ADDR_PROPNAME, } from '../../constants.mjs';
 import { ProjectIbGib_V1 } from '../../../common/project/project-types.mjs';
@@ -77,48 +77,26 @@ export class RabbitHoleCommentComponentMeta extends IbGibDynamicComponentMetaBas
  *   main container for the details panel.
  */
 interface RabbitHoleCommentElements extends ElementsBase {
-    // top level elements
-    /**
-     * redeclared to be non-optional
-     */
+    /** redeclared to be non-optional */
     headerEl: HTMLDivElement;
     expandBtn: HTMLButtonElement;
-    textEl: HTMLParagraphElement;
+    commentText: HTMLParagraphElement;
 
-    // #region command bar elements
-    /**
-     * command bar that lives in the expanded details view
-     */
+    // main command bar buttons
     commandBar: HTMLDivElement;
-
     highlightBtn: HTMLButtonElement;
-    viewTypeGroup: HTMLDivElement;
-    /**
-     * choosing this view triggers the "break it down" functionality
-     */
     keyPointsBtn: HTMLButtonElement;
     tldrBtn: HTMLButtonElement;
     translateBtn: HTMLButtonElement;
 
-
-    viewLengthGroup: HTMLDivElement;
-    shortBtn: HTMLButtonElement;
-    longBtn: HTMLButtonElement;
-
-    translationGroup: HTMLDivElement;
-    languageDropdown: HTMLSelectElement;
-    // #endregion command bar elements
-
-    // view container
-    /**
-     * shown in the details section when a component is expanded. this contains
-     * dynamically-generated summary views, as well as the {@link childrenView}.
-     */
+    // content/view areas
+    contentEl: HTMLDivElement;
     viewContainer: HTMLDivElement;
-    /**
-     * contains any child rabbit hole components (composite pattern)
-     */
-    childrenView: HTMLDivElement;
+
+    // templates for dynamic views
+    tldrViewTemplate: HTMLTemplateElement;
+    translationViewTemplate: HTMLTemplateElement;
+    keyPointsViewTemplate: HTMLTemplateElement;
 }
 
 export type TaskStatus = 'started' | 'complete';
@@ -137,37 +115,28 @@ export class RabbitHoleCommentComponentInstance
      */
     private queuedSummaryTasks: { [type_length: string]: TaskStatus } = {};
     private isHighlighted: boolean = false;
-    /**
-     * The user's desired view *type*, if selected.
-     * This acts as the state for the view type radio button group.
-     * @default undefined
-     */
-    private selectedType?: ViewType;
-    /**
-     * The user's desired summary *length*, if selected.
-     * This acts as the state for the view length radio button group.
-     * @default undefined
-     */
-    private selectedLength?: SummarizerLength;
-    /**
-     * The user's desired translation language, if selected.
-     * This acts as the state for the language dropdown.
-     * @default 'en-US'
-     */
-    private selectedTranslationLanguage: string = 'en-US';
 
-    /**
-     * The actual view being displayed.
-     * This is derived from `selectedType` and `selectedLength`.
-     */
-    private viewMode: CommentViewMode = 'children';
     /**
      * Tracks the expanded/collapsed state of the details panel.
      * @default false
      */
     private _isExpanded: boolean = false; // Start collapsed
     private childComponents: RabbitHoleCommentComponentInstance[] = [];
-    private get hasChildren(): boolean { return (this.childComponents ?? []).length > 0; }
+    protected get hasChildren(): boolean {
+        const chunkRel8nName = getChunkRel8nName({ contextScope: 'default' });
+        const childAddrs = this.ibGib?.rel8ns?.[chunkRel8nName] ?? [];
+        return childAddrs.length > 0;
+    }
+
+    private activeTldrLength: SummarizerLength | undefined;
+    private activeDetailViews: {
+        [key in 'tldr' | 'translation' | 'keyPoints']: boolean
+    } = {
+            tldr: false,
+            translation: false,
+            keyPoints: false,
+        };
+
     // #endregion state properties
 
     // #region project (ibGib, proxy, etc.)
@@ -300,21 +269,22 @@ export class RabbitHoleCommentComponentInstance
             // Set up event listeners
             const {
                 headerEl, expandBtn, highlightBtn,
-                keyPointsBtn, tldrBtn, shortBtn, longBtn,
+                keyPointsBtn, tldrBtn,
                 translateBtn,
-                languageDropdown,
             } = this.elements;
+
             headerEl.addEventListener('click', () => this.handleClick_header());
             expandBtn.addEventListener('click', (event) => this.handleClick_expandBtn(event));
             highlightBtn.addEventListener('click', (event) => this.handleClick_highlight(event));
 
-            keyPointsBtn.addEventListener('click', () => this.handleClick_viewType('children'));
-            tldrBtn.addEventListener('click', () => this.handleClick_viewType('tldr'));
-            shortBtn.addEventListener('click', () => this.handleClick_viewLength('short'));
-            longBtn.addEventListener('click', () => this.handleClick_viewLength('long'));
-
-            translateBtn.addEventListener('click', () => this.handleClick_viewType('translation'));
-            languageDropdown.addEventListener('change', (e) => this.handleChange_languageDropdown(e));
+            // UPDATED: Pointing to new toggle handlers
+            // handleClick_toggleView
+            tldrBtn.addEventListener('click', () => this.handleClick_toggleView({ viewName: 'tldr' }));
+            translateBtn.addEventListener('click', () => this.handleClick_toggleView({ viewName: 'translation' }));
+            keyPointsBtn.addEventListener('click', () => this.handleClick_toggleView({ viewName: 'keyPoints' }));
+            // tldrBtn.addEventListener('click', () => this.handleClick_toggleTldrView());
+            // translateBtn.addEventListener('click', () => this.handleClick_toggleTranslationView());
+            // keyPointsBtn.addEventListener('click', () => this.handleClick_toggleKeyPointsView());
 
             // Perform an initial render to get the component on the screen.
             await this.renderUI();
@@ -345,23 +315,16 @@ export class RabbitHoleCommentComponentInstance
                 });
             }
 
-            // Set the initial view mode based on whether children already exist.
-            const chunkRel8nName = getChunkRel8nName({ contextScope: CHUNK_REL8N_NAME_DEFAULT_CONTEXT_SCOPE });
-            const childAddrs = this.ibGib?.rel8ns?.[chunkRel8nName] ?? [];
-            if (childAddrs.length > 0) {
-                // It's a branch, so default to children view.
-                await this.renderUI_children({ childAddrs });
-                this.viewMode = 'children';
-                this.selectedType = 'children';
-            } else {
-                // It's a leaf, so default to tldr_short view.
-                // this.viewMode = 'tldr_short';
-                // this.selectedType = 'tldr';
-                // this.selectedLength = 'short';
-            }
-            // Re-render to show correct button states, etc.
-            await this.renderUI();
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+            throw error;
+        }
+    }
 
+    override async disconnected(): Promise<void> {
+        const lc = `${this.lc}[${this.disconnected.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting... (I: genuuid)`); }
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
             throw error;
@@ -370,14 +333,98 @@ export class RabbitHoleCommentComponentInstance
         }
     }
 
-    private getThinkingIdFromTjpGib(): string | undefined {
-        if (this.ibGib) {
-            const tjpGib = getGibInfo({ gib: this.gib }).tjpGib ?? this.gib;
-            return tjpGib.substring(0, 16);
-        } else {
-            return undefined;
+    private async initElements(): Promise<void> {
+        const lc = `${this.lc}[${this.initElements.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting...`); }
+            if (!this.shadowRoot) { throw new Error(`(UNEXPECTED) this.shadowRoot falsy? (E: 949cabfb12a57b69efa241b8fbad1825)`); }
+
+            this.elements = {
+                headerEl: shadowRoot_getElementById(this.shadowRoot, 'rabbit-hole-comment-header'),
+                expandBtn: shadowRoot_getElementById(this.shadowRoot, 'expand-btn'),
+                commentText: shadowRoot_getElementById(this.shadowRoot, 'comment-text'),
+
+                // main command bar buttons
+                commandBar: shadowRoot_getElementById(this.shadowRoot, 'command-bar'),
+                highlightBtn: shadowRoot_getElementById(this.shadowRoot, 'highlight-btn'),
+                keyPointsBtn: shadowRoot_getElementById(this.shadowRoot, 'key-points-btn'),
+                tldrBtn: shadowRoot_getElementById(this.shadowRoot, 'tldr-btn'),
+                translateBtn: shadowRoot_getElementById(this.shadowRoot, 'translate-btn'),
+
+                // content/view areas
+                contentEl: shadowRoot_getElementById(this.shadowRoot, 'rabbit-hole-comment-content'),
+                viewContainer: shadowRoot_getElementById(this.shadowRoot, 'view-container'),
+
+                // templates for dynamic views
+                tldrViewTemplate: shadowRoot_getElementById(this.shadowRoot, 'tldr-view-template'),
+                translationViewTemplate: shadowRoot_getElementById(this.shadowRoot, 'translation-view-template'),
+                keyPointsViewTemplate: shadowRoot_getElementById(this.shadowRoot, 'key-points-view-template'),
+            };
+
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+            throw error;
         }
     }
+
+    protected override async handleContextUpdated(): Promise<void> {
+        const lc = `${this.lc}[${this.handleContextUpdated.name}]`;
+        try {
+            await super.handleContextUpdated();
+            if (!this.ibGib) { throw new Error(`(UNEXPECTED) this.ibGib falsy? (E: 8cfa3f53f5582c4348b21ab897c38a25)`); }
+            if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements falsy? (E: 2f1e180d29264ab738e917789df87e25)`); }
+
+            const previouslyRunningTasks = { ...this.queuedSummaryTasks };
+            await this.updateSummaryTaskStatus_andBreakingDownFlag();
+
+            let aTaskJustFinished = false;
+
+            // Check if an active TLDR task just finished
+            if (this.activeTldrLength) {
+                const summaryKey = getSummaryTextKeyForIbGib({ type: 'tldr', length: this.activeTldrLength });
+                if (previouslyRunningTasks[summaryKey] === 'started' && this.queuedSummaryTasks[summaryKey] === 'complete') {
+                    aTaskJustFinished = true;
+                    const tldrView = this.elements.viewContainer.querySelector<HTMLDivElement>('#tldr-detail-view');
+                    if (tldrView) {
+                        // This is the key: explicitly re-render the view's content with the new data.
+                        this.renderUI_tldrContent(tldrView, this.activeTldrLength);
+                    }
+                }
+            }
+
+            // Check if 'break it down' just finished
+            const childrenJustAdded = this.hasChildren && this.childComponents.length === 0;
+            if (this._breakingDown && childrenJustAdded) {
+                aTaskJustFinished = true;
+                this._breakingDown = false;
+            }
+
+            // If any task finished, check if we should stop the thinking animation
+            const anyTasksStillRunning = Object.values(this.queuedSummaryTasks).some(s => s === 'started');
+            this.isThinking = anyTasksStillRunning;
+
+            // Handle auto-showing Key Points view if children were added externally
+            if (childrenJustAdded && this._isExpanded) {
+                this.activeDetailViews.keyPoints = true;
+            }
+
+            // Finally, call the main render function to update all component chrome
+            await this.renderUI();
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+            this.isThinking = false;
+            await this.renderUI();
+        }
+    }
+
+    protected override async handleNewContextChild({ childIbGib }: { childIbGib: IbGib_V1; }): Promise<void> {
+        const lc = `${this.lc}[${this.handleNewContextChild.name}]`;
+        // We are using handleContextUpdated to handle all children at once.
+        // So we don't need to do anything here for now.
+        if (logalot) { console.log(`${lc} triggered but unhandled. (childIbGib: ${pretty(childIbGib)})`); }
+    }
+
+    // #region renderUI
 
     protected override async renderUI(): Promise<void> {
         const lc = `${this.lc}[${this.renderUI.name}]`;
@@ -385,80 +432,61 @@ export class RabbitHoleCommentComponentInstance
             if (logalot) { console.log(`${lc} starting...`); }
             await super.renderUI();
 
-            if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements falsy? (E: f02db8c33382a16dc846e0d8f1d4b825)`); }
+            if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements falsy?`); }
             const {
-                textEl, contentEl, commandBar, keyPointsBtn, tldrBtn,
-                shortBtn, longBtn,
-                translateBtn,
-                headerEl, highlightBtn,
+                commentText, contentEl, headerEl,
+                keyPointsBtn, tldrBtn, translateBtn,
+                highlightBtn, viewContainer
             } = this.elements;
 
-            // Reset UI state
-            this.classList.remove('thinking');
-            if (this.isThinking) { this.classList.add('thinking'); }
-
-            // Set the header text
+            // #region Basic Component State
+            this.classList.toggle('thinking', this.isThinking);
+            contentEl.classList.toggle('collapsed', !this._isExpanded);
+            headerEl.classList.toggle('expanded', this._isExpanded);
+            await this.renderUI_highlightBtn();
             const displayText = getTocHeader_FromIbGib({ ibGib: this.ibGib });
-            textEl.textContent = displayText;
-
-            // Manage visibility of the details panel
-            if (this._isExpanded) {
-                contentEl.classList.remove('collapsed');
-                headerEl.classList.add('expanded');
-            } else {
-                contentEl.classList.add('collapsed');
-                headerEl.classList.remove('expanded');
-            }
-
-            // #region Command Bar UI Logic
-            if (this.isRootSrc) {
-                // The root comment is just a container for the ToC; it has no summaries of its own.
-                commandBar.classList.add('collapsed');
-            } else {
-                commandBar.classList.remove('collapsed');
-
-                // reset active states
-                keyPointsBtn.classList.remove('active');
-                tldrBtn.classList.remove('active');
-                translateBtn.classList.remove('active'); // new
-                shortBtn.classList.remove('active');
-                longBtn.classList.remove('active');
-
-                // Set active class on the correct type button
-                if (this.selectedType === 'children') {
-                    keyPointsBtn.classList.add('active');
-                } else if (this.selectedType === 'tldr') {
-                    tldrBtn.classList.add('active');
-                } else if (this.selectedType === 'translation') { // new
-                    translateBtn.classList.add('active'); // new
-                }
-
-                // The length group is ONLY visible when 'tldr' has been chosen.
-                const { viewLengthGroup, translationGroup, languageDropdown } = this.elements; // new
-                if (this.selectedType === 'tldr') {
-                    viewLengthGroup.classList.remove('collapsed');
-                    // Set active class on the correct length button
-                    if (this.selectedLength === 'short') {
-                        shortBtn.classList.add('active');
-                    } else if (this.selectedLength === 'long') {
-                        longBtn.classList.add('active');
-                    }
-                } else {
-                    viewLengthGroup.classList.add('collapsed');
-                }
-
-                // The translation group is ONLY visible when 'translation' has been chosen. (new)
-                if (this.selectedType === 'translation') { // new
-                    translationGroup.classList.remove('collapsed'); // new
-                    languageDropdown.value = this.selectedTranslationLanguage; // new
-                } else { // new
-                    translationGroup.classList.add('collapsed'); // new
-                }
-            }
+            commentText.textContent = displayText;
             // #endregion
 
+            // #region Main Command Bar Button States
+            tldrBtn.classList.toggle('active', this.activeDetailViews.tldr);
+            translateBtn.classList.toggle('active', this.activeDetailViews.translation);
+            keyPointsBtn.classList.toggle('active', this.activeDetailViews.keyPoints);
+            keyPointsBtn.disabled = !this.hasChildren;
+            // #endregion
 
-            await this.renderUI_highlightBtn();
+            // #region Detail View Rendering Logic (Create Once, Then Toggle)
+            if (this._isExpanded) {
+                // TLDR View
+                let tldrView = viewContainer.querySelector<HTMLDivElement>('#tldr-detail-view');
+                if (this.activeDetailViews.tldr && !tldrView) {
+                    // If view is active but doesn't exist in DOM, create it.
+                    this.createDetailView_tldr();
+                    // And re-select it after creation.
+                    tldrView = viewContainer.querySelector<HTMLDivElement>('#tldr-detail-view');
+                }
+                // Now, if the view exists, toggle its visibility based on the active state.
+                tldrView?.classList.toggle('collapsed', !this.activeDetailViews.tldr);
+
+                // Translation View
+                let translationView = viewContainer.querySelector<HTMLDivElement>('#translation-detail-view');
+                if (this.activeDetailViews.translation && !translationView) {
+                    this.createDetailView_translation();
+                    translationView = viewContainer.querySelector<HTMLDivElement>('#translation-detail-view');
+                }
+                translationView?.classList.toggle('collapsed', !this.activeDetailViews.translation);
+
+                // Key Points View (NEW)
+                let keyPointsView = viewContainer.querySelector<HTMLDivElement>('#key-points-detail-view');
+                if (this.activeDetailViews.keyPoints && !keyPointsView && this.hasChildren) {
+                    // If the view should be active, doesn't exist yet, but we now have children to show, create it.
+                    await this.createDetailView_keyPoints();
+                    keyPointsView = viewContainer.querySelector<HTMLDivElement>('#key-points-detail-view');
+                }
+                // If the view exists in the DOM, just toggle its visibility.
+                keyPointsView?.classList.toggle('collapsed', !this.activeDetailViews.keyPoints);
+            }
+            // #endregion
 
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
@@ -481,59 +509,29 @@ export class RabbitHoleCommentComponentInstance
         } finally {
             if (logalot) { console.log(`${lc} complete.`); }
         }
-
     }
 
-    private async renderUI_children({
-        childAddrs,
-    }: {
-        childAddrs: IbGibAddr[],
-    }): Promise<void> {
-        const lc = `${this.lc}[${this.renderUI_children.name}]`;
-        try {
-            if (logalot) { console.log(`${lc}[${childAddrs.length} children] starting... (I: aa38f12e5a581356d8e23ab8d4697825)`); }
-            if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements falsy (E: genuuid)`); }
+    private renderUI_tldrContent(view: HTMLDivElement, length: SummarizerLength): void {
+        const lc = `${this.lc}[${this.renderUI_tldrContent.name}]`;
+        if (!this.ibGib?.data || !view) { return; }
 
-            this.elements.childrenView.innerHTML = ''; // clear existing DOM
+        const contentView = view.querySelector<HTMLDivElement>('.detail-view-content');
+        if (!contentView) { console.error(`${lc} contentView not found in view.`); return; }
 
-            this.childComponents = []; // clear existing component instances
+        const type: SummarizerType = 'tldr';
+        const summaryKey = getSummaryTextKeyForIbGib({ type, length });
+        const summaryText = this.ibGib.data[summaryKey];
 
-            const componentSvc = await getComponentSvc();
-
-            for (const childAddr of childAddrs) {
-                // Use the service to get an instance of the child component.
-                const childInstance =
-                    await componentSvc.getComponentInstance({
-                        path: RABBIT_HOLE_COMMENT_COMPONENT_NAME,
-                        ibGibAddr: childAddr,
-                        useRegExpPrefilter: true,
-                    }) as RabbitHoleCommentComponentInstance;
-
-                if (!childInstance) {
-                    console.error(`${lc} (UNEXPECTED) childInstance falsy? couldn't get a component for addr: ${childAddr}?`);
-                    continue; // skip this child if it can't be created
-                }
-
-                // Add the new instance to our internal tracking array.
-                this.childComponents.push(childInstance);
-
-                // Use the service to inject the component into the DOM.
-                const divChild = document.createElement('div');
-                divChild.classList.add('comment-child');
-                this.elements.childrenView.appendChild(divChild);
-
-                await componentSvc.inject({
-                    parentEl: divChild,
-                    componentToInject: childInstance,
-                });
-            }
-        } catch (error) {
-            console.error(`${lc} ${extractErrorMsg(error)}`);
-            throw error;
-        } finally {
-            if (logalot) { console.log(`${lc} complete.`); }
+        if (summaryText) {
+            // Data exists, render it.
+            contentView.innerHTML = `<p>${summaryText}</p>`;
+        } else {
+            // Data does not exist, so show the generating message.
+            contentView.innerHTML = `<p>Generating ${length} tldr...</p>`;
         }
     }
+
+    // #endregion renderUI
 
     // #region handleClick
 
@@ -548,20 +546,16 @@ export class RabbitHoleCommentComponentInstance
             // Toggle the internal state
             this._isExpanded = !this._isExpanded;
 
-            // The renderUI method is the single source of truth for applying CSS classes.
-            // If we are expanding, we may also need to load a specific view.
-            if (this._isExpanded) {
-                if (this.selectedType) {
-                    await this.switchToView({ view: this.viewMode });
-                } else if (this.isRootSrc && this.hasChildren) {
-                    await this.switchToView({ view: 'children' });
-                } else {
-                    await this.renderUI();
-                }
-            } else {
-                // When collapsing, we just need to re-render to hide the content.
-                await this.renderUI();
+            // If we are EXPANDING and this component HAS children, default to
+            // showing the key points view automatically.
+            if (this._isExpanded && this.hasChildren) {
+                this.activeDetailViews.keyPoints = true;
             }
+
+            // The renderUI method is now the single source of truth for visibility.
+            // It will show/hide the content panel and any active detail views based on component state.
+            await this.renderUI();
+
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
         }
@@ -581,65 +575,44 @@ export class RabbitHoleCommentComponentInstance
         }
     }
 
-    /**
-     * Sets the highlight state for this component and all its descendants.
-     * It also sends the message to the content script to update the DOM twin.
-     */
-    private async setHighlightState(shouldBeHighlighted: boolean): Promise<void> {
-        const lc = `${this.lc}[${this.setHighlightState.name}]`;
+    private async handleClick_toggleView({
+        viewName,
+    }: {
+        viewName: keyof RabbitHoleCommentComponentInstance['activeDetailViews']
+    }): Promise<void> {
+        const lc = `${this.lc}[_handleViewToggle]`;
         try {
-            if (logalot) { console.log(`${lc} starting... shouldBeHighlighted: ${shouldBeHighlighted}`); }
+            if (logalot) { console.log(`${lc} starting... viewName: ${viewName}`); }
 
-            // 1. Set the state for the current component.
-            this.isHighlighted = shouldBeHighlighted;
+            // Determine if the view is about to become active.
+            const becomingActive = !this.activeDetailViews[viewName];
+            this.activeDetailViews[viewName] = becomingActive;
 
-            // 2. Send the message to the content script to update the DOM twin.
-            const gibId = this.ibGib?.data?.domInfo?.gibId ?? '';
-            if (gibId) {
-                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-                if (tab?.id) {
-                    chrome.tabs.sendMessage(tab.id, {
-                        type: 'toggleHighlight',
-                        gibId: gibId,
-                        shouldBeHighlighted: this.isHighlighted,
-                    });
+            if (becomingActive) {
+                // If we're turning a view ON, always ensure the main panel is expanded.
+                this._isExpanded = true;
+            } else {
+                // If we're turning a view OFF, check if any other views are still active.
+                const anyViewsActive = Object.values(this.activeDetailViews).some(isActive => isActive);
+                if (!anyViewsActive) {
+                    // If no views are left, collapse the main panel.
+                    this._isExpanded = false;
                 }
             }
 
-            // 3. Update this component's UI.
+            // Special case: If we're activating "Key Points" for the first time, generate them.
+            if (viewName === 'keyPoints' && becomingActive && !this.hasChildren) {
+                await this.breakItDown();
+                // The breakItDown process calls renderUI itself, so we can exit early.
+                return;
+            }
+
+            // For all other cases, call the main render function to update the DOM.
             await this.renderUI();
 
-            // 4. Recursively call for all children.
-            for (const child of this.childComponents) {
-                await child.setHighlightState(shouldBeHighlighted);
-            }
-
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
-        }
-    }
-
-    /**
-     * Handles clicks on the view length buttons (e.g., Short, Long).
-     * This is the final step that triggers a summary task.
-     */
-    private async handleClick_viewLength(length: SummarizerLength): Promise<void> {
-        const lc = `${this.lc}[${this.handleClick_viewLength.name}]`;
-        try {
-            if (logalot) { console.log(`${lc} starting... length: ${length}`); }
-            this.selectedLength = length;
-
-            if (this.selectedType === 'tldr') {
-                // Construct the viewMode and switch to it, which will trigger AI if needed.
-                this.viewMode = `${this.selectedType}_${this.selectedLength}`;
-                await this.switchToView({ view: this.viewMode });
-            } else {
-                // This case shouldn't be reachable if buttons are collapsed, but as a fallback,
-                // we'll just render the button states.
-                await this.renderUI();
-            }
-        } catch (error) {
-            console.error(`${lc} ${extractErrorMsg(error)}`);
+            throw error;
         }
     }
 
@@ -657,60 +630,46 @@ export class RabbitHoleCommentComponentInstance
     }
 
     /**
-     * Handles clicks on the view type buttons (e.g., Children, TLDR).
+     * Handles a click on a length button within a TLDR detail view.
+     * This is where the AI summary task would be triggered.
      */
-    private async handleClick_viewType(type: ViewType): Promise<void> {
-        const lc = `${this.lc}[${this.handleClick_viewType.name}]`;
+    private async handleClick_tldrLength(length: SummarizerLength, view: HTMLDivElement): Promise<void> {
+        const lc = `${this.lc}[${this.handleClick_tldrLength.name}]`;
         try {
-            if (logalot) { console.log(`${lc} starting... type: ${type}`); }
+            if (logalot) { console.log(`${lc} starting... length: ${length}`); }
+            this.activeTldrLength = length;
 
-            // Hide any previous views when switching types.
-            if (this.elements) {
-                this.elements.viewContainer.querySelectorAll<HTMLDivElement>('.view')
-                    .forEach(v => v.classList.add('collapsed'));
+            // Update button states immediately
+            view.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            view.querySelector<HTMLButtonElement>(`[data-view-length="${length}"]`)?.classList.add('active');
+
+            const type: SummarizerType = 'tldr';
+            const summaryKey = getSummaryTextKeyForIbGib({ type, length });
+            const summaryText = this.ibGib?.data?.[summaryKey];
+
+            // If the summary does NOT exist, we need to start the background task.
+            if (!summaryText && (!this.queuedSummaryTasks[summaryKey] || this.queuedSummaryTasks[summaryKey] === 'complete')) {
+                this.isThinking = true;
+                await this.renderUI(); // Call immediately to start the 'thinking' pulse
+
+                this.queuedSummaryTasks[summaryKey] = 'started';
+                const queueSvc = getPriorityQueueSvc();
+                queueSvc.enqueue({
+                    type: 'summary',
+                    ibGib: this.ibGib!,
+                    priority: SUMMARY_PRIORITY_USER_JUST_CLICKED,
+                    thinkingId: this.getThinkingIdFromTjpGib(),
+                    options: {
+                        text: this.ibGib?.data?.text!,
+                        type,
+                        length,
+                        isTitle: false,
+                    } as SummaryQueueInfo,
+                });
             }
 
-            this.selectedType = type;
-            this.selectedLength = undefined; // Reset length selection on type change
-
-            if (type === 'children') {
-                if (this.hasChildren) {
-                    await this.switchToView({ view: 'children' });
-                } else {
-                    await this.breakItDown();
-                }
-            } else if (type === 'tldr') {
-                // Just re-render to show the length options. Don't trigger AI yet.
-                await this.renderUI();
-            } else if (type === 'translation') {
-                // Construct the viewMode from state and switch to it.
-                this.viewMode = `translation_${this.selectedTranslationLanguage}`;
-                await this.switchToView({ view: this.viewMode });
-            }
-        } catch (error) {
-            console.error(`${lc} ${extractErrorMsg(error)}`);
-        }
-    }
-
-
-    private async handleChange_languageDropdown(event: Event): Promise<void> {
-        const lc = `${this.lc}[${this.handleChange_languageDropdown.name}]`;
-        try {
-            if (logalot) { console.log(`${lc} starting...`); }
-            const target = event.target as HTMLSelectElement;
-            const newLanguage = target.value;
-            this.selectedTranslationLanguage = newLanguage;
-
-            if (this.selectedType === 'translation') {
-                // If we are already in translation mode, switching the language should
-                // immediately trigger a new translation.
-                this.viewMode = `translation_${this.selectedTranslationLanguage}`;
-                await this.switchToView({ view: this.viewMode });
-            } else {
-                // If not in translation mode, we don't need to do anything besides
-                // updating the state, which we've already done.
-                await this.renderUI();
-            }
+            // Now, render the content (it will show the result OR the "Generating..." message)
+            this.renderUI_tldrContent(view, length);
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
         }
@@ -718,6 +677,201 @@ export class RabbitHoleCommentComponentInstance
 
 
     // #endregion handleClick
+
+    /**
+     * Handles a language selection from within a Translation detail view.
+     */
+    private async handleChange_translationLanguage(event: Event, view: HTMLDivElement): Promise<void> {
+        const lc = `${this.lc}[${this.handleChange_translationLanguage.name}]`;
+        try {
+            const dropdown = event.target as HTMLSelectElement;
+            const targetLang = dropdown.value;
+            if (!targetLang) { return; }
+            console.log(`${lc} Target language selected: ${targetLang}`);
+
+            const contentView = view.querySelector<HTMLDivElement>('.detail-view-content');
+            if (contentView) {
+                contentView.innerHTML = `<p>Translation to ${targetLang} coming soon...</p>`;
+            }
+
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+        }
+    }
+
+    // #region createDetailView
+
+    /**
+     * Creates the TLDR detail view from its template, wires up its internal
+     * controls, and appends it to the view container.
+     */
+    private createDetailView_tldr(): void {
+        const lc = `${this.lc}[${this.createDetailView_tldr.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting...`); }
+            if (!this.elements) { throw new Error(`(UNEXPECTED) elements not initialized.`); }
+
+            // 1. Clone the template
+            const tldrTemplate = this.elements.tldrViewTemplate;
+            const tldrViewClone = tldrTemplate.content.cloneNode(true) as DocumentFragment;
+            const tldrView = tldrViewClone.firstElementChild as HTMLDivElement;
+
+            if (!tldrView) { throw new Error(`(UNEXPECTED) Cloning tldr-view-template failed.`); }
+
+            // 2. Wire up internal controls
+            const shortBtn = tldrView.querySelector<HTMLButtonElement>('[data-view-length="short"]');
+            const longBtn = tldrView.querySelector<HTMLButtonElement>('[data-view-length="long"]');
+
+            if (!shortBtn || !longBtn) { throw new Error(`(UNEXPECTED) Could not find length buttons in TLDR template clone.`); }
+
+            shortBtn.addEventListener('click', () => this.handleClick_tldrLength('short', tldrView));
+            longBtn.addEventListener('click', () => this.handleClick_tldrLength('long', tldrView));
+
+            // 3. Append to the DOM
+            this.elements.viewContainer.appendChild(tldrView);
+
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+        }
+    }
+
+    /**
+     * Creates the Translation detail view, wires up its controls, and appends it.
+     */
+    private async createDetailView_translation(): Promise<void> {
+        const lc = `${this.lc}[${this.createDetailView_translation.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting...`); }
+            if (!this.elements) { throw new Error(`(UNEXPECTED) elements not initialized.`); }
+
+            const template = this.elements.translationViewTemplate;
+            const viewClone = template.content.cloneNode(true) as DocumentFragment;
+            const view = viewClone.firstElementChild as HTMLDivElement;
+            if (!view) { throw new Error(`(UNEXPECTED) Cloning translation-view-template failed.`); }
+
+            const sourceInput = view.querySelector<HTMLInputElement>('.source-language-input');
+            const languageDropdown = view.querySelector<HTMLSelectElement>('.language-dropdown');
+            if (!sourceInput || !languageDropdown) { throw new Error(`(UNEXPECTED) Could not find controls in Translation template clone.`); }
+
+            // This function hides/shows dropdown options based on the source input
+            const updateDropdown = () => {
+                const sourceLang = sourceInput.value.toLowerCase();
+                languageDropdown.querySelectorAll('option').forEach(opt => {
+                    const shouldHide = opt.value !== '' && opt.value === sourceLang;
+                    opt.style.display = shouldHide ? 'none' : '';
+                    // If the currently selected item is now hidden, select the default
+                    if (shouldHide && opt.selected) {
+                        languageDropdown.value = '';
+                    }
+                });
+            };
+
+            // Add event listeners right away
+            const debouncedUpdate = debounce(updateDropdown, 300);
+            sourceInput.addEventListener('input', debouncedUpdate);
+            languageDropdown.addEventListener('change', (e) => this.handleChange_translationLanguage(e, view));
+
+            // Append to the DOM so the user sees the "Detecting..." state
+            this.elements.viewContainer.appendChild(view);
+
+
+            // #region Language Detection Logic
+            let detectedLanguage = 'en'; // Default value
+            try {
+                sourceInput.value = 'Detecting...';
+                sourceInput.disabled = true;
+
+                const textToDetect = this.ibGib?.data?.text ?? '';
+                if (!textToDetect) {
+                    if (logalot) { console.log(`${lc} No text to detect, defaulting to 'en'.`); }
+                    // detectedLanguage is already 'en'
+                } else {
+                    const detector = await LanguageDetector.create();
+                    const langResults = await detector.detect(textToDetect);
+                    // Use the top result, but fallback to 'en'
+                    detectedLanguage = (langResults[0]?.detectedLanguage) ?? 'en';
+                    if (logalot) { console.log(`${lc} Detected language: ${detectedLanguage}`); }
+                }
+            } catch (error) {
+                console.error(`${lc} Language detection failed. Defaulting to 'en'. ${extractErrorMsg(error)}`);
+                // detectedLanguage is already 'en' on error
+            } finally {
+                // Update the UI with the result (or fallback)
+                sourceInput.value = detectedLanguage;
+                sourceInput.disabled = false;
+                updateDropdown(); // Filter dropdown with the new language
+            }
+            // #endregion Language Detection Logic
+
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+        }
+    }
+
+    private async createDetailView_keyPoints(): Promise<void> {
+        const lc = `${this.lc}[${this.createDetailView_keyPoints.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting...`); }
+            if (!this.elements) { throw new Error(`(UNEXPECTED) elements not initialized.`); }
+            if (!this.ibGib) { throw new Error(`(UNEXPECTED) ibGib not initialized.`); }
+
+            // 1. Clone the template
+            const template = this.elements.keyPointsViewTemplate;
+            const viewClone = template.content.cloneNode(true) as DocumentFragment;
+            const view = viewClone.firstElementChild as HTMLDivElement;
+            if (!view) { throw new Error(`(UNEXPECTED) Cloning key-points-view-template failed.`); }
+
+            const contentView = view.querySelector<HTMLDivElement>('.detail-view-content');
+            if (!contentView) { throw new Error(`(UNEXPECTED) Could not find content area in Key Points template clone.`); }
+
+            // 2. Get Child Data
+            const chunkRel8nName = getChunkRel8nName({ contextScope: 'default' });
+            const childAddrs = this.ibGib.rel8ns?.[chunkRel8nName] ?? [];
+
+            if (childAddrs.length === 0) {
+                if (logalot) { console.log(`${lc} No children to render.`); }
+                // We could put a message here, but for now, we'll just be blank if there are no children.
+            }
+
+            // 3. Render Child Components into the new view's content area
+            this.childComponents = []; // clear existing component instances
+            const componentSvc = await getComponentSvc();
+
+            for (const childAddr of childAddrs) {
+                const childInstance =
+                    await componentSvc.getComponentInstance({
+                        path: RABBIT_HOLE_COMMENT_COMPONENT_NAME,
+                        ibGibAddr: childAddr,
+                        useRegExpPrefilter: true,
+                    }) as RabbitHoleCommentComponentInstance;
+
+                if (!childInstance) {
+                    console.error(`${lc} (UNEXPECTED) could not get a component for addr: ${childAddr}`);
+                    continue;
+                }
+
+                this.childComponents.push(childInstance);
+                const divChild = document.createElement('div');
+                divChild.classList.add('comment-child');
+                contentView.appendChild(divChild); // Append to the content area of our new clone
+
+                await componentSvc.inject({
+                    parentEl: divChild,
+                    componentToInject: childInstance,
+                });
+            }
+
+            // 4. Append the fully-populated view to the DOM
+            this.elements.viewContainer.appendChild(view);
+
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+        }
+    }
+
+    // #endregion createDetailView
+
+    // #region other helpers
 
     private async scrollToGib(): Promise<void> {
         const lc = `${this.lc}[${this.scrollToGib.name}]`;
@@ -746,313 +900,41 @@ export class RabbitHoleCommentComponentInstance
         }
     }
 
-    // #region switchToView
-    private async switchToView({ view }: { view: CommentViewMode }): Promise<void> {
-        const lc = `${this.lc}[${this.switchToView.name}]`;
-        try {
-            if (logalot) { console.log(`${lc} starting... view: ${view}`); }
-            if (!this.ibGib) { throw new Error(`(UNEXPECTED) this.ibGib falsy? (E: 8a7c6d5e4f3b4c9e8a1b2c3d4e5f6a7b)`); }
-            if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements falsy? (E: 1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e)`); }
-
-            this.viewMode = view; // Set the current view mode
-            const { viewContainer } = this.elements;
-
-            // 1. Hide all views to start fresh
-            const allViews = viewContainer.querySelectorAll<HTMLDivElement>('.view');
-            allViews.forEach(v => v.classList.add('collapsed'));
-
-            // 2. Get the container for the target view, creating it if it doesn't exist.
-            const targetViewEl = this.getOrCreateView(view);
-
-            // 3. Dispatch to the appropriate sub-method to populate the view.
-            if (view === 'children') {
-                await this.switchToView_children({ targetViewEl });
-            } else if (view === 'original') {
-                await this.switchToView_original({ targetViewEl });
-            } else if (view.startsWith('translation_')) {
-                await this.switchToView_translation({ view: view as TranslationFlavor, targetViewEl });
-            } else {
-                // This is a summary view, e.g., 'tldr_short'
-                await this.switchToView_summary({ view: view as SummaryFlavor, targetViewEl });
-            }
-
-            // 4. Show the target view.
-            targetViewEl.classList.remove('collapsed');
-
-            // 5. Render the component's chrome (header, buttons, etc.).
-            await this.renderUI();
-
-        } catch (error) {
-            console.error(`${lc} ${extractErrorMsg(error)}`);
-            this.isThinking = false;
-            await this.renderUI();
-        } finally {
-            if (logalot) { console.log(`${lc} complete.`); }
-        }
-    }
-
-    private async switchToView_children({
-        targetViewEl,
-    }: {
-        targetViewEl: HTMLDivElement
-    }): Promise<void> {
-        const lc = `${this.lc}[${this.switchToView_children.name}]`;
-        try {
-            if (logalot) { console.log(`${lc} starting...`); }
-            if (!this.ibGib) { throw new Error(`(UNEXPECTED) this.ibGib falsy?`); }
-
-            const childAddrs = this.ibGib.rel8ns?.[getChunkRel8nName({ contextScope: 'default' })] ?? [];
-            // Only re-render children if the count has changed to avoid DOM thrashing.
-            if (childAddrs.length !== this.childComponents.length) {
-                await this.renderUI_children({ childAddrs });
-            }
-        } catch (error) {
-            console.error(`${lc} ${extractErrorMsg(error)}`);
-            throw error;
-        }
-    }
-
-    private async switchToView_original({
-        targetViewEl,
-    }: {
-        targetViewEl: HTMLDivElement
-    }): Promise<void> {
-        const lc = `${this.lc}[${this.switchToView_original.name}]`;
-        try {
-            if (logalot) { console.log(`${lc} starting...`); }
-            if (!this.ibGib) { throw new Error(`(UNEXPECTED) this.ibGib falsy?`); }
-
-            if (targetViewEl.innerHTML === '') {
-                targetViewEl.innerHTML = `<p>${this.ibGib.data?.text ?? '(No text)'}</p>`;
-            }
-        } catch (error) {
-            console.error(`${lc} ${extractErrorMsg(error)}`);
-            throw error;
-        }
-    }
-
-    private async switchToView_summary({
-        view,
-        targetViewEl,
-    }: {
-        view: SummaryFlavor,
-        targetViewEl: HTMLDivElement,
-    }): Promise<void> {
-        const lc = `${this.lc}[${this.switchToView_summary.name}]`;
-        try {
-            if (logalot) { console.log(`${lc} starting...`); }
-            if (!this.ibGib?.data) { throw new Error(`(UNEXPECTED) ibGib.data is falsy?`); }
-
-            const [type, length] = view.split('_');
-            const summaryKey = getSummaryTextKeyForIbGib({ type: type as SummarizerType, length: length as SummarizerLength });
-            const summaryText = this.ibGib.data[summaryKey];
-
-            if (summaryText) {
-                this.isThinking = false;
-                targetViewEl.innerHTML = `<p>${summaryText}</p>`;
-            } else {
-                this.isThinking = true;
-                targetViewEl.textContent = `Generating ${view.replace('_', ' ')}...`;
-
-                if (!this.queuedSummaryTasks[summaryKey]) {
-                    this.queuedSummaryTasks[summaryKey] = 'started';
-                    const queueSvc = getPriorityQueueSvc();
-                    queueSvc.enqueue({
-                        type: 'summary',
-                        ibGib: this.ibGib,
-                        priority: SUMMARY_PRIORITY_USER_JUST_CLICKED,
-                        thinkingId: this.getThinkingIdFromTjpGib(),
-                        options: {
-                            text: this.ibGib.data.text!,
-                            type: type as SummarizerType,
-                            length: length as SummarizerLength,
-                            isTitle: false,
-                        } as SummaryQueueInfo,
-                    });
-                }
-            }
-        } catch (error) {
-            console.error(`${lc} ${extractErrorMsg(error)}`);
-            throw error;
-        }
-    }
-
-    private async switchToView_translation({
-        view,
-        targetViewEl,
-    }: {
-        view: TranslationFlavor,
-        targetViewEl: HTMLDivElement,
-    }): Promise<void> {
-        const lc = `${this.lc}[${this.switchToView_translation.name}]`;
-        try {
-            if (logalot) { console.log(`${lc} starting...`); }
-            if (!this.ibGib?.data) { throw new Error(`(UNEXPECTED) ibGib.data is falsy?`); }
-
-            const targetLang = view.split('_')[1];
-            // As you specified, for now, we only translate the base .text property.
-            const sourceDataKey = 'text';
-            const translationKey = getTranslationTextKeyForIbGib({ dataKey: sourceDataKey, targetLanguage: targetLang });
-            const translatedText = this.ibGib.data[translationKey];
-
-            if (translatedText) {
-                this.isThinking = false;
-                targetViewEl.innerHTML = `<p>${translatedText}</p>`;
-            } else {
-                this.isThinking = true;
-                targetViewEl.textContent = `Translating to ${targetLang}...`;
-
-                (async () => {
-                    try {
-                        const textToTranslate = this.ibGib!.data![sourceDataKey]!;
-                        if (!textToTranslate) { throw new Error(`Source text at data.${sourceDataKey} is empty.`); }
-
-                        const detector = await LanguageDetector.create();
-                        const langResults = await detector.detect(textToTranslate);
-                        const sourceLang = (langResults[0]?.detectedLanguage) ?? 'en';
-
-                        const optionToHide = this.elements?.languageDropdown.querySelector<HTMLOptionElement>(`option[value="${sourceLang}"]`);
-                        if (optionToHide) { optionToHide.style.display = 'none'; }
-
-                        const translator = await Translator.create({ sourceLanguage: sourceLang, targetLanguage: targetLang });
-                        const translation = await translator.translate(textToTranslate);
-
-                        const metaspace = await getGlobalMetaspace_waitIfNeeded();
-                        const space = await metaspace.getLocalUserSpace({ lock: false });
-                        if (!space) { throw new Error(`(UNEXPECTED) couldn't get default local user space.`); }
-
-                        const dataToAdd = { [translationKey]: translation };
-                        await mut8Timeline({
-                            timeline: this.ibGib,
-                            mut8Opts: { dataToAddOrPatch: dataToAdd },
-                            metaspace,
-                            space,
-                        });
-
-                    } catch (error) {
-                        console.error(`${lc} inline translation failed: ${extractErrorMsg(error)}`);
-                        this.isThinking = false;
-                        if (this.viewMode === view) {
-                            targetViewEl.textContent = `Translation failed. See console for details.`;
-                        }
-                        await this.renderUI();
-                    }
-                })();
-            }
-        } catch (error) {
-            console.error(`${lc} ${extractErrorMsg(error)}`);
-            throw error;
-        }
-    }
-    // #endregion switchToView
-
-    /**
-     * Public method to initiate the chunking process.
-     * This can be called from outside the component, e.g., by the sidepanel
-     * after initial creation.
-     */
-    // public async breakItDown(): Promise<void> {
-    //     const lc = `${this.lc}[${this.breakItDown.name}]`;
-    //     try {
-    //         if (logalot) { console.log(`${lc} starting...`); }
-
-    //         console.error(`${lc} not implemented...needs to be updated for new twin dom approach. (E: 9e4aec549ea63df5bcf2ac0a8598d525)`);
-    //         // throw new Error(`not implemented...needs to be updated for new twin dom approach. (E: 9e4aec549ea63df5bcf2ac0a8598d525)`);
-
-    //         // // Step 1: Set thinking state and update UI to show it.
-    //         // this.isThinking = true;
-    //         // await this.renderUI();
-
-    //         // // Step 2: Gather data for the background chunking operation.
-    //         // if (!this.ibGib) { throw new Error(`(UNEXPECTED) this.ibGib falsy? (E: f1f388d432988b84ba02fb48634b9a25)`); }
-    //         // if (!this.projectIbGib) { throw new Error(`(UNEXPECTED) this.projectIbGib falsy? (E: a615c8102d14b83e181f55081c932a25)`); }
-
-    //         // const content = this.ibGib.data?.text ?? '';
-    //         // const thinkingId = addThinkingEntry(`breaking down "${getSaferSubstring({ text: content, length: 25 })}"...`);
-
-    //         // const metaspace = await getGlobalMetaspace_waitIfNeeded();
-    //         // const space = await metaspace.getLocalUserSpace({ lock: false });
-    //         // if (!space) { throw new Error(`(UNEXPECTED) couldn't get space (E: genuuid)`); }
-
-    //         // // Step 3: Kick off stub creation. This is fast.
-    //         // // The component's ibGibProxy will automatically detect this change and
-    //         // // trigger handleContextUpdated, which handles rendering the stubs.
-    //         // await chunkCommentIbGib({
-    //         //     srcCommentIbGib: this.ibGib as CommentIbGib_V1,
-    //         //     // We pass pageContentInfo only if this is the root.
-    //         //     pageContentInfo: this.isRootSrc ? this.pageContentInfo : undefined,
-    //         //     project: this.projectIbGib,
-    //         //     thinkingId,
-    //         //     // title is no longer created or passed here
-    //         //     metaspace,
-    //         //     space,
-    //         //     skipLock: true,
-    //         // });
-    //     } catch (error) {
-    //         console.error(`${lc} ${extractErrorMsg(error)}`);
-    //         // If something goes wrong, reset the thinking state.
-    //         this.isThinking = false;
-    //         await this.renderUI();
-    //     } finally {
-    //         if (logalot) { console.log(`${lc} complete.`); }
-    //     }
-    // }
-
-    public async breakItDown(): Promise<void> {
+    private async breakItDown(): Promise<void> {
         const lc = `${this.lc}[${this.breakItDown.name}]`;
-        if (this._breakingDown) {
-            console.log(`${lc} already breaking down...(I: 784baa9d97376cf77cd4ea1804aa8825)`);
-            return; /* <<<< returns early */
-        }
+        if (this._breakingDown) { return; /* <<<< returns early */ }
+
         try {
-            if (logalot) { console.log(`${lc} starting...`); }
             this._breakingDown = true;
 
-            // =================================================================
-            // Step 1: CONFIRM with the user if children already exist.
-            // =================================================================
+            // Confirm with user if children already exist.
             if (this.hasChildren) {
                 const confirm = await promptForConfirm({
-                    msg: "This action will replace the existing key points with new ones. Are you sure you want to continue?",
-                    yesLabel: "YES, forget those",
-                    noLabel: "NO, let's keep those",
+                    msg: "This will replace the existing key points. Are you sure?",
+                    yesLabel: "YES, Replace Them",
+                    noLabel: "NO, Keep Them",
                 });
                 if (!confirm) {
-                    if (logalot) { console.log(`${lc} User cancelled the operation.`); }
-                    // If they cancel, we need to revert the button state back to 'children' view
-                    // without actually performing the breakdown.
-                    this.selectedType = 'children';
-                    await this.switchToView({ view: 'children' });
+                    this.activeDetailViews.keyPoints = false; // Revert state
+                    await this.renderUI(); // Update button to be inactive
+                    this._breakingDown = false; // Reset flag
                     return; /* <<<< returns early */
                 }
             }
 
-            // If we've made it this far, either there were no children or the user confirmed.
-            console.error(`${lc} not implemented...needs to be updated for new twin dom approach. (E: 9e4aec549ea63df5bcf2ac0a8598d525)`);
-            // throw new Error(`not implemented...needs to be updated for new twin dom approach. (E: 9e4aec549ea63df5bcf2ac0a8598d525)`);
+            // Set thinking state and update UI to show it.
+            this.isThinking = true;
+            await this.renderUI();
 
-            // // Step 2: Set thinking state and update UI to show it.
-            // this.isThinking = true;
-            // await this.renderUI();
-
-            // ... (rest of the implementation will go here)
-
+            // NOTE: The actual chunking implementation is still pending.
+            // We will eventually re-integrate the `chunkCommentIbGib` call here.
+            console.error(`${lc} not fully implemented...needs to call chunkCommentIbGib. (E: 9e4aec549ea63df5bcf2ac0a8598d525)`);
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
-            // If something goes wrong, reset the thinking state.
             this.isThinking = false;
+            this._breakingDown = false;
             await this.renderUI();
-        } finally {
-            if (logalot) { console.log(`${lc} complete.`); }
         }
-    }
-
-
-    /**
-     * Handles the click event from the component's own "Break It Down" button.
-     */
-    private async handleBreakItDownClick(): Promise<void> {
-        await this.breakItDown();
     }
 
     /**
@@ -1102,105 +984,41 @@ export class RabbitHoleCommentComponentInstance
         }
     }
 
-    async initElements(): Promise<void> {
-        const lc = `${this.lc}[${this.initElements.name}]`;
+    /**
+     * Sets the highlight state for this component and all its descendants.
+     * It also sends the message to the content script to update the DOM twin.
+     */
+    private async setHighlightState(shouldBeHighlighted: boolean): Promise<void> {
+        const lc = `${this.lc}[${this.setHighlightState.name}]`;
         try {
-            if (logalot) { console.log(`${lc} starting...`); }
-            if (!this.shadowRoot) { throw new Error(`(UNEXPECTED) this.shadowRoot falsy? (E: 949cabfb12a57b69efa241b8fbad1825)`); }
+            if (logalot) { console.log(`${lc} starting... shouldBeHighlighted: ${shouldBeHighlighted}`); }
 
-            this.elements = {
-                // top-level elements
-                headerEl: shadowRoot_getElementById(this.shadowRoot, 'rabbit-hole-comment-header'),
-                expandBtn: shadowRoot_getElementById(this.shadowRoot, 'expand-btn'),
-                textEl: shadowRoot_getElementById(this.shadowRoot, 'comment-text'),
-                contentEl: shadowRoot_getElementById(this.shadowRoot, 'rabbit-hole-comment-content'),
+            // 1. Set the state for the current component.
+            this.isHighlighted = shouldBeHighlighted;
 
-                // command bar elements
-                commandBar: shadowRoot_getElementById(this.shadowRoot, 'command-bar'),
-                highlightBtn: shadowRoot_getElementById(this.shadowRoot, 'highlight-btn'),
-                viewTypeGroup: shadowRoot_getElementById(this.shadowRoot, 'view-type-group'),
-                keyPointsBtn: shadowRoot_getElementById(this.shadowRoot, 'key-points-btn'),
-                tldrBtn: shadowRoot_getElementById(this.shadowRoot, 'tldr-btn'),
-                translateBtn: shadowRoot_getElementById(this.shadowRoot, 'translate-btn'),
-                viewLengthGroup: shadowRoot_getElementById(this.shadowRoot, 'view-length-group'),
-                shortBtn: shadowRoot_getElementById(this.shadowRoot, 'short-btn'),
-                longBtn: shadowRoot_getElementById(this.shadowRoot, 'long-btn'),
-                translationGroup: shadowRoot_getElementById(this.shadowRoot, 'translation-group'),
-                languageDropdown: shadowRoot_getElementById(this.shadowRoot, 'language-dropdown'),
-
-                // view container and specific views
-                viewContainer: shadowRoot_getElementById(this.shadowRoot, 'view-container'),
-                childrenView: shadowRoot_getElementById(this.shadowRoot, 'children-view'),
-            };
-
-
-        } catch (error) {
-            console.error(`${lc} ${extractErrorMsg(error)}`);
-            throw error;
-        } finally {
-            if (logalot) { console.log(`${lc} complete.`); }
-        }
-    }
-
-    private getOrCreateView(view: CommentViewMode): HTMLDivElement {
-        const lc = `${this.lc}[${this.getOrCreateView.name}]`;
-        if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements falsy. (E: c8e9a1b2c3d4e5f6a7b8c9d0e1f2a3b4)`); }
-        const { viewContainer } = this.elements;
-
-        // View IDs are convention-based, e.g., 'tldr_short' -> 'tldr_short-view'
-        const viewId = `${view}-view`;
-
-        let viewEl = viewContainer.querySelector<HTMLDivElement>(`#${viewId}`);
-
-        if (!viewEl) {
-            if (logalot) { console.log(`${lc} creating new view: ${viewId}`); }
-            // If it doesn't exist, create, append, and then select it.
-            viewEl = document.createElement('div');
-            viewEl.id = viewId;
-            viewEl.classList.add('view');
-            viewContainer.appendChild(viewEl);
-        }
-
-        return viewEl;
-    }
-
-    protected override async handleContextUpdated(): Promise<void> {
-        const lc = `${this.lc}[${this.handleContextUpdated.name}]`;
-        try {
-            await super.handleContextUpdated(); // handles updating this.ibGibAddr
-            if (logalot) { console.log(`${lc} starting... context updated.`); }
-            if (!this.ibGib) { return; } // nothing to do
-
-            /**
-             * no matter what, we check our data to see if we have new summary
-             * data that changed via the async task queue svc
-             */
-            await this.updateSummaryTaskStatus_andBreakingDownFlag();
-
-            const chunkRel8nName = getChunkRel8nName({ contextScope: CHUNK_REL8N_NAME_DEFAULT_CONTEXT_SCOPE });
-            const childAddrs = this.ibGib.rel8ns?.[chunkRel8nName] ?? [];
-
-            // Scenario 1: Children were just added (e.g., after "break it down").
-            // We check against this.childComponents.length to only trigger this on the FIRST population.
-            if (childAddrs.length > 0 && childAddrs.length !== this.childComponents.length) {
-                this.isThinking = false; // "break it down" background task is complete.
-                await this.switchToView({ view: 'children' });
-            } else {
-                // Scenario 2: No new children. This is a data-only update (e.g., a summary finished).
-                // We just need to refresh the current view.
-                if (logalot) { console.log(`${lc} context updated. Assuming data change (e.g., summary finished). Refreshing current view: ${this.viewMode}`); }
-                this.isThinking = false; // The background task is complete.
-                // Re-running switchToView will find the new summary data on the ibGib
-                // and populate the correct view container, replacing the "Generating..." message.
-                await this.switchToView({ view: this.viewMode });
+            // 2. Send the message to the content script to update the DOM twin.
+            const gibId = this.ibGib?.data?.domInfo?.gibId ?? '';
+            if (gibId) {
+                const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+                if (tab?.id) {
+                    chrome.tabs.sendMessage(tab.id, {
+                        type: 'toggleHighlight',
+                        gibId: gibId,
+                        shouldBeHighlighted: this.isHighlighted,
+                    });
+                }
             }
+
+            // 3. Update just this component's highlight button UI.
+            await this.renderUI_highlightBtn();
+
+            // 4. Recursively call for all children.
+            for (const child of this.childComponents) {
+                await child.setHighlightState(shouldBeHighlighted);
+            }
+
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
-            this.isThinking = false;
-            await this.renderUI(); // Safe fallback to update component chrome on error.
-            throw error;
-        } finally {
-            if (logalot) { console.log(`${lc} complete.`); }
         }
     }
 
@@ -1237,22 +1055,14 @@ export class RabbitHoleCommentComponentInstance
         }
     }
 
-    protected override async handleNewContextChild({ childIbGib }: { childIbGib: IbGib_V1; }): Promise<void> {
-        const lc = `${this.lc}[${this.handleNewContextChild.name}]`;
-        // We are using handleContextUpdated to handle all children at once.
-        // So we don't need to do anything here for now.
-        if (logalot) { console.log(`${lc} triggered but unhandled. (childIbGib: ${pretty(childIbGib)})`); }
-    }
-
-    override async disconnected(): Promise<void> {
-        const lc = `${this.lc}[${this.disconnected.name}]`;
-        try {
-            if (logalot) { console.log(`${lc} starting... (I: genuuid)`); }
-        } catch (error) {
-            console.error(`${lc} ${extractErrorMsg(error)}`);
-            throw error;
-        } finally {
-            if (logalot) { console.log(`${lc} complete.`); }
+    private getThinkingIdFromTjpGib(): string | undefined {
+        if (this.ibGib) {
+            const tjpGib = getGibInfo({ gib: this.gib }).tjpGib ?? this.gib;
+            return tjpGib.substring(0, 16);
+        } else {
+            return undefined;
         }
     }
+
+    // #endregion other helpers
 }

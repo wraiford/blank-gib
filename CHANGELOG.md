@@ -6,7 +6,28 @@ I'm doing per upgrade. This should be automatically created per "commit", and
 really this should just be a regular part of the "chat" that is this project.
 We'll get there eventually!
 
+## v0.15.3
+
+* **Refactor: Rabbit Hole Comment Architecture**
+  * Changed details views to toggle-based. Now you can see tldr AND translation AND key points.
+  * Overhauled the component to use a consistent, template-based system for all detail views (TLDR, Translate, Key Points).
+  * Views are now created dynamically on-demand, improving initial render performance.
+* **Fix: collapsed `ul`/`ol` tags**
+  * Short list tags were getting collapsed and losing navigation.
+
+## v0.15.2
+
+* **Feature: In-App Translation**
+  * Integrated the built-in Chrome `Translator` and `LanguageDetector` APIs.
+  * Added a "Translate" button and language selection dropdown to each comment component.
+  * The source language is now auto-detected and hidden from the target language list.
+  * Translations are performed on-device and saved to the comment's `ibGib` data for persistence.
+* **Refactor: Component Logic**
+  * Refactored the `switchToView` method into smaller, more manageable sub-methods (`switchToView_children`, `switchToView_summary`, `switchToView_translation`).
+  * Created new helper functions (`getTranslationTextKeyForIbGib`) to handle complex data key generation, preventing parsing issues with underscores.
+
 ## v0.15.1
+
 * working on extension for hackathon built-in AI from google
 * changed generate-version-file.js from using `assert` to `with` in import
   statement.
@@ -119,7 +140,6 @@ We'll get there eventually!
   * initial button for clearing/setting (and reading a mask of) the Gemini API
     key implemented. Now you can see the masked API key, clear it, and update
     it.
-
 
 ## v0.0.88
 

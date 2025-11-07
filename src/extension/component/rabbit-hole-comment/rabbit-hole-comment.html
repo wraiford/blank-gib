@@ -7,34 +7,76 @@
                 <button id="highlight-btn">🌟</button>
             </div>
             <div id="view-type-group" class="button-group">
-                <button id="key-points-btn" data-view-type="children">️️⛏️</button>
-                <button id="tldr-btn" data-view-type="tldr"
+                <button id="key-points-btn" title="Break it down into key points (uses built-in AI).">️️⛏️</button>
+                <button id="tldr-btn" title="Summarize this comment (uses AI)."
                     style="font-family: 'Courier New', Courier, monospace;">tl;dr</button>
-                <button id="translate-btn" data-view-type="translation">Abc文</button>
-            </div>
-            <div id="view-length-group" class="button-group collapsed">
-                <button id="short-btn" data-view-length="short">Short</button>
-                <button id="long-btn" data-view-length="long">Long</button>
-            </div>
-            <div id="translation-group" class="button-group collapsed">
-                <select id="language-dropdown">
-                    <option value="en">English</option>
-                    <option value="it">Italian</option>
-                    <option value="es">Spanish</option>
-                    <option value="fr">French</option>
-                    <option value="de">German</option>
-                    <option value="ja">Japanese</option>
-                    <option value="zh">Chinese</option>
-                </select>
+                <button id="translate-btn" title="Translate this comment (uses AI).">Abc文</button>
             </div>
         </div>
     </div>
     <!-- The content area is now the children/view container, and it's collapsed by default -->
     <div id="rabbit-hole-comment-content" class="collapsed">
         <div id="view-container">
-            <!-- Children view is static (and listed here) -->
-            <div id="children-view" class="view"></div>
-            <!-- note: other views like tldr and translation are created/injected dynamically -->
         </div>
     </div>
+
+    <!-- TEMPLATES for Detail Views -->
+    <template id="tldr-view-template">
+        <div class="detail-view" id="tldr-detail-view">
+            <div class="detail-view-header">
+                <span class="detail-view-title" title="too long; didn't read - summary">tl;dr</span>
+                <div class="button-group">
+                    <button data-view-length="short">Short</button>
+                    <button data-view-length="long">Long</button>
+                </div>
+            </div>
+            <div class="detail-view-content">
+                <!-- Summary results (e.g., short, long) will be added here -->
+            </div>
+        </div>
+    </template>
+
+    <template id="translation-view-template">
+        <div class="detail-view" id="translation-detail-view">
+            <div class="detail-view-header">
+                <span class="detail-view-title">Translate</span>
+                <div class="button-group">
+                    <div class="translation-control">
+                        <label>From:</label>
+                        <input type="text" class="source-language-input" size="5" />
+                    </div>
+                    <div class="translation-control">
+                        <label>To:</label>
+                        <select class="language-dropdown">
+                            <option value="" disabled selected>Select...</option>
+                            <option value="en">English</option>
+                            <option value="it">Italian</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                            <option value="ja">Japanese</option>
+                            <option value="ko">Korean</option>
+                            <option value="zh">Chinese</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-view-content">
+                <!-- Translation results will be added here -->
+            </div>
+        </div>
+    </template>
+
+    <template id="key-points-view-template">
+        <div class="detail-view" id="key-points-detail-view">
+            <div class="detail-view-header">
+                <span class="detail-view-title">Key Points</span>
+                <!-- We could add controls here in the future, e.g., to re-generate points -->
+            </div>
+            <div class="detail-view-content">
+                <!-- Child components will be injected here -->
+            </div>
+        </div>
+    </template>
+
 </div>
