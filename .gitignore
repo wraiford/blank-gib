@@ -10,6 +10,9 @@ chat
 tmp.md
 tmp2.md
 
+# freezing auto-generated version file that changes when publish
+src/AUTO-GENERATED-version.mts
+
 # misc
 .env
 .vscode
