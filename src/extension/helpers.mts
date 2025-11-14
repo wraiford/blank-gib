@@ -284,6 +284,10 @@ export function getTranslationTextKeyForIbGib({
      * AND {@link targetLanguage} may contain SINGLE underscores.
      */
     dataKey: string,
+    /**
+     * this is the language into which we are translating the text found at
+     * ibGib.data[{@link dataKey}]
+     */
     targetLanguage: string,
     /**
      * @default '__' (double underscore)

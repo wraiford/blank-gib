@@ -1,32 +1,34 @@
-import { delay, extractErrorMsg, getSaferSubstring, pretty, } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
-import { Gib } from "@ibgib/ts-gib/dist/types.mjs";
-import { IbGibAddr } from "@ibgib/ts-gib/dist/types.mjs";
+import { extractErrorMsg, } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
 import { IbGib_V1 } from "@ibgib/ts-gib/dist/V1/types.mjs";
 import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.mjs';
-import { CommentIbGib_V1 } from '@ibgib/core-gib/dist/common/comment/comment-types.mjs';
-import { appendToTimeline, mut8Timeline } from '@ibgib/core-gib/dist/timeline/timeline-api.mjs';
-
-import { SummarizerCreateOptions, SummarizerFormat, SummarizerLength, SummarizerType } from "./chrome-ai.mjs";
+import { mut8Timeline } from '@ibgib/core-gib/dist/timeline/timeline-api.mjs';
 import { MetaspaceService } from "@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs";
+
 import { GLOBAL_LOG_A_LOT } from "../constants.mjs";
-import { getIbGibAddr } from "@ibgib/ts-gib/dist/helper.mjs";
+import { SummarizerFormat, SummarizerLength, SummarizerType } from "./chrome-ai.mjs";
 import { updateThinkingEntry } from "./thinking-log.mjs";
-import { getGlobalMetaspace_waitIfNeeded, getSummary, getSummaryTextKeyForIbGib } from "./helpers.mjs";
+import {
+    getGlobalMetaspace_waitIfNeeded, getSummary, getSummaryTextKeyForIbGib,
+    getTranslationTextKeyForIbGib
+} from "./helpers.mjs";
 
 
 /**
- * @see {@link SummaryQueueItem.priority}
+ * @see {@link PriorityQueueInfo.priority}
  */
-export const SUMMARY_PRIORITY_USER_JUST_CLICKED = 1;
+export const QUEUE_SERVICE_PRIORITY_USER_JUST_CLICKED = 1;
 /**
- * @see {@link SummaryQueueItem.priority}
+ * @see {@link PriorityQueueInfo.priority}
  */
-export const SUMMARY_PRIORITY_TITLE = 10;
+export const QUEUE_SERVICE_PRIORITY_SUMMARY_TITLE = 10;
 /**
- * @see {@link SummaryQueueItem.priority}
+ * @see {@link PriorityQueueInfo.priority}
  */
-export const SUMMARY_PRIORITY_BACKGROUND = 100;
+export const QUEUE_SERVICE_PRIORITY_BACKGROUND = 100;
 
+/**
+ * Information for a summary task.
+ */
 export interface SummaryQueueInfo {
     /**
      * text to summarize
@@ -56,6 +58,33 @@ export interface SummaryQueueInfo {
 }
 
 /**
+ * Information for a translation task.
+ */
+export interface TranslationQueueInfo {
+    /**
+     * actual text to be translated
+     */
+    text: string;
+    /**
+     * the key into ibgib.data for the translated text. IOW, {@link text} should
+     * be `ibGib.data[dataKey]`.
+     *
+     * {@see getTranslationTextKeyForIbGib}
+     */
+    dataKey: string;
+    /**
+     * The language of {@link text}
+     */
+    sourceLanguage: string;
+    /**
+     * The language into which we are translating {@link text}
+     *
+     * {@see getTranslationTextKeyForIbGib}
+     */
+    targetLanguage: string;
+}
+
+/**
  * maybe yagni, but to show we can use the priority queue for anon fns related
  * to priority.
  */
@@ -68,10 +97,11 @@ export interface AnonFnQueueInfo {
 
 export type PriorityQueueInfoOptions =
     | SummaryQueueInfo
+    | TranslationQueueInfo
     | AnonFnQueueInfo
     ;
 
-export type PriorityQueueType = 'summary' | 'anon-fn';
+export type PriorityQueueType = 'summary' | 'translation' | 'anon-fn';
 
 export interface PriorityQueueInfo {
     /**
@@ -203,6 +233,9 @@ class PriorityQueueService {
                         case 'summary':
                             await this.processQueue_summarize(item);
                             break;
+                        case 'translation': // Add this case
+                            await this.processQueue_translate(item);
+                            break;
                         case 'anon-fn':
                             await (item.options as AnonFnQueueInfo).fn(item);
                             break;
@@ -238,16 +271,16 @@ class PriorityQueueService {
                 throw new Error(`Invalid summary options. text, type, and length are required. (E: genuuid)`);
             }
 
-
-            // 1. Get/Create the summarizer instance based on the item's requirements.
-            //    (We'll need a helper for this to cache summarizers later, but for now, we create it)
+            // Get/Create the instance based on the item's requirements. (We'll
+            // need a helper for this to cache this later, but for now, we
+            // create it)
             const summarizer = await Summarizer.create({
                 type: summaryOpts.type,
                 length: summaryOpts.length,
                 format: summaryOpts.format ?? 'plain-text',
             });
 
-            // 2. Perform the summarization.
+            // Perform the summarization.
             if (item.thinkingId) { updateThinkingEntry(item.thinkingId, `Summarizing (p${item.priority})...`); }
             const summaryText = await getSummary({
                 summarizer,
@@ -256,22 +289,25 @@ class PriorityQueueService {
                 thinkingId: item.thinkingId,
             });
 
-            // 3. Get the necessary space and metaspace to save the result.
+            // Get the necessary space and metaspace to save the result.
             const metaspace = item.metaspace ?? await getGlobalMetaspace_waitIfNeeded();
             const space = item.space ?? await metaspace.getLocalUserSpace({ lock: false });
-            if (!space) { throw new Error(`(UNEXPECTED) could not get a space. (E: genuuid)`); }
+            if (!space) { throw new Error(`(UNEXPECTED) could not get default user space from metaspace? (E: genuuid)`); }
 
             /**
              * always store the summary via the specific type/length.
              *
-             * this helper atow just builds e.g. "text_tldr_long" or "text_headline_short", etc.
+             * this helper atow just builds e.g. "text_tldr_long" or
+             * "text_headline_short", etc.
              */
             const key = getSummaryTextKeyForIbGib({ type: summaryOpts.type, length: summaryOpts.length });
             const dataToAddOrPatch: any = { [key]: summaryText };
             // optionally store it in the data.title if it's expected to be the title
             if (summaryOpts.isTitle) { dataToAddOrPatch.title = summaryText; }
 
-            // 5. Mutate the ibGib's timeline to save the new summary data.
+            // Mutate the ibGib's timeline to save the new data. This updated
+            // timeline will be heard by the subscribed ibgib's component and
+            // reacted to.
             await mut8Timeline({
                 timeline: item.ibGib,
                 metaspace,
@@ -293,23 +329,70 @@ class PriorityQueueService {
     }
 
 
-    // private async processQueue_summarize(item: PriorityQueueInfo): Promise<void> {
-    //     const lc = `${this.lc}[${this.processQueue_summarize.name}]`;
-    //     try {
-    //         if (logalot) { console.log(`${lc} starting... (I: 297c0399cc88246ba94c28984ae49225)`); }
-    //         // This is where the core summarization logic would go.
-    //         // For now, we'll just log it. We will integrate the actual
-    //         // summarizer call and the mut8Timeline logic here in the next step.
-    //         console.warn(`(STUB) Would summarize text for ibGib: ${getIbGibAddr({ ibGib: item.ibGib })} NOT IMPLEMENTED YET (W: genuuid)`);
+    private async processQueue_translate(item: PriorityQueueInfo): Promise<void> {
+        const lc = `${this.lc}[${this.processQueue_translate.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting...`); }
+            if (item.type !== 'translation') { throw new Error(`(UNEXPECTED) invalid info type: ${item.type}`); }
+            const translateOpts = item.options as TranslationQueueInfo;
+            const { text, dataKey, sourceLanguage, targetLanguage } = translateOpts;
+            const { ibGib, thinkingId } = item;
 
-    //         await delay(1000); // simulate async work
-    //     } catch (error) {
-    //         console.error(`${lc} ${extractErrorMsg(error)}`);
-    //         throw error;
-    //     } finally {
-    //         if (logalot) { console.log(`${lc} complete.`); }
-    //     }
-    // }
+            // 1. Get/Create the instance based on the item's requirements.
+            //    (We'll need a helper for this to cache this later, but for
+            //    now, we create it)
+            const translator = await Translator.create({
+                sourceLanguage,
+                targetLanguage,
+            });
+
+            // 2. Perform the translation.
+            if (thinkingId) { updateThinkingEntry(thinkingId, `Translating (p${item.priority})...`); }
+            const translationText = await translator.translate(text);
+
+
+            // 3. Get the necessary space and metaspace to save the result.
+            const metaspace = item.metaspace ?? await getGlobalMetaspace_waitIfNeeded();
+            const space = item.space ?? await metaspace.getLocalUserSpace({ lock: false });
+            if (!space) { throw new Error(`(UNEXPECTED) could not get default user space from metaspace? (E: genuuid)`); }
+
+
+            /**
+             * always store the translation via the key.
+             *
+             * atow (11/2024) e.g. `translationtext__text__es` or
+             * `translationtext__summarytext_tldr_short__en-US`
+             *
+             * @see {@link getTranslationTextKeyForIbGib}
+             */
+            const key = getTranslationTextKeyForIbGib({
+                dataKey,
+                targetLanguage,
+            });
+
+            // Mutate the ibGib's timeline to save the new data. This updated
+            // timeline will be heard by the subscribed ibgib's component and
+            // reacted to.
+            const dataToAddOrPatch = { [key]: translationText };
+            await mut8Timeline({
+                timeline: ibGib,
+                metaspace,
+                space,
+                mut8Opts: { dataToAddOrPatch },
+                skipLock: false,
+            });
+
+            if (thinkingId) { updateThinkingEntry(thinkingId, `Translating (p${item.priority}) complete.`); }
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+            if (item.thinkingId) { updateThinkingEntry(item.thinkingId, `error translating (p${item.priority}): ${extractErrorMsg(error)}`); }
+            // We throw here to allow the main processing loop to handle the error,
+            // but we could also implement more specific retry logic if needed.
+            throw error;
+        }
+    }
+
+
 }
 
 /**

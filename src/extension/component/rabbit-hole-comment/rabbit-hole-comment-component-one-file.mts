@@ -15,16 +15,16 @@ import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.
 import { GLOBAL_LOG_A_LOT } from '../../../constants.mjs';
 import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from '../../../ui/component/ibgib-dynamic-component-bases.mjs';
 import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "../../../ui/component/component-types.mjs";
-import { getChunkRel8nName, getGlobalMetaspace_waitIfNeeded, getSummaryTextKeyForIbGib, getTitleFromSummarizer, getTocHeader_FromIbGib, } from '../../helpers.mjs';
+import { getChunkRel8nName, getGlobalMetaspace_waitIfNeeded, getSummaryTextKeyForIbGib, getTitleFromSummarizer, getTocHeader_FromIbGib, getTranslationTextKeyForIbGib, } from '../../helpers.mjs';
 import { debounce } from '../../../helpers.mjs';
 import { promptForConfirm, shadowRoot_getElementById } from '../../../helpers.web.mjs';
-import { CHUNK_REL8N_NAME_DEFAULT_CONTEXT_SCOPE, PROJECT_TJP_ADDR_PROPNAME, } from '../../constants.mjs';
+import { CHUNK_REL8N_NAME_DEFAULT_CONTEXT_SCOPE, PROJECT_TJP_ADDR_PROPNAME, SUMMARY_TEXT_ATOM, TRANSLATION_TEXT_ATOM, } from '../../constants.mjs';
 import { ProjectIbGib_V1 } from '../../../common/project/project-types.mjs';
 import { LiveProxyIbGib } from '../../../witness/live-proxy-ibgib/live-proxy-ibgib-one-file.mjs';
 import { updateThinkingEntry } from '../../thinking-log.mjs';
 import { SummarizerLength, SummarizerType } from '../../chrome-ai.mjs';
 import { getComponentSvc } from '../../../ui/component/ibgib-component-service.mjs';
-import { getPriorityQueueSvc, SUMMARY_PRIORITY_TITLE, SUMMARY_PRIORITY_USER_JUST_CLICKED, SummaryQueueInfo } from '../../priority-queue-service-one-file.mjs';
+import { getPriorityQueueSvc, QUEUE_SERVICE_PRIORITY_SUMMARY_TITLE, QUEUE_SERVICE_PRIORITY_USER_JUST_CLICKED, SummaryQueueInfo, TranslationQueueInfo } from '../../priority-queue-service-one-file.mjs';
 import { ChunkCommentData_V1 } from '../../types.mjs';
 
 
@@ -113,7 +113,7 @@ export class RabbitHoleCommentComponentInstance
     /**
      *
      */
-    private queuedSummaryTasks: { [type_length: string]: TaskStatus } = {};
+    private queuedTasks: { [type_length: string]: TaskStatus } = {};
     private isHighlighted: boolean = false;
 
     /**
@@ -307,7 +307,7 @@ export class RabbitHoleCommentComponentInstance
                 queueSvc.enqueue({
                     type: 'summary',
                     ibGib: this.ibGib!,
-                    priority: SUMMARY_PRIORITY_TITLE,
+                    priority: QUEUE_SERVICE_PRIORITY_SUMMARY_TITLE,
                     thinkingId: this.getThinkingIdFromTjpGib(),
                     options: {
                         text: data.text, type: 'headline', length: 'short', isTitle: true,
@@ -374,23 +374,59 @@ export class RabbitHoleCommentComponentInstance
             if (!this.ibGib) { throw new Error(`(UNEXPECTED) this.ibGib falsy? (E: 8cfa3f53f5582c4348b21ab897c38a25)`); }
             if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements falsy? (E: 2f1e180d29264ab738e917789df87e25)`); }
 
-            const previouslyRunningTasks = { ...this.queuedSummaryTasks };
-            await this.updateSummaryTaskStatus_andBreakingDownFlag();
+            const previouslyRunningTasks = { ...this.queuedTasks };
+            await this.updateQueuedTaskStatuses_andBreakingDownFlag();
 
-            let aTaskJustFinished = false;
+            /**
+             * I _think_ only one task would finish per context update, but not sure.
+             */
+            const taskKeysJustFinished: string[] = [];
+            for (const key in previouslyRunningTasks) {
+                if (previouslyRunningTasks[key] === 'started' && this.queuedTasks[key] === 'complete') {
+                    taskKeysJustFinished.push(key);
+                }
+            }
 
-            // Check if an active TLDR task just finished
-            if (this.activeTldrLength) {
-                const summaryKey = getSummaryTextKeyForIbGib({ type: 'tldr', length: this.activeTldrLength });
-                if (previouslyRunningTasks[summaryKey] === 'started' && this.queuedSummaryTasks[summaryKey] === 'complete') {
-                    aTaskJustFinished = true;
+            if (taskKeysJustFinished.length > 1) {
+                console.warn(`${lc} I was figuring that only one task would complete per context updated handler, but taskKeysJustFinished.length > 1. taskKeysJustFinished.length: ${taskKeysJustFinished.length} (W: b1b118eb7f08f4507848ca1ca968fa25)`);
+            }
+
+            for (const taskKeyJustFinished of taskKeysJustFinished) {
+                if (taskKeyJustFinished.startsWith(SUMMARY_TEXT_ATOM)) {
+                    // just finished a summary
+                    if (!this.activeTldrLength) { throw new Error(`(UNEXPECTED) just finished summary task but this.activeTldrLength falsy? (E: f81dd8bb63f899bb8ee41755a2537825)`); }
+
+                    // const summaryKey = getSummaryTextKeyForIbGib({ type: 'tldr', length: this.activeTldrLength });
+                    // if (previouslyRunningTasks[summaryKey] === 'started' && this.queuedSummaryTasks[summaryKey] === 'complete') {
                     const tldrView = this.elements.viewContainer.querySelector<HTMLDivElement>('#tldr-detail-view');
                     if (tldrView) {
                         // This is the key: explicitly re-render the view's content with the new data.
                         this.renderUI_tldrContent(tldrView, this.activeTldrLength);
+                    } else {
+                        throw new Error(`(UNEXPECTED) tldrView falsy? couldn't querySelector the tldr-detail-view? (E: b49d5c8867a8a27a18c20ac6acfa9825)`);
                     }
+                    // }
+                } else if (taskKeyJustFinished.startsWith(TRANSLATION_TEXT_ATOM)) {
+                    const translationView = this.elements.viewContainer.querySelector<HTMLDivElement>('#translation-detail-view');
+                    if (translationView) {
+                        // This is the key: explicitly re-render the view's content with the new data.
+                        const task =this.queuedTasks
+                        this.renderUI_translationContent(translationView);
+                    } else {
+                        throw new Error(`(UNEXPECTED) tldrView falsy? couldn't querySelector the tldr-detail-view? (E: b49d5c8867a8a27a18c20ac6acfa9825)`);
+                    }
+
+
+                } else {
+                    throw new Error(`(UNEXPECTED) unknown taskKey start? this is expected to start with a known atom in ${[SUMMARY_TEXT_ATOM, TRANSLATION_TEXT_ATOM]}. (E: b8067fc976884b6ded8da3118e395825)`);
                 }
             }
+
+            // Check if an active TLDR task just finished
+
+
+
+
 
             // Check if 'break it down' just finished
             const childrenJustAdded = this.hasChildren && this.childComponents.length === 0;
@@ -400,7 +436,7 @@ export class RabbitHoleCommentComponentInstance
             }
 
             // If any task finished, check if we should stop the thinking animation
-            const anyTasksStillRunning = Object.values(this.queuedSummaryTasks).some(s => s === 'started');
+            const anyTasksStillRunning = Object.values(this.queuedTasks).some(s => s === 'started');
             this.isThinking = anyTasksStillRunning;
 
             // Handle auto-showing Key Points view if children were added externally
@@ -494,6 +530,67 @@ export class RabbitHoleCommentComponentInstance
         }
     }
 
+    private async renderUI_tldrView(): Promise<void> {
+        const lc = `${this.lc}[${this.renderUI_tldrView.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting... (I: 8fe038f13d669c1c483887e2bcd97725)`); }
+
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+            throw error;
+        } finally {
+            if (logalot) { console.log(`${lc} complete.`); }
+        }
+    }
+
+    private async renderUI_translationView(): Promise<void> {
+        const lc = `${this.lc}[${this.renderUI_translationView.name}]`;
+        try {
+            if (!this.elements) { throw new Error(`(UNEXPECTED) elements not initialized. (E: genuuid)`); }
+
+            let view = this.elements.viewContainer.querySelector<HTMLDivElement>('#translation-detail-view');
+
+            // Create the view if it's active but not in the DOM.
+            if (this.activeDetailViews.translation && !view) {
+                await this.createDetailView_translation();
+                view = this.elements.viewContainer.querySelector<HTMLDivElement>('#translation-detail-view');
+            }
+
+            if (view) {
+                // Toggle visibility based on the active flag.
+                view.classList.toggle('collapsed', !this.activeDetailViews.translation);
+
+                if (this.activeDetailViews.translation) {
+                    // If the view is visible, ensure its content is up-to-date.
+                    const sourceInput = view.querySelector<HTMLInputElement>('.source-language-input');
+                    const languageDropdown = view.querySelector<HTMLSelectElement>('.language-dropdown');
+                    if (sourceInput?.value && languageDropdown?.value) {
+                        this.renderUI_translationContent(view, sourceInput.value, languageDropdown.value);
+                    } else {
+                        // Clear content if no language is selected.
+                        const contentView = view.querySelector<HTMLDivElement>('.detail-view-content');
+                        if (contentView) { contentView.innerHTML = ''; }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+        }
+    }
+
+    private async renderUI_keyPointsView(): Promise<void> {
+        const lc = `${this.lc}[${this.renderUI_keyPointsView.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting... (I: 8fe038f13d669c1c483887e2bcd97725)`); }
+
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+            throw error;
+        } finally {
+            if (logalot) { console.log(`${lc} complete.`); }
+        }
+    }
+
     private async renderUI_highlightBtn(): Promise<void> {
         const lc = `${this.lc}[${this.renderUI_highlightBtn.name}]`;
         try {
@@ -528,6 +625,37 @@ export class RabbitHoleCommentComponentInstance
         } else {
             // Data does not exist, so show the generating message.
             contentView.innerHTML = `<p>Generating ${length} tldr...</p>`;
+        }
+    }
+
+
+    private renderUI_translationContent(view: HTMLDivElement, sourceLanguage: string, targetLanguage: string): void {
+        const lc = `${this.lc}[${this.renderUI_translationContent.name}]`;
+        if (!this.ibGib?.data || !view) { return; }
+
+        const contentView = view.querySelector<HTMLDivElement>('.detail-view-content');
+        if (!contentView) { console.error(`${lc} contentView not found in view.`); return; }
+
+        const translationKey = getTranslationTextKeyForIbGib({
+            dataKey: 'text',
+            targetLanguage,
+        });
+        const translationText = this.ibGib.data[translationKey];
+
+        if (translationText) {
+            contentView.innerHTML = `<p>${translationText}</p>`;
+        } else {
+            // Check if this task is queued or in-progress.
+            const taskStatus = this.queuedTasks[translationKey];
+            if (taskStatus === 'started') {
+                contentView.innerHTML = `<p>Translating from ${sourceLanguage} into ${targetLanguage}...</p>`;
+            } else if (taskStatus === 'complete') {
+                throw new Error(`(UNEXPECTED) translation taskStatus is 'complete', but this.ibGib.data[${translationKey}] is falsy? (E: 5e59a8a137b87dcc5237a52de83f3325)`);
+            } else if (!taskStatus) {
+                throw new Error(`(UNEXPECTED) we are rendering translationContent but no translation taskStatus is falsy? I would expect this to always be truthy at this point. (E: 9348dbb9129f54e558b0c3d60b76a825)`);
+            } else {
+                throw new Error(`(UNEXPECTED) taskStatus is truthy but not 'started' or 'complete'? (E: 6697d8e86698325f933cdaf840112825)`);
+            }
         }
     }
 
@@ -648,16 +776,16 @@ export class RabbitHoleCommentComponentInstance
             const summaryText = this.ibGib?.data?.[summaryKey];
 
             // If the summary does NOT exist, we need to start the background task.
-            if (!summaryText && (!this.queuedSummaryTasks[summaryKey] || this.queuedSummaryTasks[summaryKey] === 'complete')) {
+            if (!summaryText && (!this.queuedTasks[summaryKey] || this.queuedTasks[summaryKey] === 'complete')) {
                 this.isThinking = true;
                 await this.renderUI(); // Call immediately to start the 'thinking' pulse
 
-                this.queuedSummaryTasks[summaryKey] = 'started';
+                this.queuedTasks[summaryKey] = 'started';
                 const queueSvc = getPriorityQueueSvc();
                 queueSvc.enqueue({
                     type: 'summary',
                     ibGib: this.ibGib!,
-                    priority: SUMMARY_PRIORITY_USER_JUST_CLICKED,
+                    priority: QUEUE_SERVICE_PRIORITY_USER_JUST_CLICKED,
                     thinkingId: this.getThinkingIdFromTjpGib(),
                     options: {
                         text: this.ibGib?.data?.text!,
@@ -675,24 +803,58 @@ export class RabbitHoleCommentComponentInstance
         }
     }
 
-
     // #endregion handleClick
 
-    /**
-     * Handles a language selection from within a Translation detail view.
-     */
-    private async handleChange_translationLanguage(event: Event, view: HTMLDivElement): Promise<void> {
+    private async handleChange_translationLanguage(event: Event): Promise<void> {
         const lc = `${this.lc}[${this.handleChange_translationLanguage.name}]`;
         try {
-            const dropdown = event.target as HTMLSelectElement;
-            const targetLang = dropdown.value;
-            if (!targetLang) { return; }
-            console.log(`${lc} Target language selected: ${targetLang}`);
+            if (!this.ibGib) { throw new Error(`(UNEXPECTED) this.ibGib falsy? (E: genuuid)`); }
+            if (!this.ibGib.data) { throw new Error(`(UNEXPECTED) this.ibGib.data falsy? (E: c16d4fe6e948d79f310acafee3597425)`); }
 
-            const contentView = view.querySelector<HTMLDivElement>('.detail-view-content');
-            if (contentView) {
-                contentView.innerHTML = `<p>Translation to ${targetLang} coming soon...</p>`;
+            const select = event.target as HTMLSelectElement;
+            const view = select.closest<HTMLDivElement>('.detail-view');
+            if (!view) { throw new Error(`(UNEXPECTED) could not find parent view.`); }
+
+            const targetLanguage = select.value;
+            if (!targetLanguage) {
+                // User selected "Select...", so clear the content.
+                const contentView = view.querySelector<HTMLDivElement>('.detail-view-content');
+                if (contentView) { contentView.innerHTML = ''; }
+                return;
             }
+
+            const sourceInput = view.querySelector<HTMLInputElement>('.source-language-input');
+            const sourceLanguage = sourceInput?.value ?? 'en';
+            const text = this.ibGib.data?.text ?? '';
+            if (!text) { return; } // Nothing to translate
+
+            /**
+             * right now, we're only translating this.ibGib.data.text
+             */
+            const dataKey = 'text';
+            const translationKey = getTranslationTextKeyForIbGib({
+                dataKey,
+                targetLanguage,
+            });
+            const existingTranslation = this.ibGib.data[translationKey];
+
+            // If we don't already have this translation and it's not already started...
+            if (!existingTranslation && this.queuedTasks[translationKey] !== 'started') {
+                this.isThinking = true;
+                this.queuedTasks[translationKey] = 'started';
+
+                const queueSvc = getPriorityQueueSvc();
+                queueSvc.enqueue({
+                    type: 'translation',
+                    ibGib: this.ibGib,
+                    priority: QUEUE_SERVICE_PRIORITY_USER_JUST_CLICKED,
+                    thinkingId: this.getThinkingIdFromTjpGib(),
+                    options: { dataKey, sourceLanguage, targetLanguage, text } as TranslationQueueInfo,
+                });
+            }
+
+            // Defer to the main render loop to show "Translating..." or the result.
+            await this.renderUI();
 
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
@@ -701,28 +863,24 @@ export class RabbitHoleCommentComponentInstance
 
     // #region createDetailView
 
-    /**
-     * Creates the TLDR detail view from its template, wires up its internal
-     * controls, and appends it to the view container.
-     */
     private createDetailView_tldr(): void {
         const lc = `${this.lc}[${this.createDetailView_tldr.name}]`;
         try {
-            if (logalot) { console.log(`${lc} starting...`); }
-            if (!this.elements) { throw new Error(`(UNEXPECTED) elements not initialized.`); }
+            if (logalot) { console.log(`${lc} starting... (I: genuuid)`); }
+            if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements falsy? (E: genuuid)`); }
 
             // 1. Clone the template
             const tldrTemplate = this.elements.tldrViewTemplate;
             const tldrViewClone = tldrTemplate.content.cloneNode(true) as DocumentFragment;
             const tldrView = tldrViewClone.firstElementChild as HTMLDivElement;
 
-            if (!tldrView) { throw new Error(`(UNEXPECTED) Cloning tldr-view-template failed.`); }
+            if (!tldrView) { throw new Error(`(UNEXPECTED) Cloning tldr-view-template failed? (E: genuuid)`); }
 
             // 2. Wire up internal controls
             const shortBtn = tldrView.querySelector<HTMLButtonElement>('[data-view-length="short"]');
             const longBtn = tldrView.querySelector<HTMLButtonElement>('[data-view-length="long"]');
 
-            if (!shortBtn || !longBtn) { throw new Error(`(UNEXPECTED) Could not find length buttons in TLDR template clone.`); }
+            if (!shortBtn || !longBtn) { throw new Error(`(UNEXPECTED) Could not find length buttons in TLDR template clone? (E: genuuid)`); }
 
             shortBtn.addEventListener('click', () => this.handleClick_tldrLength('short', tldrView));
             longBtn.addEventListener('click', () => this.handleClick_tldrLength('long', tldrView));
@@ -732,12 +890,10 @@ export class RabbitHoleCommentComponentInstance
 
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
+            throw error;
         }
     }
 
-    /**
-     * Creates the Translation detail view, wires up its controls, and appends it.
-     */
     private async createDetailView_translation(): Promise<void> {
         const lc = `${this.lc}[${this.createDetailView_translation.name}]`;
         try {
@@ -747,93 +903,81 @@ export class RabbitHoleCommentComponentInstance
             const template = this.elements.translationViewTemplate;
             const viewClone = template.content.cloneNode(true) as DocumentFragment;
             const view = viewClone.firstElementChild as HTMLDivElement;
-            if (!view) { throw new Error(`(UNEXPECTED) Cloning translation-view-template failed.`); }
+            if (!view) { throw new Error(`(UNEXPECTED) Cloning translation-view-template failed? (E: genuuid)`); }
 
             const sourceInput = view.querySelector<HTMLInputElement>('.source-language-input');
             const languageDropdown = view.querySelector<HTMLSelectElement>('.language-dropdown');
-            if (!sourceInput || !languageDropdown) { throw new Error(`(UNEXPECTED) Could not find controls in Translation template clone.`); }
+            if (!sourceInput || !languageDropdown) { throw new Error(`Could not find controls in Translation template clone. (E: genuuid)`); }
 
-            // This function hides/shows dropdown options based on the source input
             const updateDropdown = () => {
                 const sourceLang = sourceInput.value.toLowerCase();
                 languageDropdown.querySelectorAll('option').forEach(opt => {
                     const shouldHide = opt.value !== '' && opt.value === sourceLang;
                     opt.style.display = shouldHide ? 'none' : '';
-                    // If the currently selected item is now hidden, select the default
-                    if (shouldHide && opt.selected) {
-                        languageDropdown.value = '';
-                    }
+                    if (shouldHide && opt.selected) { languageDropdown.value = ''; }
                 });
             };
 
-            // Add event listeners right away
-            const debouncedUpdate = debounce(updateDropdown, 300);
-            sourceInput.addEventListener('input', debouncedUpdate);
-            languageDropdown.addEventListener('change', (e) => this.handleChange_translationLanguage(e, view));
+            sourceInput.addEventListener('input', debounce(updateDropdown, 300));
+            // Attach our new handler to the 'change' event.
+            languageDropdown.addEventListener('change', (e) => this.handleChange_translationLanguage(e));
 
-            // Append to the DOM so the user sees the "Detecting..." state
             this.elements.viewContainer.appendChild(view);
 
-
-            // #region Language Detection Logic
-            let detectedLanguage = 'en'; // Default value
+            // --- Language Detection ---
+            sourceInput.value = 'Detecting...';
+            sourceInput.disabled = true;
+            let detectedLanguage = 'en';
             try {
-                sourceInput.value = 'Detecting...';
-                sourceInput.disabled = true;
-
                 const textToDetect = this.ibGib?.data?.text ?? '';
-                if (!textToDetect) {
-                    if (logalot) { console.log(`${lc} No text to detect, defaulting to 'en'.`); }
-                    // detectedLanguage is already 'en'
-                } else {
+                if (textToDetect) {
                     const detector = await LanguageDetector.create();
                     const langResults = await detector.detect(textToDetect);
-                    // Use the top result, but fallback to 'en'
                     detectedLanguage = (langResults[0]?.detectedLanguage) ?? 'en';
-                    if (logalot) { console.log(`${lc} Detected language: ${detectedLanguage}`); }
                 }
             } catch (error) {
-                console.error(`${lc} Language detection failed. Defaulting to 'en'. ${extractErrorMsg(error)}`);
-                // detectedLanguage is already 'en' on error
+                console.error(`${lc} Language detection failed. Defaulting to 'en'. ${extractErrorMsg(error)} (E: genuuid)`);
             } finally {
-                // Update the UI with the result (or fallback)
                 sourceInput.value = detectedLanguage;
                 sourceInput.disabled = false;
-                updateDropdown(); // Filter dropdown with the new language
+                updateDropdown();
             }
-            // #endregion Language Detection Logic
-
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
+            throw error;
         }
     }
 
     private async createDetailView_keyPoints(): Promise<void> {
         const lc = `${this.lc}[${this.createDetailView_keyPoints.name}]`;
         try {
-            if (logalot) { console.log(`${lc} starting...`); }
-            if (!this.elements) { throw new Error(`(UNEXPECTED) elements not initialized.`); }
-            if (!this.ibGib) { throw new Error(`(UNEXPECTED) ibGib not initialized.`); }
+            if (logalot) { console.log(`${lc} starting... (I: genuuid)`); }
+            if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements falsy? (E: genuuid)`); }
+            if (!this.ibGib) { throw new Error(`(UNEXPECTED) this.ibGib falsy? (E: genuuid)`); }
 
             // 1. Clone the template
             const template = this.elements.keyPointsViewTemplate;
             const viewClone = template.content.cloneNode(true) as DocumentFragment;
             const view = viewClone.firstElementChild as HTMLDivElement;
-            if (!view) { throw new Error(`(UNEXPECTED) Cloning key-points-view-template failed.`); }
+            if (!view) { throw new Error(`(UNEXPECTED) Cloning key-points-view-template failed. (E: genuuid)`); }
+
+            // Append the view ahead of time so we see progress as children are
+            // added to DOM
+            this.elements.viewContainer.appendChild(view);
 
             const contentView = view.querySelector<HTMLDivElement>('.detail-view-content');
-            if (!contentView) { throw new Error(`(UNEXPECTED) Could not find content area in Key Points template clone.`); }
+            if (!contentView) { throw new Error(`(UNEXPECTED) Could not find content area in Key Points template clone. (E: genuuid)`); }
 
-            // 2. Get Child Data
+            // Get Child Data
             const chunkRel8nName = getChunkRel8nName({ contextScope: 'default' });
             const childAddrs = this.ibGib.rel8ns?.[chunkRel8nName] ?? [];
 
             if (childAddrs.length === 0) {
-                if (logalot) { console.log(`${lc} No children to render.`); }
+                if (logalot) { console.log(`${lc} No children to render. (I: genuuid)`); }
                 // We could put a message here, but for now, we'll just be blank if there are no children.
             }
 
-            // 3. Render Child Components into the new view's content area
+            // Render Child Components into the new view's content area
             this.childComponents = []; // clear existing component instances
             const componentSvc = await getComponentSvc();
 
@@ -846,7 +990,7 @@ export class RabbitHoleCommentComponentInstance
                     }) as RabbitHoleCommentComponentInstance;
 
                 if (!childInstance) {
-                    console.error(`${lc} (UNEXPECTED) could not get a component for addr: ${childAddr}`);
+                    console.error(`${lc} (UNEXPECTED) could not get a component for addr: ${childAddr} (E: genuuid)`);
                     continue;
                 }
 
@@ -860,12 +1004,9 @@ export class RabbitHoleCommentComponentInstance
                     componentToInject: childInstance,
                 });
             }
-
-            // 4. Append the fully-populated view to the DOM
-            this.elements.viewContainer.appendChild(view);
-
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
+            throw error;
         }
     }
 
@@ -1022,8 +1163,8 @@ export class RabbitHoleCommentComponentInstance
         }
     }
 
-    private async updateSummaryTaskStatus_andBreakingDownFlag(): Promise<void> {
-        const lc = `${this.lc}[${this.updateSummaryTaskStatus_andBreakingDownFlag.name}]`;
+    private async updateQueuedTaskStatuses_andBreakingDownFlag(): Promise<void> {
+        const lc = `${this.lc}[${this.updateQueuedTaskStatuses_andBreakingDownFlag.name}]`;
         try {
             if (logalot) { console.log(`${lc} starting... (I: 68c98a597bf83f6338c2645ea2ea4e25)`); }
 
@@ -1032,13 +1173,13 @@ export class RabbitHoleCommentComponentInstance
 
             const data = this.ibGib.data as ChunkCommentData_V1;
             const keysCompleted: string[] = [];
-            Object.entries(this.queuedSummaryTasks)
+            Object.entries(this.queuedTasks)
                 .filter(([_key, status]) => status === 'started')
                 .forEach(([key, _status]) => {
                     if (!!data[key]) { keysCompleted.push(key); }
                 });
             keysCompleted.forEach(key => {
-                this.queuedSummaryTasks[key] = 'complete';
+                this.queuedTasks[key] = 'complete';
             });
 
             // const summaryKey = getSummaryTextKeyForIbGib({ type: view.split('_')[0] as SummarizerType, length: view.split('_')[1] as SummarizerLength });
