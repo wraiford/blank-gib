@@ -64,9 +64,12 @@ intent of what the code is meant to do and any pertinent considerations.
 
 * Use 4 spaces for indentation
 * Use descriptive names for classes, interfaces, function names, variables, constants, etc.
-  * Only use short names for extremely common patterns, e.g., `lc` is for "log
-    context", but only because this is in every single TS file, in every single
-    class/function.
+  * Only use short names for extremely common patterns, such as...
+    * `lc` is for "log context", but only because this is in literally every
+      single TS file, in every single class/function.
+    * lambdas frequently use `x`, e.g., `.filter(x => x === 'ok')`, but this is
+      because the long name should be in the name of the array being worked
+      upon.
 
 ### TypeScript
 
@@ -103,6 +106,44 @@ The exceptions to this are two-fold:
 
 But on the whole, we sacrifice slivers of performance for logging and then later, we will cull this back.
 
+#### exceptions and UNEXPECTED exceptions
+
+_Note: the `genuuid` is a workspace keyboard snippet that is expanded in the IDE to a valid UUID. For AIs, just type `genuuid` and the human (me I guess!) will manually expand it, so we have a legit UUID._
+
+* All exceptions should have three things:
+  1. log context (usually ${lc} in the templated string)
+  2. message
+  3. UUID with `E` inside parens, e.g., `(E: 7acca8fd4cc8f7b6e980ec4865ca4925)`
+* "UNEXPECTED" exceptions are like code assertions.
+* "normal" exceptions are those that can happen during the course of events. Logic flow is usually not exception-based, prefering other workflow constructs.
+  * sometimes, especially when consuming other libs/std code, we have to use
+    exceptions for the logic flow because that is how those libs are designed.
+* Almost all functions should rethrow exceptions.
+
+#### use "sub-functions/methods" to organize complex fns/methods
+
+Whenever a function or method starts growing in complexity and size, it often
+needs to be broken down into smaller parts. But really these parts only belong
+to that function or method. When this is true, sometimes we place the function
+nested in the scope, and sometimes we create what I call a "sub-method". For
+these, the naming convention is `[super method name]_[sub-method name]`, e.g.,
+`doSomething_doAPart({...})`.
+
+These should always *NOT* be exported in the case of functions, and `private` in
+the case of methods. Usually these will only be called from within the primary
+method. These should be located just above the primary function/method
+declaration and should be enclosed in region tags:
+
+`// #region doSomething` and `// #endregion doSomething`
+
+Note that the `#endregion` tag has the same exact text as the opening tag and is
+not just a bare `#endregion` comment like most code bases.
+
+One real world example is with `renderUI`: `renderUI`, `renderUI_header`,
+`renderUI_content`, `renderUI_footer`, etc. But note that because some of these
+stand on their own for micro-updates, they are sometimes called outside of the
+primary method.
+
 ### Markdown
 
 * Use asterisks for bullets.
@@ -115,9 +156,9 @@ This section covers conventions for building user interfaces, including componen
 ### Component Structure (HTML/DOM)
 
 *   **Component Root Naming:** The root element of a component should have an `id` that matches the component's name, e.g., `my-component`.
-    
+
 *   **Internal Component Layout:** Within a component's root element, its primary child elements should follow a `[component-name]-header`, `[component-name]-content`, and `[component-name]-footer` naming convention for their `id`s. This provides a consistent and predictable DOM structure across all components. Not all sections are required. For example:
-    
+
     ```html
     <div id="my-component">
         <div id="my-component-header">...</div>
