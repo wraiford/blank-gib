@@ -1,7 +1,7 @@
 {
   "name": "@ibgib/blank-gib",
   "private": false,
-  "version": "0.15.4",
+  "version": "0.15.5",
   "description": "new UX that starts with a blank canvas and heavily relies on AI models per renderable object to create more dynamic, JIT-compiled layouts, scenes, compositions, etc.",
   "funding": {
     "type": "individual",
