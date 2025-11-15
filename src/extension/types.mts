@@ -57,3 +57,9 @@ export interface ChunkCommentData_V1 extends CommentData_V1 {
      */
     domInfo: DOMElementInfo;
 }
+
+export interface TranslationTextKeyInfo {
+    translationTextAtom: string,
+    dataKey: string,
+    targetLanguage: string,
+}

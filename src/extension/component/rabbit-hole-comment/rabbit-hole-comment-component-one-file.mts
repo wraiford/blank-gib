@@ -15,7 +15,7 @@ import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.
 import { GLOBAL_LOG_A_LOT } from '../../../constants.mjs';
 import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from '../../../ui/component/ibgib-dynamic-component-bases.mjs';
 import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "../../../ui/component/component-types.mjs";
-import { getChunkRel8nName, getGlobalMetaspace_waitIfNeeded, getSummaryTextKeyForIbGib, getTitleFromSummarizer, getTocHeader_FromIbGib, getTranslationTextKeyForIbGib, } from '../../helpers.mjs';
+import { getChunkRel8nName, getGlobalMetaspace_waitIfNeeded, getSummaryTextKeyForIbGib, getTitleFromSummarizer, getTocHeader_FromIbGib, getTranslationTextKeyForIbGib, parseTranslationTextKeyForIbGib, } from '../../helpers.mjs';
 import { debounce } from '../../../helpers.mjs';
 import { promptForConfirm, shadowRoot_getElementById } from '../../../helpers.web.mjs';
 import { CHUNK_REL8N_NAME_DEFAULT_CONTEXT_SCOPE, PROJECT_TJP_ADDR_PROPNAME, SUMMARY_TEXT_ATOM, TRANSLATION_TEXT_ATOM, } from '../../constants.mjs';
@@ -24,7 +24,7 @@ import { LiveProxyIbGib } from '../../../witness/live-proxy-ibgib/live-proxy-ibg
 import { updateThinkingEntry } from '../../thinking-log.mjs';
 import { SummarizerLength, SummarizerType } from '../../chrome-ai.mjs';
 import { getComponentSvc } from '../../../ui/component/ibgib-component-service.mjs';
-import { getPriorityQueueSvc, QUEUE_SERVICE_PRIORITY_SUMMARY_TITLE, QUEUE_SERVICE_PRIORITY_USER_JUST_CLICKED, SummaryQueueInfo, TranslationQueueInfo } from '../../priority-queue-service-one-file.mjs';
+import { getPriorityQueueSvc, PriorityQueueInfo, QUEUE_SERVICE_PRIORITY_SUMMARY_TITLE, QUEUE_SERVICE_PRIORITY_USER_JUST_CLICKED, SummaryQueueInfo, TaskStatus, TranslationQueueInfo } from '../../priority-queue-service-one-file.mjs';
 import { ChunkCommentData_V1 } from '../../types.mjs';
 
 
@@ -99,7 +99,6 @@ interface RabbitHoleCommentElements extends ElementsBase {
     keyPointsViewTemplate: HTMLTemplateElement;
 }
 
-export type TaskStatus = 'started' | 'complete';
 
 export class RabbitHoleCommentComponentInstance
     extends IbGibDynamicComponentInstanceBase<CommentIbGib_V1, RabbitHoleCommentElements>
@@ -109,11 +108,51 @@ export class RabbitHoleCommentComponentInstance
 
     // #region state properties
     private _breakingDown = false;
-    private isThinking: boolean = false;
     /**
+     * ref counter for long-running tasks
      *
+     * if this is greater than 0, then the thinking animation shows.
      */
-    private queuedTasks: { [type_length: string]: TaskStatus } = {};
+    private isThinking: number = 0;
+    /**
+     * there is a little bit of jankiness to the code here. when tasks complete,
+     * we know beforehand and need to react to certain subsets of updates, but
+     * we don't want to trigger the update until our backing ibGib is updated.
+     * Really, our renderUI should be smart enough to handle small updates no
+     * matter what. Anyway, this is a kluge I'm using for this scenario. So if
+     * we finish, e.g., a translation task, then we just want to render the
+     * translation view.
+     */
+    private tasksToHandle: PriorityQueueInfo[] = [];
+    private allTasks: { [key: string]: PriorityQueueInfo } = {};
+    private get enqueuedTasks(): { [key: string]: PriorityQueueInfo } {
+        const filteredTasks: { [key: string]: PriorityQueueInfo } = {};
+        for (const key in this.allTasks) {
+            if (this.allTasks[key].status === 'queued') {
+                filteredTasks[key] = this.allTasks[key];
+            }
+        }
+        return filteredTasks;
+    }
+    private get completeTasks(): { [key: string]: PriorityQueueInfo } {
+        const filteredTasks: { [key: string]: PriorityQueueInfo } = {};
+        for (const key in this.allTasks) {
+            if (this.allTasks[key].status === 'complete') {
+                filteredTasks[key] = this.allTasks[key];
+            }
+        }
+        return filteredTasks;
+    }
+    private get erroredTasks(): { [key: string]: PriorityQueueInfo } {
+        const filteredTasks: { [key: string]: PriorityQueueInfo } = {};
+        for (const key in this.allTasks) {
+            if (this.allTasks[key].status === 'errored') {
+                filteredTasks[key] = this.allTasks[key];
+            }
+        }
+        return filteredTasks;
+    }
+
     private isHighlighted: boolean = false;
 
     /**
@@ -137,6 +176,14 @@ export class RabbitHoleCommentComponentInstance
             keyPoints: false,
         };
 
+    /**
+     * maps the DOM element that corresponds to a given dataKey (path into
+     * this.ibGib.data).
+     *
+     * so we create the DOM elements corresponding to language source/target
+     * pairs. if it doesn't exist here, then we create it and add it here.
+     */
+    private translationContentViews: { [dataKey: string]: HTMLElement } = {};
     // #endregion state properties
 
     // #region project (ibGib, proxy, etc.)
@@ -302,8 +349,6 @@ export class RabbitHoleCommentComponentInstance
             // If component is a stub, enqueue title generation.
             if (!data.title) {
                 if (logalot) { console.log(`${lc} I am a stub. Enqueuing title generation.`); }
-                this.isThinking = true;
-                await this.renderUI();
                 queueSvc.enqueue({
                     type: 'summary',
                     ibGib: this.ibGib!,
@@ -312,6 +357,18 @@ export class RabbitHoleCommentComponentInstance
                     options: {
                         text: data.text, type: 'headline', length: 'short', isTitle: true,
                     } as SummaryQueueInfo,
+                    fnOnQueued: async (info) => {
+                        this.isThinking++;
+                        await this.renderUI_thinking();
+                    },
+                    fnOnComplete: async (info) => {
+                        this.isThinking--;
+                        await this.renderUI_thinking();
+                    },
+                    fnOnError: async (info) => {
+                        this.isThinking--;
+                        await this.renderUI_thinking();
+                    },
                 });
             }
 
@@ -374,81 +431,14 @@ export class RabbitHoleCommentComponentInstance
             if (!this.ibGib) { throw new Error(`(UNEXPECTED) this.ibGib falsy? (E: 8cfa3f53f5582c4348b21ab897c38a25)`); }
             if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements falsy? (E: 2f1e180d29264ab738e917789df87e25)`); }
 
-            const previouslyRunningTasks = { ...this.queuedTasks };
-            await this.updateQueuedTaskStatuses_andBreakingDownFlag();
-
-            /**
-             * I _think_ only one task would finish per context update, but not sure.
-             */
-            const taskKeysJustFinished: string[] = [];
-            for (const key in previouslyRunningTasks) {
-                if (previouslyRunningTasks[key] === 'started' && this.queuedTasks[key] === 'complete') {
-                    taskKeysJustFinished.push(key);
-                }
-            }
-
-            if (taskKeysJustFinished.length > 1) {
-                console.warn(`${lc} I was figuring that only one task would complete per context updated handler, but taskKeysJustFinished.length > 1. taskKeysJustFinished.length: ${taskKeysJustFinished.length} (W: b1b118eb7f08f4507848ca1ca968fa25)`);
-            }
-
-            for (const taskKeyJustFinished of taskKeysJustFinished) {
-                if (taskKeyJustFinished.startsWith(SUMMARY_TEXT_ATOM)) {
-                    // just finished a summary
-                    if (!this.activeTldrLength) { throw new Error(`(UNEXPECTED) just finished summary task but this.activeTldrLength falsy? (E: f81dd8bb63f899bb8ee41755a2537825)`); }
-
-                    // const summaryKey = getSummaryTextKeyForIbGib({ type: 'tldr', length: this.activeTldrLength });
-                    // if (previouslyRunningTasks[summaryKey] === 'started' && this.queuedSummaryTasks[summaryKey] === 'complete') {
-                    const tldrView = this.elements.viewContainer.querySelector<HTMLDivElement>('#tldr-detail-view');
-                    if (tldrView) {
-                        // This is the key: explicitly re-render the view's content with the new data.
-                        this.renderUI_tldrContent(tldrView, this.activeTldrLength);
-                    } else {
-                        throw new Error(`(UNEXPECTED) tldrView falsy? couldn't querySelector the tldr-detail-view? (E: b49d5c8867a8a27a18c20ac6acfa9825)`);
-                    }
-                    // }
-                } else if (taskKeyJustFinished.startsWith(TRANSLATION_TEXT_ATOM)) {
-                    const translationView = this.elements.viewContainer.querySelector<HTMLDivElement>('#translation-detail-view');
-                    if (translationView) {
-                        // This is the key: explicitly re-render the view's content with the new data.
-                        const task =this.queuedTasks
-                        this.renderUI_translationContent(translationView);
-                    } else {
-                        throw new Error(`(UNEXPECTED) tldrView falsy? couldn't querySelector the tldr-detail-view? (E: b49d5c8867a8a27a18c20ac6acfa9825)`);
-                    }
-
-
-                } else {
-                    throw new Error(`(UNEXPECTED) unknown taskKey start? this is expected to start with a known atom in ${[SUMMARY_TEXT_ATOM, TRANSLATION_TEXT_ATOM]}. (E: b8067fc976884b6ded8da3118e395825)`);
-                }
-            }
-
-            // Check if an active TLDR task just finished
-
-
-
-
-
-            // Check if 'break it down' just finished
-            const childrenJustAdded = this.hasChildren && this.childComponents.length === 0;
-            if (this._breakingDown && childrenJustAdded) {
-                aTaskJustFinished = true;
-                this._breakingDown = false;
-            }
+            await this.updateBreakingDownFlag();
 
             // If any task finished, check if we should stop the thinking animation
-            const anyTasksStillRunning = Object.values(this.queuedTasks).some(s => s === 'started');
-            this.isThinking = anyTasksStillRunning;
 
-            // Handle auto-showing Key Points view if children were added externally
-            if (childrenJustAdded && this._isExpanded) {
-                this.activeDetailViews.keyPoints = true;
-            }
-
-            // Finally, call the main render function to update all component chrome
+            // Finally, call the main render function to update the entire component
             await this.renderUI();
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
-            this.isThinking = false;
             await this.renderUI();
         }
     }
@@ -475,66 +465,119 @@ export class RabbitHoleCommentComponentInstance
                 highlightBtn, viewContainer
             } = this.elements;
 
-            // #region Basic Component State
-            this.classList.toggle('thinking', this.isThinking);
-            contentEl.classList.toggle('collapsed', !this._isExpanded);
-            headerEl.classList.toggle('expanded', this._isExpanded);
-            await this.renderUI_highlightBtn();
-            const displayText = getTocHeader_FromIbGib({ ibGib: this.ibGib });
-            commentText.textContent = displayText;
-            // #endregion
+            // header text
+            const headerText = getTocHeader_FromIbGib({ ibGib: this.ibGib });
+            commentText.textContent = headerText;
 
-            // #region Main Command Bar Button States
+            await this.renderUI_highlightBtn();
+
+            // buttons states
             tldrBtn.classList.toggle('active', this.activeDetailViews.tldr);
             translateBtn.classList.toggle('active', this.activeDetailViews.translation);
             keyPointsBtn.classList.toggle('active', this.activeDetailViews.keyPoints);
             keyPointsBtn.disabled = !this.hasChildren;
-            // #endregion
 
-            // #region Detail View Rendering Logic (Create Once, Then Toggle)
+            // expanded-related
             if (this._isExpanded) {
-                // TLDR View
-                let tldrView = viewContainer.querySelector<HTMLDivElement>('#tldr-detail-view');
-                if (this.activeDetailViews.tldr && !tldrView) {
-                    // If view is active but doesn't exist in DOM, create it.
-                    this.createDetailView_tldr();
-                    // And re-select it after creation.
-                    tldrView = viewContainer.querySelector<HTMLDivElement>('#tldr-detail-view');
-                }
-                // Now, if the view exists, toggle its visibility based on the active state.
-                tldrView?.classList.toggle('collapsed', !this.activeDetailViews.tldr);
-
-                // Translation View
-                let translationView = viewContainer.querySelector<HTMLDivElement>('#translation-detail-view');
-                if (this.activeDetailViews.translation && !translationView) {
-                    this.createDetailView_translation();
-                    translationView = viewContainer.querySelector<HTMLDivElement>('#translation-detail-view');
-                }
-                translationView?.classList.toggle('collapsed', !this.activeDetailViews.translation);
-
-                // Key Points View (NEW)
-                let keyPointsView = viewContainer.querySelector<HTMLDivElement>('#key-points-detail-view');
-                if (this.activeDetailViews.keyPoints && !keyPointsView && this.hasChildren) {
-                    // If the view should be active, doesn't exist yet, but we now have children to show, create it.
-                    await this.createDetailView_keyPoints();
-                    keyPointsView = viewContainer.querySelector<HTMLDivElement>('#key-points-detail-view');
-                }
-                // If the view exists in the DOM, just toggle its visibility.
-                keyPointsView?.classList.toggle('collapsed', !this.activeDetailViews.keyPoints);
+                contentEl.classList.remove('collapsed');
+                headerEl.classList.add('expanded');
+                await this.renderUI_tldrView();
+                await this.renderUI_translationView();
+                await this.renderUI_keyPointsView();
+            } else {
+                contentEl.classList.add('collapsed');
+                headerEl.classList.remove('expanded');
             }
-            // #endregion
 
+            await this.renderUI_thinking();
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
             throw error;
         }
     }
 
+    protected async renderUI_thinking(): Promise<void> {
+        this.classList.toggle('thinking', this.isThinking > 0);
+    }
+
+    /**
+     * renders the tldr view, creating it if needed.
+     *
+     * this will trigger the tldr summarization if not already started, which
+     * isn't strictly good for a render method, but there it is.
+     */
     private async renderUI_tldrView(): Promise<void> {
         const lc = `${this.lc}[${this.renderUI_tldrView.name}]`;
         try {
             if (logalot) { console.log(`${lc} starting... (I: 8fe038f13d669c1c483887e2bcd97725)`); }
 
+            if (!this.ibGib) { throw new Error(`(UNEXPECTED) this.ibGib falsy? (E: e7ae18b272977f21baa90e7857841825)`); }
+            if (!this.ibGib.data) { throw new Error(`(UNEXPECTED) this.ibGib.data falsy? (E: 8146c8feba88da8ca889f97357fd0725)`); }
+
+            if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements falsy? (E: da0a18037c587f607833149e9ed73825)`); }
+            const { viewContainer } = this.elements;
+
+            let tldrView = viewContainer.querySelector<HTMLDivElement>('#tldr-detail-view');
+            if (this.activeDetailViews.tldr && !tldrView) {
+                // If view is active but doesn't exist in DOM, create it.
+                this.createDetailView_tldr();
+                // And re-select it after creation.
+                tldrView = viewContainer.querySelector<HTMLDivElement>('#tldr-detail-view');
+            }
+            if (!tldrView || !this.activeTldrLength) { return; /* <<<< returns early */ }
+
+            // the view exists, toggle its visibility based on the active state.
+            tldrView.classList.toggle('collapsed', !this.activeDetailViews.tldr);
+
+            // Update button states
+            tldrView.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            tldrView.querySelector<HTMLButtonElement>(`[data-view-length="${this.activeTldrLength}"]`)?.classList.add('active');
+
+
+            const contentView = tldrView.querySelector<HTMLDivElement>('.detail-view-content');
+            if (!contentView) { console.error(`${lc} contentView not found in view.`); return; }
+
+            const length = this.activeTldrLength;
+            const key = getSummaryTextKeyForIbGib({ type: 'tldr', length });
+            const tldrText = this.ibGib.data[key];
+            if (tldrText) {
+                // Data exists, render it.
+                contentView.innerHTML = `<p>${tldrText}</p>`;
+            } else {
+                // Data does not exist, so show the generating message and queue
+                // task if not already done so.
+                contentView.innerHTML = `<p>Generating ${length} tl;dr summary...</p>`;
+
+                const alreadyQueued = Object.keys(this.enqueuedTasks).some((k) => k === key);
+                if (!alreadyQueued) {
+                    const queueSvc = getPriorityQueueSvc();
+                    queueSvc.enqueue({
+                        type: 'summary',
+                        ibGib: this.ibGib!,
+                        priority: QUEUE_SERVICE_PRIORITY_USER_JUST_CLICKED,
+                        thinkingId: this.getThinkingIdFromTjpGib(),
+                        options: {
+                            text: this.ibGib?.data?.text!,
+                            type: 'tldr',
+                            length,
+                            isTitle: false,
+                        } as SummaryQueueInfo,
+                        fnOnQueued: async (info) => {
+                            this.allTasks[key] = info;
+                            this.isThinking++;
+                            await this.renderUI_thinking();
+                        },
+                        fnOnComplete: async (info) => {
+                            this.isThinking--;
+                            await this.renderUI_thinking();
+                        },
+                        fnOnError: async (info) => {
+                            this.isThinking--;
+                            await this.renderUI_thinking();
+                        },
+                    });
+                }
+            }
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
             throw error;
@@ -546,31 +589,82 @@ export class RabbitHoleCommentComponentInstance
     private async renderUI_translationView(): Promise<void> {
         const lc = `${this.lc}[${this.renderUI_translationView.name}]`;
         try {
-            if (!this.elements) { throw new Error(`(UNEXPECTED) elements not initialized. (E: genuuid)`); }
+            if (!this.ibGib) { throw new Error(`(UNEXPECTED) this.ibGib falsy? (E: e6ac285ebf68a4d5b8dbbc757edd1c25)`); }
+            if (!this.ibGib.data) { throw new Error(`(UNEXPECTED) this.ibGib.data falsy? (E: b65d0855667875be489410989a0d3525)`); }
+            if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements falsy? (E: genuuid)`); }
 
-            let view = this.elements.viewContainer.querySelector<HTMLDivElement>('#translation-detail-view');
+            let translationView = this.elements.viewContainer.querySelector<HTMLDivElement>('#translation-detail-view');
 
-            // Create the view if it's active but not in the DOM.
-            if (this.activeDetailViews.translation && !view) {
-                await this.createDetailView_translation();
-                view = this.elements.viewContainer.querySelector<HTMLDivElement>('#translation-detail-view');
+            if (!this.activeDetailViews.translation) {
+                if (translationView) { translationView.classList.add('collapsed'); }
+                return; /* <<<< returns early */
             }
 
-            if (view) {
-                // Toggle visibility based on the active flag.
-                view.classList.toggle('collapsed', !this.activeDetailViews.translation);
+            // Create the view if needed
+            translationView ??= await this.createDetailView_translation();
+            const sourceInput = translationView.querySelector<HTMLInputElement>('.source-language-input');
+            if (!sourceInput) { throw new Error(`(UNEXPECTED) couldn't get sourceInput from translationView? (E: a3de9a298718e47248208b0b2c8e5825)`); }
+            const languageDropdown = translationView.querySelector<HTMLSelectElement>('.language-dropdown');
+            if (!languageDropdown) { throw new Error(`(UNEXPECTED) couldn't get languageDropdown from translationView? (E: 15a8c2118a9763993d7dd688a89cec25)`); }
 
-                if (this.activeDetailViews.translation) {
-                    // If the view is visible, ensure its content is up-to-date.
-                    const sourceInput = view.querySelector<HTMLInputElement>('.source-language-input');
-                    const languageDropdown = view.querySelector<HTMLSelectElement>('.language-dropdown');
-                    if (sourceInput?.value && languageDropdown?.value) {
-                        this.renderUI_translationContent(view, sourceInput.value, languageDropdown.value);
-                    } else {
-                        // Clear content if no language is selected.
-                        const contentView = view.querySelector<HTMLDivElement>('.detail-view-content');
-                        if (contentView) { contentView.innerHTML = ''; }
-                    }
+            const translationViewContent = translationView.querySelector<HTMLDivElement>('.detail-view-content');
+            if (!translationViewContent) { throw new Error(`(UNEXPECTED) couldn't get translationViewContent from translationView? (E: d1d5822919e8d08aa1700a2360d83325)`); }
+
+            const sourceLanguage = sourceInput.value;
+            const targetLanguage = languageDropdown.value;
+            if (sourceLanguage && targetLanguage) {
+                /**
+                 * right now, we're only doing ibGib.data.text translations. in
+                 * the future, we will be doing tldr translations I think, but
+                 * may be yagni.
+                 */
+                const dataKey = 'text';
+                const key = getTranslationTextKeyForIbGib({
+                    dataKey,
+                    targetLanguage,
+                });
+                const translationText = this.ibGib.data[key] as (string | undefined);
+                if (translationText) {
+                    const paragraphs = translationText.split('\n');
+                    const paragraphsHtml = paragraphs.map(x => `<p>${x}</p>`).join('\n');
+                    translationViewContent.innerHTML = paragraphsHtml;
+                } else {
+                    translationViewContent.innerHTML = `<p>Translating from ${sourceLanguage} into ${targetLanguage}...</p>`;
+                }
+
+            } else {
+                translationViewContent.innerHTML = '<p>Select a language...</p>';
+            }
+
+            // this approach is tabled for now. it would allow multiple language
+            // translations to be shown at once but probably yagni or just not
+            // now anyway.
+            // const existingTranslationKeys =
+            //     Object.keys(this.ibGib.data).filter(x => x.startsWith(TRANSLATION_TEXT_ATOM));
+            // for (const existingTranslationKey of existingTranslationKeys) {
+            //     let translationContentEl =
+            //         this.translationContentViews[existingTranslationKey];
+
+            //     if (!translationContentEl) {
+            //         // we don't yet have a view for this translation, so create it
+            //         const { dataKey, targetLanguage } = parseTranslationTextKeyForIbGib({ key: existingTranslationKey });
+            //     }
+            //     getTranslationTextKeyForIbGib
+            // }
+
+
+
+            // Toggle visibility based on the active flag.
+            translationView.classList.toggle('collapsed', !this.activeDetailViews.translation);
+
+            if (this.activeDetailViews.translation) {
+                // If the view is visible, ensure its content is up-to-date.
+                if (sourceInput?.value && languageDropdown?.value) {
+                    this.renderUI_translationContent(translationView, sourceInput.value, languageDropdown.value);
+                } else {
+                    // Clear content if no language is selected.
+                    const contentView = translationView.querySelector<HTMLDivElement>('.detail-view-content');
+                    if (contentView) { contentView.innerHTML = ''; }
                 }
             }
         } catch (error) {
@@ -583,6 +677,23 @@ export class RabbitHoleCommentComponentInstance
         try {
             if (logalot) { console.log(`${lc} starting... (I: 8fe038f13d669c1c483887e2bcd97725)`); }
 
+            // createDetailView_keyPoints
+            if (!this.ibGib) { throw new Error(`(UNEXPECTED) this.ibGib falsy? (E: genuuid)`); }
+            if (!this.ibGib.data) { throw new Error(`(UNEXPECTED) this.ibGib.data falsy? (E: genuuid)`); }
+            if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements falsy? (E: genuuid)`); }
+
+            let keypointsView = this.elements.viewContainer.querySelector<HTMLDivElement>('#key-points-detail-view');
+
+            if (!this.activeDetailViews.keyPoints) {
+                if (keypointsView) { keypointsView.classList.add('collapsed'); }
+                return; /* <<<< returns early */
+            }
+
+            // Create the view if needed
+            keypointsView ??= await this.createDetailView_keyPoints();
+
+            // don't do anything further atm
+            // console.error(`${lc} not implemented yet (E: cb04c863a828d357c7ef0a08196f6825)`);
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
             throw error;
@@ -636,26 +747,42 @@ export class RabbitHoleCommentComponentInstance
         const contentView = view.querySelector<HTMLDivElement>('.detail-view-content');
         if (!contentView) { console.error(`${lc} contentView not found in view.`); return; }
 
+        const dataKey = 'text'; // we only do this.ibGib.text atow 11/2025
         const translationKey = getTranslationTextKeyForIbGib({
-            dataKey: 'text',
+            dataKey,
             targetLanguage,
         });
-        const translationText = this.ibGib.data[translationKey];
+        const translationText = this.ibGib.data[translationKey] as string | undefined;
 
         if (translationText) {
-            contentView.innerHTML = `<p>${translationText}</p>`;
+            const paragraphs = translationText.split('\n');
+            const paragraphsHtml = paragraphs.map(x => `<p>${x}</p>`).join('\n');
+            contentView.innerHTML = paragraphsHtml;
         } else {
+            //
             // Check if this task is queued or in-progress.
-            const taskStatus = this.queuedTasks[translationKey];
-            if (taskStatus === 'started') {
-                contentView.innerHTML = `<p>Translating from ${sourceLanguage} into ${targetLanguage}...</p>`;
-            } else if (taskStatus === 'complete') {
-                throw new Error(`(UNEXPECTED) translation taskStatus is 'complete', but this.ibGib.data[${translationKey}] is falsy? (E: 5e59a8a137b87dcc5237a52de83f3325)`);
-            } else if (!taskStatus) {
-                throw new Error(`(UNEXPECTED) we are rendering translationContent but no translation taskStatus is falsy? I would expect this to always be truthy at this point. (E: 9348dbb9129f54e558b0c3d60b76a825)`);
+            let resFilter = this.tasksToHandle.filter(x => {
+                if (x.type !== 'translation') { return false; };
+                let opts = x.options as TranslationQueueInfo;
+                return (opts.dataKey === dataKey && opts.targetLanguage === targetLanguage);
+            });
+            if (resFilter.length === 1) {
+                // we just finished this task, so why no translationText?
+
+            } else if (resFilter.length > 1) {
+                throw new Error(`(UNEXPECTED) more than one task for the same translation opts? (E: 2bc578a50ff8b9fad25953f4b9022825)`);
             } else {
-                throw new Error(`(UNEXPECTED) taskStatus is truthy but not 'started' or 'complete'? (E: 6697d8e86698325f933cdaf840112825)`);
+                // length === 0, i.e., task is just started
+                contentView.innerHTML = `<p>Translating from ${sourceLanguage} into ${targetLanguage}...</p>`;
             }
+            // if (taskStatus === 'started') {
+            // } else if (taskStatus === 'complete') {
+            //     throw new Error(`(UNEXPECTED) translation taskStatus is 'complete', but this.ibGib.data[${translationKey}] is falsy? (E: 5e59a8a137b87dcc5237a52de83f3325)`);
+            // } else if (!taskStatus) {
+            //     throw new Error(`(UNEXPECTED) we are rendering translationContent but no translation taskStatus is falsy? I would expect this to always be truthy at this point. (E: 9348dbb9129f54e558b0c3d60b76a825)`);
+            // } else {
+            //     throw new Error(`(UNEXPECTED) taskStatus is truthy but not 'started' or 'complete'? (E: 6697d8e86698325f933cdaf840112825)`);
+            // }
         }
     }
 
@@ -765,39 +892,60 @@ export class RabbitHoleCommentComponentInstance
         const lc = `${this.lc}[${this.handleClick_tldrLength.name}]`;
         try {
             if (logalot) { console.log(`${lc} starting... length: ${length}`); }
+            if (!this.ibGib) { throw new Error(`(UNEXPECTED) this.ibGib falsy? (E: 7e6c0b4623116a4759f006760433a825)`); }
+            if (!this.ibGib.data) { throw new Error(`(UNEXPECTED) this.ibGib.data falsy? (E: 3c15480612df256a1d05ddb803fb1825)`); }
+
             this.activeTldrLength = length;
 
+            await this.renderUI_tldrView();
+
             // Update button states immediately
-            view.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
-            view.querySelector<HTMLButtonElement>(`[data-view-length="${length}"]`)?.classList.add('active');
+            // view.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+            // view.querySelector<HTMLButtonElement>(`[data-view-length="${length}"]`)?.classList.add('active');
 
-            const type: SummarizerType = 'tldr';
-            const summaryKey = getSummaryTextKeyForIbGib({ type, length });
-            const summaryText = this.ibGib?.data?.[summaryKey];
+            // const summarizerType: SummarizerType = 'tldr';
+            // const summaryKey = getSummaryTextKeyForIbGib({ type: summarizerType, length });
+            // const summaryText = this.ibGib.data[summaryKey];
 
-            // If the summary does NOT exist, we need to start the background task.
-            if (!summaryText && (!this.queuedTasks[summaryKey] || this.queuedTasks[summaryKey] === 'complete')) {
-                this.isThinking = true;
-                await this.renderUI(); // Call immediately to start the 'thinking' pulse
+            // if (summaryText) {
 
-                this.queuedTasks[summaryKey] = 'started';
-                const queueSvc = getPriorityQueueSvc();
-                queueSvc.enqueue({
-                    type: 'summary',
-                    ibGib: this.ibGib!,
-                    priority: QUEUE_SERVICE_PRIORITY_USER_JUST_CLICKED,
-                    thinkingId: this.getThinkingIdFromTjpGib(),
-                    options: {
-                        text: this.ibGib?.data?.text!,
-                        type,
-                        length,
-                        isTitle: false,
-                    } as SummaryQueueInfo,
-                });
-            }
+            // } else {
+            //     // summary does NOT exist, we need to start the background task.
+            //     const resFilter = Object.values(this.enqueuedTasks)
+            //         .filter(x => x.type === 'summary')
+            //         .filter(x => {
+            //             const summaryOpts = x.options as SummaryQueueInfo;
+            //             return summaryOpts.type === summarizerType && summaryOpts.length === length;
+            //         });
 
-            // Now, render the content (it will show the result OR the "Generating..." message)
-            this.renderUI_tldrContent(view, length);
+            //     if (resFilter.length === 1) {
+            //         // summary task already started
+            //     } else if (resFilter.length > 1) {
+            //         throw new Error(`(UNEXPECTED) more than one task for same summary opts (type: ${summarizerType}, length: ${length})? (E: 1877f8c0c3af9350e902497163276f25)`);
+            //     } else {
+            //         // summary task not yet started
+            //         this.isThinking = true;
+            //         await this.renderUI(); // Call immediately to start the 'thinking' pulse
+
+            //         const queueSvc = getPriorityQueueSvc();
+            //         queueSvc.enqueue({
+            //             type: 'summary',
+            //             ibGib: this.ibGib!,
+            //             priority: QUEUE_SERVICE_PRIORITY_USER_JUST_CLICKED,
+            //             thinkingId: this.getThinkingIdFromTjpGib(),
+            //             options: {
+            //                 text: this.ibGib?.data?.text!,
+            //                 type: summarizerType,
+            //                 length,
+            //                 isTitle: false,
+            //             } as SummaryQueueInfo,
+            //         });
+
+            //     }
+            // }
+
+            // // Now, render the content (it will show the result OR the "Generating..." message)
+            // this.renderUI_tldrContent(view, length);
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
         }
@@ -828,10 +976,7 @@ export class RabbitHoleCommentComponentInstance
             const text = this.ibGib.data?.text ?? '';
             if (!text) { return; } // Nothing to translate
 
-            /**
-             * right now, we're only translating this.ibGib.data.text
-             */
-            const dataKey = 'text';
+            const dataKey = 'text'; // we only do this.ibGib.text atow 11/2025
             const translationKey = getTranslationTextKeyForIbGib({
                 dataKey,
                 targetLanguage,
@@ -839,10 +984,7 @@ export class RabbitHoleCommentComponentInstance
             const existingTranslation = this.ibGib.data[translationKey];
 
             // If we don't already have this translation and it's not already started...
-            if (!existingTranslation && this.queuedTasks[translationKey] !== 'started') {
-                this.isThinking = true;
-                this.queuedTasks[translationKey] = 'started';
-
+            if (!existingTranslation && !this.enqueuedTasks[translationKey]) {
                 const queueSvc = getPriorityQueueSvc();
                 queueSvc.enqueue({
                     type: 'translation',
@@ -850,11 +992,63 @@ export class RabbitHoleCommentComponentInstance
                     priority: QUEUE_SERVICE_PRIORITY_USER_JUST_CLICKED,
                     thinkingId: this.getThinkingIdFromTjpGib(),
                     options: { dataKey, sourceLanguage, targetLanguage, text } as TranslationQueueInfo,
+                    fnOnQueued: async (info) => {
+                        // Defer to the main render loop to show "Translating..." or the result.
+                        this.enqueuedTasks[translationKey] = info;
+
+                        this.isThinking++;
+                        await this.renderUI_thinking();
+                    },
+                    fnOnComplete: async (info) => {
+                        this.isThinking--;
+                        await this.renderUI_thinking();
+
+                        // prepare
+                        // this.tasksToHandle.push(info);
+
+                        // 3. Get the necessary space and metaspace to save the result.
+                        // const metaspace = info.metaspace ?? await getGlobalMetaspace_waitIfNeeded();
+                        // const space = info.space ?? await metaspace.getLocalUserSpace({ lock: false });
+                        // if (!space) { throw new Error(`(UNEXPECTED) could not get default user space from metaspace? (E: genuuid)`); }
+
+
+                        // /**
+                        //  * always store the translation via the key.
+                        //  *
+                        //  * atow (11/2024) e.g. `translationtext__text__es` or
+                        //  * `translationtext__summarytext_tldr_short__en-US`
+                        //  *
+                        //  * @see {@link getTranslationTextKeyForIbGib}
+                        //  */
+                        // const key = getTranslationTextKeyForIbGib({
+                        //     dataKey,
+                        //     targetLanguage,
+                        // });
+
+                        // // Mutate the ibGib's timeline to save the new data. This updated
+                        // // timeline will be heard by the subscribed ibgib's component and
+                        // // reacted to.
+                        // const dataToAddOrPatch = { [key]: translationText };
+                        // await mut8Timeline({
+                        //     timeline: ibGib,
+                        //     metaspace,
+                        //     space,
+                        //     mut8Opts: { dataToAddOrPatch },
+                        //     skipLock: false,
+                        // });
+                    },
+                    fnOnError: async (info) => {
+                        this.isThinking--;
+                        await this.renderUI_thinking();
+                        // do what here?
+                        console.error(`${lc} the translation info failed. now what? (E: genuuid)`);
+                        this.tasksToHandle.push(info);
+                        // Defer to the main render loop to show "Translating..." or the result.
+                        await this.renderUI();
+                    },
                 });
             }
 
-            // Defer to the main render loop to show "Translating..." or the result.
-            await this.renderUI();
 
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
@@ -869,14 +1063,14 @@ export class RabbitHoleCommentComponentInstance
             if (logalot) { console.log(`${lc} starting... (I: genuuid)`); }
             if (!this.elements) { throw new Error(`(UNEXPECTED) this.elements falsy? (E: genuuid)`); }
 
-            // 1. Clone the template
+            // Clone the template
             const tldrTemplate = this.elements.tldrViewTemplate;
             const tldrViewClone = tldrTemplate.content.cloneNode(true) as DocumentFragment;
             const tldrView = tldrViewClone.firstElementChild as HTMLDivElement;
 
             if (!tldrView) { throw new Error(`(UNEXPECTED) Cloning tldr-view-template failed? (E: genuuid)`); }
 
-            // 2. Wire up internal controls
+            // Wire up internal controls
             const shortBtn = tldrView.querySelector<HTMLButtonElement>('[data-view-length="short"]');
             const longBtn = tldrView.querySelector<HTMLButtonElement>('[data-view-length="long"]');
 
@@ -885,7 +1079,7 @@ export class RabbitHoleCommentComponentInstance
             shortBtn.addEventListener('click', () => this.handleClick_tldrLength('short', tldrView));
             longBtn.addEventListener('click', () => this.handleClick_tldrLength('long', tldrView));
 
-            // 3. Append to the DOM
+            // Append to the DOM
             this.elements.viewContainer.appendChild(tldrView);
 
         } catch (error) {
@@ -894,7 +1088,7 @@ export class RabbitHoleCommentComponentInstance
         }
     }
 
-    private async createDetailView_translation(): Promise<void> {
+    private async createDetailView_translation(): Promise<HTMLDivElement> {
         const lc = `${this.lc}[${this.createDetailView_translation.name}]`;
         try {
             if (logalot) { console.log(`${lc} starting...`); }
@@ -942,13 +1136,15 @@ export class RabbitHoleCommentComponentInstance
                 sourceInput.disabled = false;
                 updateDropdown();
             }
+
+            return view;
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
             throw error;
         }
     }
 
-    private async createDetailView_keyPoints(): Promise<void> {
+    private async createDetailView_keyPoints(): Promise<HTMLDivElement> {
         const lc = `${this.lc}[${this.createDetailView_keyPoints.name}]`;
         try {
             if (logalot) { console.log(`${lc} starting... (I: genuuid)`); }
@@ -1004,6 +1200,8 @@ export class RabbitHoleCommentComponentInstance
                     componentToInject: childInstance,
                 });
             }
+
+            return view;
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
             throw error;
@@ -1064,15 +1262,15 @@ export class RabbitHoleCommentComponentInstance
             }
 
             // Set thinking state and update UI to show it.
-            this.isThinking = true;
-            await this.renderUI();
+            this.isThinking++;
+            await this.renderUI_thinking();
 
             // NOTE: The actual chunking implementation is still pending.
             // We will eventually re-integrate the `chunkCommentIbGib` call here.
             console.error(`${lc} not fully implemented...needs to call chunkCommentIbGib. (E: 9e4aec549ea63df5bcf2ac0a8598d525)`);
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
-            this.isThinking = false;
+            this.isThinking--;
             this._breakingDown = false;
             await this.renderUI();
         }
@@ -1163,8 +1361,8 @@ export class RabbitHoleCommentComponentInstance
         }
     }
 
-    private async updateQueuedTaskStatuses_andBreakingDownFlag(): Promise<void> {
-        const lc = `${this.lc}[${this.updateQueuedTaskStatuses_andBreakingDownFlag.name}]`;
+    private async updateBreakingDownFlag(): Promise<void> {
+        const lc = `${this.lc}[${this.updateBreakingDownFlag.name}]`;
         try {
             if (logalot) { console.log(`${lc} starting... (I: 68c98a597bf83f6338c2645ea2ea4e25)`); }
 
@@ -1172,15 +1370,15 @@ export class RabbitHoleCommentComponentInstance
             if (!this.ibGib.data) { throw new Error(`(UNEXPECTED) this.ibGib falsy? (E: 08f6c868ef287e4548a8e708952bdd25)`); }
 
             const data = this.ibGib.data as ChunkCommentData_V1;
-            const keysCompleted: string[] = [];
-            Object.entries(this.queuedTasks)
-                .filter(([_key, status]) => status === 'started')
-                .forEach(([key, _status]) => {
-                    if (!!data[key]) { keysCompleted.push(key); }
-                });
-            keysCompleted.forEach(key => {
-                this.queuedTasks[key] = 'complete';
-            });
+            // const keysCompleted: string[] = [];
+            // Object.entries(this.queuedTasks)
+            //     .filter(([_key, status]) => status === 'started')
+            //     .forEach(([key, _status]) => {
+            //         if (!!data[key]) { keysCompleted.push(key); }
+            //     });
+            // keysCompleted.forEach(key => {
+            //     this.queuedTasks[key] = 'complete';
+            // });
 
             // const summaryKey = getSummaryTextKeyForIbGib({ type: view.split('_')[0] as SummarizerType, length: view.split('_')[1] as SummarizerLength });
             // const summaryText = this.ibGib.data?.[summaryKey];

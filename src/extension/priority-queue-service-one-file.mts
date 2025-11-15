@@ -1,4 +1,4 @@
-import { extractErrorMsg, } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
+import { extractErrorMsg, pickRandom_Letters, } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
 import { IbGib_V1 } from "@ibgib/ts-gib/dist/V1/types.mjs";
 import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.mjs';
 import { mut8Timeline } from '@ibgib/core-gib/dist/timeline/timeline-api.mjs';
@@ -26,10 +26,15 @@ export const QUEUE_SERVICE_PRIORITY_SUMMARY_TITLE = 10;
  */
 export const QUEUE_SERVICE_PRIORITY_BACKGROUND = 100;
 
+export type TaskStatus = 'queued' | 'started' | 'complete' | 'errored';
+
 /**
  * Information for a summary task.
  */
 export interface SummaryQueueInfo {
+    /**
+     */
+    id?: string;
     /**
      * text to summarize
      */
@@ -105,6 +110,14 @@ export type PriorityQueueType = 'summary' | 'translation' | 'anon-fn';
 
 export interface PriorityQueueInfo {
     /**
+     * this is set once the item is added to the queue.
+     */
+    id?: string;
+    /**
+     * this is set once the item is added to the queue.
+     */
+    status?: TaskStatus;
+    /**
      * discriminator
      */
     type: PriorityQueueType;
@@ -139,6 +152,10 @@ export interface PriorityQueueInfo {
      * if truthy, will add an entry. Will NOT create an entry if falsy.
      */
     thinkingId?: string;
+    result?: any;
+    fnOnQueued?: (info: PriorityQueueInfo) => Promise<void>;
+    fnOnComplete?: (info: PriorityQueueInfo) => Promise<void>;
+    fnOnError?: (info: PriorityQueueInfo, error: any) => Promise<void>;
 }
 
 // Add this code below the existing interface definitions
@@ -167,8 +184,23 @@ class PriorityQueueService {
         try {
             if (logalot) { console.log(`${lc} starting... (I: beb3980fa4d6406b443a2f4d499fd525)`); }
 
-            if (logalot) { console.log(`${lc} adding new item with priority ${info.priority} (I: genuuid)`); }
+            info.id ??= pickRandom_Letters({ count: 8 });
+            if (!info.status) {
+                info.status = 'queued';
+            } else {
+                throw new Error(`(UNEXPECTED) info.status (${info.status}) already truthy? This is expected to be falsy when enqueueing (E: c08346c19a84a913870351687b546425)`);
+            }
+
+            if (logalot) { console.log(`${lc} adding to queue new item with priority ${info.priority} (I: genuuid)`); }
+
             this.queue.push(info);
+
+            if (info.fnOnQueued) {
+                info.fnOnQueued(info)
+                    .catch(e => {
+                        console.error(`${lc}[info.fnOnQueued] ${extractErrorMsg(e)}`);
+                    }); // spins off
+            }
 
             // sort will happen in processing loop
 
@@ -242,9 +274,30 @@ class PriorityQueueService {
                         default:
                             throw new Error(`(UNEXPECTED) unknown item.type (${item.type})? (E: 81e8eb4866dc1822c84606c8dee66d25)`);
                     }
+
+                    item.status = 'complete';
+                    if (item.fnOnComplete) {
+                        try {
+                            await item.fnOnComplete(item);
+                        } catch (error) {
+                            console.error(`${lc}[item.fnOnComplete] ${extractErrorMsg(error)}`);
+                        }
+                    }
                 } catch (error) {
                     console.error(`${lc} Error processing queue item: ${extractErrorMsg(error)}`);
-                    // Continue to the next item even if one fails.
+                    item.status = 'errored';
+                    if (item.fnOnError) {
+                        try {
+                            await item.fnOnError(item, error);
+                        } catch (error_fnOnError) {
+                            // an inner error? sheesh
+                            console.error(`${lc}[item.fnOnError] ${extractErrorMsg(error_fnOnError)}`);
+                        }
+                    }
+
+                    // do NOT rethrow, i.e., continue to the next item even if
+                    // one fails.
+                    // throw error;
                 } finally {
                     if (logalot) { console.log(`${lc} processing item complete.`); }
                 }
@@ -328,7 +381,6 @@ class PriorityQueueService {
         }
     }
 
-
     private async processQueue_translate(item: PriorityQueueInfo): Promise<void> {
         const lc = `${this.lc}[${this.processQueue_translate.name}]`;
         try {
@@ -338,18 +390,19 @@ class PriorityQueueService {
             const { text, dataKey, sourceLanguage, targetLanguage } = translateOpts;
             const { ibGib, thinkingId } = item;
 
-            // 1. Get/Create the instance based on the item's requirements.
-            //    (We'll need a helper for this to cache this later, but for
-            //    now, we create it)
+            // Get/Create the instance based on the item's requirements. (We'll
+            // need a helper for this to cache this later, but for now, we
+            // create it)
             const translator = await Translator.create({
                 sourceLanguage,
                 targetLanguage,
             });
 
-            // 2. Perform the translation.
+            // Perform the translation.
             if (thinkingId) { updateThinkingEntry(thinkingId, `Translating (p${item.priority})...`); }
             const translationText = await translator.translate(text);
 
+            item.result = translationText;
 
             // 3. Get the necessary space and metaspace to save the result.
             const metaspace = item.metaspace ?? await getGlobalMetaspace_waitIfNeeded();

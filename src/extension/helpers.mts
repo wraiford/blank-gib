@@ -32,7 +32,7 @@ import {
 } from './constants.mjs';
 import { DOMElementInfo, PageContentInfo } from './page-analyzer/page-analyzer-types.mjs';
 import { ProjectIbGib_V1 } from '../common/project/project-types.mjs';
-import { ChunkCommentAddlMetadataInfo, ChunkCommentData_V1, } from './types.mjs';
+import { ChunkCommentAddlMetadataInfo, ChunkCommentData_V1, TranslationTextKeyInfo, } from './types.mjs';
 import { PROJECT_MAX_NAME_LENGTH } from '../common/project/project-constants.mjs';
 import { getNodeTextContent_keepspaces } from './page-analyzer/page-analyzer-helpers.mjs';
 
@@ -299,6 +299,42 @@ export function getTranslationTextKeyForIbGib({
         TRANSLATION_TEXT_ATOM, dataKey, targetLanguage
     ].join(delimiter);
 }
+
+export function parseTranslationTextKeyForIbGib({
+    key,
+    delimiter = '__',
+}: {
+    key: string,
+    delimiter?: string,
+}): TranslationTextKeyInfo {
+    const lc = `[${parseTranslationTextKeyForIbGib.name}]`;
+    try {
+        if (logalot) { console.log(`${lc} starting... (I: 9802c8fabfa24f8d54c18748f6bd8f25)`); }
+
+        if (!key) { throw new Error(`key required (E: 21976526bc9820dca8a777e95594f425)`); }
+        delimiter ??= '__';
+        const parts = key.split(delimiter);
+
+        if (parts.length !== 3) {
+            throw new Error(`Invalid translation text key. Expected 3 parts delimited by "${delimiter}", but got ${parts.length}. (E: fe82db0fd898fecec87454fc12985825)`);
+        }
+
+        const [translationTextAtom, dataKey, targetLanguage] = parts;
+
+        if (translationTextAtom !== TRANSLATION_TEXT_ATOM) {
+            throw new Error(`Invalid translation text key. First part is not "${TRANSLATION_TEXT_ATOM}". (E: 58de3919192c57cb6f38c54f7e268925)`);
+        }
+
+        return { translationTextAtom, dataKey, targetLanguage };
+
+    } catch (error) {
+        console.error(`${lc} ${extractErrorMsg(error)}`);
+        throw error;
+    } finally {
+        if (logalot) { console.log(`${lc} complete.`); }
+    }
+}
+
 
 export async function getSummary({
     summarizer,
