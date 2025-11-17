@@ -36,7 +36,8 @@ import { PROJECT_TJP_ADDR_PROPNAME } from '../../constants.mjs';
 import { getComponentSvc } from '../../../ui/component/ibgib-component-service.mjs';
 import { RABBIT_HOLE_COMMENT_COMPONENT_NAME, RabbitHoleCommentComponentInstance } from '../rabbit-hole-comment/rabbit-hole-comment-component-one-file.mjs';
 import { getCurrentTabURL } from '../../helpers.ext.mjs';
-import { autoChunkByHeadings, getHeadingInfo, getNodeTextContent_keepspaces, } from '../../page-analyzer/page-analyzer-helpers.mjs';
+import { autoChunkByHeadings, cleanDomTreeRecursive, getHeadingInfo, getNodeTextContent_keepspaces, } from '../../page-analyzer/page-analyzer-helpers.mjs';
+import { HEADING_SCORE_H1, HEADING_SCORE_ROOT } from '../../page-analyzer/page-analyzer-constants.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT || true;
 
@@ -657,15 +658,17 @@ export class SidepanelComponentInstance
                 metaspace,
                 space,
             });
-            srcCommentIbGib = await appendToTimeline({
-                timeline: srcCommentIbGib,
-                rel8nInfos: [{
-                    rel8nName: getChunkRel8nName({ contextScope: 'default' }),
-                    ibGibs: childrenChunkIbGibs,
-                }],
-                metaspace,
-                space,
-            }) as CommentIbGib_V1;
+            if (childrenChunkIbGibs.length > 0) {
+                srcCommentIbGib = await appendToTimeline({
+                    timeline: srcCommentIbGib,
+                    rel8nInfos: [{
+                        rel8nName: getChunkRel8nName({ contextScope: 'default' }),
+                        ibGibs: childrenChunkIbGibs,
+                    }],
+                    metaspace,
+                    space,
+                }) as CommentIbGib_V1;
+            }
 
 
             // create and inject the comment component corresponding to the
@@ -1618,7 +1621,8 @@ export class SidepanelComponentInstance
                 return; /* <<<< returns early */
             }
 
-            const chunkedTree = autoChunkByHeadings(this._currentDomRoot || this._fullDomTree);
+            const initialRoot = this._currentDomRoot || this._fullDomTree;
+            const chunkedTree = autoChunkByHeadings(initialRoot);
 
             // Set the new structure as the current root and re-render
             this._currentDomRoot = chunkedTree;

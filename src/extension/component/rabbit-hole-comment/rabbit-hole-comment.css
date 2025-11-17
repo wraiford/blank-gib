@@ -7,10 +7,14 @@
     display: none !important;
 }
 
+/*
+ * thinking animation
+ * removing width because is causing layout change issues
+ */
 @keyframes pulse-border {
     0% {
         border-color: var(--tjp-color, #ff8b44);
-        border-width: 1px;
+        /* border-width: 1px; */
         box-shadow: 0 0 1px #ffcc0020;
         border-style: dotted;
         background-color: #00c8ff06;
@@ -20,7 +24,7 @@
         /* Using tjp-color as a vibrant "thinking" highlight */
         border-color: var(--tjp-color-contrast, #00c8ff);
         box-shadow: 0 1px 3px ff00d950;
-        border-width: 1px 2px 1px 1px;
+        /* border-width: 1px 2px 1px 1px; */
         border-style: dashed;
         background-color: #d900ff03;
     }
@@ -28,7 +32,7 @@
     100% {
         border-color: var(--ibgib-color, #9c1227);
         box-shadow: 0 3px 5px #6200ff90;
-        border-width: 1px 4px 1px 1px;
+        /* border-width: 1px 4px 1px 1px; */
         border-style: dotted;
         background-color: #bbff0010;
     }

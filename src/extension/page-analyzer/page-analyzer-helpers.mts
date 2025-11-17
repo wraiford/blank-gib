@@ -3,6 +3,7 @@ import { clone, extractErrorMsg, pickRandom_Letters, pretty } from "@ibgib/helpe
 import {
     HEADING_SCORE_H1, HEADING_SCORE_H2, HEADING_SCORE_H3, HEADING_SCORE_H4,
     HEADING_SCORE_H5, HEADING_SCORE_H6,
+    HEADING_SCORE_ROOT,
     MIN_TEXT_LENGTH_TO_CHUNK,
     TAGNAMES_UPPERCASE_COLLAPSE_BLACKLIST,
     TAGNAMES_UPPERCASE_UNWRAP_BLACKLIST,
@@ -28,7 +29,7 @@ export async function getSummarizerMaxChunkSize(): Promise<number> {
  * Recursively removes child nodes that are empty or only contain whitespace.
  * This is a crucial data cleaning step to handle junk text nodes.
  */
-function cleanDomTreeRecursive(node: DOMElementInfo): DOMElementInfo {
+export function cleanDomTreeRecursive(node: DOMElementInfo): DOMElementInfo {
     if (!node.content) { return node; }
 
     node.content = node.content.filter(child => {
@@ -345,7 +346,13 @@ function chunkIfElementIsSpecialCase(element: DOMElementInfo): DOMElementInfo | 
     }
 }
 
-function createSemanticChunks(nodes: (DOMElementInfo | string)[]): (DOMElementInfo | string)[] {
+function createSemanticChunks({
+    nodes,
+    parentInfo,
+}: {
+    nodes: (DOMElementInfo | string)[],
+    parentInfo?: DOMElementInfo
+}): (DOMElementInfo | string)[] {
     const lc = `[${createSemanticChunks.name}]`;
     try {
         if (logalot) { console.log(`${lc} starting... (I: 3f3ea803c3a7f5cd58ec8d488814c625)`); }
@@ -353,6 +360,10 @@ function createSemanticChunks(nodes: (DOMElementInfo | string)[]): (DOMElementIn
         if (!nodes || nodes.length === 0) { return []; }
 
         // first make sure all of our nodes have heading scores
+
+        /**
+         * only looking at dom element nodes, not bare strings
+         */
         const elementNodes = nodes.filter(n => typeof n !== 'string') as DOMElementInfo[];
 
         // edge case?
@@ -394,17 +405,20 @@ function createSemanticChunks(nodes: (DOMElementInfo | string)[]): (DOMElementIn
                 if (typeof node === 'string') {
                     semanticallyChunkedContent.push(node);
                 } else {
+                    // "special case" means like a table or ol/ul element where
+                    // it is already semantically chunked and we want to follow
+                    // those semantics
                     const specialNode = chunkIfElementIsSpecialCase(node);
                     if (specialNode) {
                         semanticallyChunkedContent.push(specialNode);
                     } else {
-
+                        // not a special case
                         if (node.content.length > 0) {
                             const newChunk: DOMElementInfo = {
-                                tagName: 'chunk',
+                                tagName: node.tagName,
                                 gibId: node.gibId,
                                 headingInfo: node.headingInfo,
-                                content: [...createSemanticChunks(node.content)],
+                                content: [...createSemanticChunks({ nodes: node.content })],
                             };
                             semanticallyChunkedContent.push(newChunk);
                         } else {
@@ -454,7 +468,7 @@ function createSemanticChunks(nodes: (DOMElementInfo | string)[]): (DOMElementIn
                 // debugger; // all nodes are strings...i want to see if/when this hits in creating semantic chunks
                 gibId = 'ibgib'; // not particularly true (implies we'll scroll to very top of document), but we'll fix this later if this even ever hits
             }
-            const preambleSemanticChunks = createSemanticChunks(preambleNodes);
+            const preambleSemanticChunks = createSemanticChunks({ nodes: preambleNodes });
             result.push({
                 gibId,
                 content: preambleSemanticChunks,
@@ -472,7 +486,7 @@ function createSemanticChunks(nodes: (DOMElementInfo | string)[]): (DOMElementIn
             const endIndex = (i + 1 < splitIndices.length) ? splitIndices[i + 1] : nodes.length;
             /** nodes sans heading node */
             const contentNodes = nodes.slice(startIndex + 1, endIndex);
-            const subContent = createSemanticChunks(contentNodes);
+            const subContent = createSemanticChunks({ nodes: contentNodes });
             const newChunk: DOMElementInfo = {
                 tagName: 'chunk',
                 // gibId: `chunk-${headingNode.gibId || pickRandom_Letters({ count: 5 })}`,
@@ -495,25 +509,39 @@ function createSemanticChunks(nodes: (DOMElementInfo | string)[]): (DOMElementIn
     }
 }
 
-function unwrapSingleChildNodes(node: DOMElementInfo): DOMElementInfo {
+export function unwrapSingleChildNodes({
+    node,
+    recursive = true,
+    force,
+}: {
+    node: DOMElementInfo,
+    recursive?: boolean,
+    /**
+     * if true, ignores blacklist
+     */
+    force?: boolean,
+}): DOMElementInfo {
     // Base case: If content is not an array or is empty, we can't unwrap.
     if (!Array.isArray(node.content) || node.content.length === 0) {
         return node;
     }
 
-    if (TAGNAMES_UPPERCASE_UNWRAP_BLACKLIST.includes(node.tagName.toUpperCase())) {
+    if (!force && TAGNAMES_UPPERCASE_UNWRAP_BLACKLIST.includes(node.tagName.toUpperCase())) {
         // node is a DOMElementInfo but on the blacklist
         return node;
     }
 
     // Recursive step: First, process all children of the current node.
-    node.content = node.content.map(child => {
-        if (typeof child === 'string') {
-            return child; // Strings are left as-is.
-        } else {
-            return unwrapSingleChildNodes(child); // Recurse on element children.
-        }
-    });
+    if (recursive) {
+        node.content = node.content.map(child => {
+            if (typeof child === 'string') {
+                return child; // Strings are left as-is.
+            } else {
+                // Recurse on element children.
+                return unwrapSingleChildNodes({ node: child, recursive: true, force });
+            }
+        });
+    }
 
     // Main Unwrap Logic: Check if the current node should be unwrapped.
     if (node.content.length === 1 && typeof node.content[0] !== 'string') {
@@ -598,48 +626,56 @@ export function autoChunkByHeadings(domInfoTree: DOMElementInfo): DOMElementInfo
     const lc = `[${autoChunkByHeadings.name}]`;
     if (!domInfoTree) { throw new Error(`${lc} domInfoTree is required.`); }
 
-    // 1. Sanitize the entire tree by removing empty/whitespace-only text nodes.
-    const cleanedDomInfoTree = cleanDomTreeRecursive(JSON.parse(JSON.stringify(domInfoTree)));
+    // Sanitize the entire tree by removing empty/whitespace-only text nodes.
+    const cleanedNode = cleanDomTreeRecursive(JSON.parse(JSON.stringify(domInfoTree)));
 
-    // debugger; // start the walk through of autochunk
+    // recurse only until we get a node with multiple children, i.e., don't
+    // recurse indefinitely
+    let firstRoot = cleanedNode;
+    while (typeof firstRoot !== 'string' && firstRoot.content.length === 1) {
+        firstRoot = unwrapSingleChildNodes({
+            node: firstRoot,
+            recursive: false,
+            force: true,
+        });
+    }
+    // edge case, 'ibgib' makes it scroll to top on navigation
+    firstRoot.gibId ||= 'ibgib';
+    if (firstRoot.headingInfo) {
+        firstRoot.headingInfo.headingScore = HEADING_SCORE_ROOT;
+    } else {
+        firstRoot.headingInfo = { headingScore: HEADING_SCORE_ROOT };
+    }
 
-    // i think flattening is the wrong approach
-    // 2. Flatten the tree to get a single list of all nodes in document order.
-    // const allNodes = flattenDomTree(cleanedDomInfoTree);
-    const allNodes = cleanedDomInfoTree.content;
-
-    // 3. We pass all nodes *except* the root node itself to the recursive chunker.
+    // We pass all nodes *except* the root node itself to the recursive chunker.
     // the first node seems to be a copy of all of the others? of course I'm not
     // flattening now so who knows
-    // if (logalot) { console.log(`${lc} allNodes.at(0): ${pretty(allNodes.at(0))} (I: 6d59987e573855e508d3b0187107f825)`); }
-    // const contentNodes = allNodes.slice(1);
-    // if (logalot) { console.log(`${lc} contentNodes after slice: ${pretty(allNodes)} (I: 99f5896718df0e56ef1c8c68cd5c5825)`); }
-    const contentNodes = allNodes;
-
-    const firstPassContent = createSemanticChunks(contentNodes);
+    const firstPassContent = createSemanticChunks({ nodes: firstRoot.content });
     const firstPassChunkedRoot: DOMElementInfo = {
-        tagName: 'body',
-        gibId: 'ibgib',
-        headingInfo: { headingScore: 110 },
+        ...firstRoot,
         content: firstPassContent,
     };
 
-    const unwrappedChunkedRoot = unwrapSingleChildNodes(firstPassChunkedRoot);
+    const unwrappedChunkedRoot = unwrapSingleChildNodes({ node: firstPassChunkedRoot });
 
     const collapsedChunkedRoot = collapseSmallNodesRecursive(unwrappedChunkedRoot);
 
     // hack to get the first child to always scroll to the top
     if (typeof collapsedChunkedRoot === 'string') {
         // does this ever hit?
-        console.warn(`${lc} does this ever hit? we collapse down to a single text string? (W: genuuid)`)
-
+        console.warn(`${lc} does this ever hit? we collapse down to a single text string? (W: 478217ccba88823a286642988b1d5725)`);
         return {
             tagName: 'root',
             gibId: 'ibgib',
-            headingInfo: { headingScore: 0 },
+            headingInfo: { headingScore: HEADING_SCORE_ROOT },
             content: [collapsedChunkedRoot],
         };
     } else {
+        if (collapsedChunkedRoot.headingInfo) {
+            collapsedChunkedRoot.headingInfo.headingScore = HEADING_SCORE_ROOT;
+        } else {
+            collapsedChunkedRoot.headingInfo = { headingScore: HEADING_SCORE_ROOT };
+        }
         const firstChild = collapsedChunkedRoot.content.at(0);
         if (firstChild && typeof firstChild !== 'string') {
             firstChild.gibId = 'ibgib';

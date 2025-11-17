@@ -1,3 +1,4 @@
+export const HEADING_SCORE_ROOT = 110;
 export const HEADING_SCORE_H1 = 100;
 export const HEADING_SCORE_H2 = 90;
 export const HEADING_SCORE_H3 = 80;
@@ -16,9 +17,9 @@ export const MIN_TEXT_LENGTH_TO_CHUNK = 2048;
  * working. this is intended to fix this problem.
  */
 export const TAGNAMES_UPPERCASE_UNWRAP_BLACKLIST = [
-    'P', 'OL', 'UL', 'TABLE'
+    'P', 'OL', 'UL', 'TABLE', 'P',
 ];
 
 export const TAGNAMES_UPPERCASE_COLLAPSE_BLACKLIST = [
-    'OL', 'UL', 'TABLE'
+    'OL', 'UL', 'TABLE',
 ];
