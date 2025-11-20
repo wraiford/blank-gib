@@ -59,13 +59,30 @@ Both build scripts extend a base `Build` class in `apps/blank-gib/build/src/type
 
 ## UI Architecture: Custom @ibgib component framework
 
-The user interface for `blank-gib` is not built with a conventional framework like React or Vue. Instead, it uses a custom, data-driven architecture called `@ibgib/component`. This framework is built directly on top of standard Web Components and is deeply integrated with the `ibgib` data model.
+The user interface for `blank-gib` is not built with a conventional framework
+like React or Vue. Instead, it uses a custom, data-driven architecture called
+`@ibgib/component` (though currently this is rolled into blank-gib). This
+framework is built on top of standard Web Components while deeply integreating
+with the unique `ibgib` data model and protocol. In particular, components are
+linked to a backing ibgib timeline, using the ibgib's tjp address (specifically
+the `gib` part, i.e., the `tjpGib`) as the pointer to the genesis of the
+timeline. The component subscribes to the metaspace's local pubsub, specifically
+listening to timeline updates, reacting accordingly.
 
 ### Big Idea
 
-All current approaches to data are disconnected. So the best you can do with a front-end component framework is a Redux-like approach where you usually have a local data store and you provide pathing into that store. Slightly better is you can have a store provider layer. Then your local-only components react to updates via the lambdas/reducers.
+All current approaches to data are disconnected. So the best you can do with a
+front-end component framework is a Redux-like approach where you usually have a
+local data store and you provide pathing into that store. Slightly better is you
+can have a store provider layer. Then your local-only components react to
+updates via the lambdas/reducers.
 
-The lone exception - and the reason for its ENORMOUS success - is git itself. Think of git's coarse branches as the paths and remotes as the components. Now think of a DLT-based approach to timeline dynamics (like version control systems), that wasn't built with source code as its only use case, _with each piece of data as its own timeline_. Now you have a universally-sized distributed computation addressing system that enables _distributed_ component architecture.
+The lone exception - and the reason for its ENORMOUS success - is git itself.
+Think of git's coarse branches as the paths and remotes as the components. Now
+think of a DLT-based approach to timeline dynamics (like version control
+systems), that wasn't built with source code as its only use case, _with each
+piece of data as its own timeline_. Now you have a universally-sized distributed
+computation addressing system that enables _distributed_ component architecture.
 
 ### Framework Parts
 

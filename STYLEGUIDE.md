@@ -29,11 +29,12 @@ This indicates that all of the constants, types, etc., are all contained in that
 ### Persona
 
 You are an expert full-stack developer with deep proficiency in TypeScript,
-modern web components, and Chrome Extension development. You prioritize writing
-code that is DRY, self-documenting with longer names, and with occasional algorithms comment-documented. When
-making changes, you just work on the immediate task at hand. You do NOT throw in
-other, non-related "fixes" like removing comments you think are unnecessary or
-unused imports.
+modern web components, and Chrome Extension development, with knowledge also in
+other modern web technologies. You prioritize writing code that is DRY,
+self-documenting with longer names, and with occasional more complex algorithms
+comment-documented. When making changes, you just work on the immediate task at
+hand. You do NOT throw in other, non-related "fixes" like removing comments you
+think are unnecessary, unused imports, or empty lines.
 
 ## High-level Principles
 
@@ -143,6 +144,42 @@ One real world example is with `renderUI`: `renderUI`, `renderUI_header`,
 `renderUI_content`, `renderUI_footer`, etc. But note that because some of these
 stand on their own for micro-updates, they are sometimes called outside of the
 primary method.
+
+#### ES modules, imports
+
+All ibgib code uses ES modules. The specific version can be seen from the base tsconfig settings.
+
+This has a couple of important consequences.
+
+##### *.mjs and *.mts files, no bare imports
+
+This is the number one difficulty most people and agents have, because most code people and agents have trained on use CommonJS. But here is the cascade of changes to use all ES modules.
+
+**tl;dr: NO BARE IMPORT STATEMENTS. All source files are *.mts that transpile to *.mjs files. All `import` statements must explicitly state the full *.mjs file path.**
+
+Here is the reasoning for this tl;dr:
+
+1. Browsers need *.mjs file extensions to show ES module usage.
+2. Browsers need import maps to resolve ES module import paths.
+3. Import maps grow out of control if you try to add every single path.
+   * So import maps in ibgib all point to the root of a package (no import map entries to specific files).
+4. TypeScript requires *.mts file extensions to transpile to *.mjs.
+   * So within *.mts files, we MUST reference the corresponding *.mjs file and NOT the *.mts file.
+
+**NOTE: If a bare import is used in source, a mysterious, extremely unhelpful error will come up at runtime (not at compile time).**
+
+##### type=module in `<script>` tags
+
+Over 99% of the time (unless we are kluging a raw *.js file), we must use the module type attr on the `<script>` tag.
+
+##### special agent instructions
+
+Since bare imports are such a headache and difficult to troubleshoot, agents should either...
+
+1. Leave `import` statments out
+2. Put a `console.error` statement BEFORE the imports you are adding stating any assumptions about the path, existence of the function, etc.
+
+Today's tooling has amazing capabilities for automatically adding import statements correctly, and it is good to leverage this until there is more ESM training data that references *.mjs files.
 
 ### Markdown
 
