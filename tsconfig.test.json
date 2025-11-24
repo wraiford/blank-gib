@@ -1,11 +1,8 @@
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "outDir": "./dist", /* Redirect output structure to the directory. */
-    "module": "ESNext", /* https://www.typescriptlang.org/docs/handbook/esm-node.html */
-  },
   "exclude": [
-    // override inherited exclude of spec files
     "node_modules",
+    "./dist/**/*",
+    "./build/**/*"
   ]
 }

@@ -179,7 +179,7 @@ for (const test of tests) {
         ]);
 
         for (const run of Object.values(test.runs)) {
-            await ifWeMight(sir, `${run.id}: ${run.text.substring(0, 10)}...`, async () => {
+            await ifWe(sir, `${run.id}: ${run.text.substring(0, 10)}...`, async () => {
                 console.log(`run.text STARTING: ${run.text}`);
                 console.log('EXPECTED SKETCH:');
                 console.log(pretty(run.expectedSketch));

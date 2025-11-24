@@ -8,7 +8,7 @@ const maam = `[${import.meta.url}]`, sir = maam;
 
 // await respecfully(sir, `indexeddb storage`, async () => {
 
-//     await ifWeMight(sir, `storageDBExists`, async () => {
+//     await ifWe(sir, `storageDBExists`, async () => {
 //         const randomName = pickRandom_Letters({ count: 7 });
 //         const dbExists = await storageDBExists({ name: randomName });
 //         iReckon(sir, dbExists).isGonnaBeFalse();

@@ -30,6 +30,6 @@ import {
 
 await respecfully(maam, `when testing stuff...`, async () => {
     await ifWe(maam, `should happen to do...`, async () => {
-        iReckon(maam, true).asTo('42').isGonnaBe(false);
+        iReckon(maam, true).asTo('42').isGonnaBe(true);
     });
 });

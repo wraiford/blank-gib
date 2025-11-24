@@ -71,6 +71,20 @@ intent of what the code is meant to do and any pertinent considerations.
     * lambdas frequently use `x`, e.g., `.filter(x => x === 'ok')`, but this is
       because the long name should be in the name of the array being worked
       upon.
+* Tag ALL logging messages, warnings, and errors with the proper prefix, a uuid or "genuuid", inside parens.
+  * ```
+    console.log(`${lc} Some info message (I: ea6fe8637f74134775c02e8749e7e825)`);
+    console.log(`${lc} Some info message (I: genuuid)`);
+    console.warn(`${lc} Some warning (W: 2f7b7cefcc2bbe905c9f6268885ee325)`);
+    console.warn(`${lc} Some warning (W: genuuid)`);
+    throw new Error(`some error (E: eb7a98a3bdf2df9ff35769f38ef01825)`);
+    throw new Error(`some error (E: genuuid)`);
+    throw new Error(`(UNEXPECTED) value falsy? We expect this to always be truthy at this point. (E: a2f717c53b582b5b4fac57a5ee1f6125)`);
+    throw new Error(`(UNEXPECTED) value falsy? We expect this to always be truthy at this point. (E: a2f717c53b582b5b4fac57a5ee1f6125)`);
+    ```
+    * The "genuuid" is the code snippet here in the ide. Agents have a hard time
+      generating uuids, so its best just to put this in and the human coder (or
+      agent with access to ide) can do a "Find all" and invoke the snippet.
 
 ### TypeScript
 
@@ -111,15 +125,22 @@ But on the whole, we sacrifice slivers of performance for logging and then later
 
 _Note: the `genuuid` is a workspace keyboard snippet that is expanded in the IDE to a valid UUID. For AIs, just type `genuuid` and the human (me I guess!) will manually expand it, so we have a legit UUID._
 
-* All exceptions should have three things:
-  1. log context (usually ${lc} in the templated string)
-  2. message
-  3. UUID with `E` inside parens, e.g., `(E: 7acca8fd4cc8f7b6e980ec4865ca4925)`
-* "UNEXPECTED" exceptions are like code assertions.
+* All exceptions should have...
+  * The error message describing the problem.
+  * UUID with `E` inside parens, e.g., `(E: 7acca8fd4cc8f7b6e980ec4865ca4925)`
+* "UNEXPECTED" exceptions are like code assertions and usually have very short
+  questions, with optional expectated description.
 * "normal" exceptions are those that can happen during the course of events. Logic flow is usually not exception-based, prefering other workflow constructs.
   * sometimes, especially when consuming other libs/std code, we have to use
     exceptions for the logic flow because that is how those libs are designed.
-* Almost all functions should rethrow exceptions.
+* The majority of functions should rethrow exceptions.
+* examples
+  ```
+  throw new Error(`some error (E: eb7a98a3bdf2df9ff35769f38ef01825)`);
+  throw new Error(`some error (E: genuuid)`);
+  throw new Error(`(UNEXPECTED) value falsy? We expect this to always be truthy at this point. (E: a2f717c53b582b5b4fac57a5ee1f6125)`);
+  throw new Error(`(UNEXPECTED) value falsy? We expect this to always be truthy at this point. (E: a2f717c53b582b5b4fac57a5ee1f6125)`);
+  ```
 
 #### use "sub-functions/methods" to organize complex fns/methods
 

@@ -6,6 +6,28 @@ I'm doing per upgrade. This should be automatically created per "commit", and
 really this should just be a regular part of the "chat" that is this project.
 We'll get there eventually!
 
+## current/v0.15.6 ish
+* impl: upgraded build to handle respec-gib testing
+  * npm run test did not work, as this was still configured for the simpler
+    pre-esbuild build process.
+  * added build-test.mts as esbuild target and tsconfig
+* progress: keystone plumbing
+  * restarting bottom up keystone with Gemini 3.0 collab
+    * https://aistudio.google.com/prompts/1-Itqn0afYpgnm-ajEID8Mv0SAHii7OBY
+    * largely me driving higher level and getting Gemini 3.0 up-to-speed on
+      understanding the architecture enabled by the ibgib protocol, with Gemini
+      iterating on implementation details.
+    * the factory style approach was Gemini's idea, which is a good tactical
+      decision IMO
+    * deferring refactoring most names until after, as that causes hiccups with
+      LLMs
+  * doing in blank-gib/keystone for now for ease of development
+    * this was the driver to get the testing working for blank-gib using the new
+      esbuild process
+* meta: iterating styleguide
+  * using entire styleguide as part of system text for Gemini in Google's AI
+    Studio
+
 ## v0.15.3
 
 * **Refactor: Rabbit Hole Comment Architecture**
