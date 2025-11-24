@@ -1,4 +1,5 @@
-import { hash } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs'; // Import hash helper
+import { extractErrorMsg, hash } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
+import { getIbGibAddr } from '@ibgib/ts-gib';
 
 import {
     KeystoneData_V1,
@@ -11,9 +12,11 @@ import {
     KeystoneReplenishStrategy,
     KeystoneRevocationInfo,
 } from './keystone-types.mjs';
-import { KeystoneStrategyFactory } from './strategy/factory.mjs';
+import { KeystoneStrategyFactory } from './strategy/keystone-strategy-factory.mjs';
 import { POOL_ID_REVOKE, VERB_REVOKE } from './keystone-constants.mjs';
-import { getIbGibAddr } from '@ibgib/ts-gib';
+import { GLOBAL_LOG_A_LOT } from '../constants.mjs';
+
+const logalot = GLOBAL_LOG_A_LOT;
 
 /**
  * Facade for managing Keystone Identities.
@@ -21,6 +24,7 @@ import { getIbGibAddr } from '@ibgib/ts-gib';
  * Handles Genesis, Authorized Evolution (Signing), and Validation.
  */
 export class KeystoneService_V1 {
+    protected lc: string = `[${KeystoneService_V1.name}]`;
 
     /**
      * Creates a brand new Keystone Identity Timeline.
@@ -32,8 +36,10 @@ export class KeystoneService_V1 {
         masterSecret: string;
         configs: KeystonePoolConfig[];
     }): Promise<KeystoneIbGib_V1> {
-        const lc = `[${KeystoneService_V1.name}.${this.genesis.name}]`;
+        const lc = `${this.lc}[${this.genesis.name}]`;
         try {
+            if (logalot) { console.log(`${lc} starting... (I: c98ae8adbc5888dbf84c5aced7610b25)`); }
+
             const challengePools: KeystoneChallengePool[] = [];
 
             for (const config of configs) {
@@ -48,7 +54,7 @@ export class KeystoneService_V1 {
 
                 for (let i = 0; i < targetSize; i++) {
                     // Opaque ID Generation
-                    const challengeId = await this.generateChallengeId({
+                    const challengeId = await this.generateOpaqueChallengeId({
                         salt: config.salt,
                         timestamp,
                         index: i
@@ -76,10 +82,11 @@ export class KeystoneService_V1 {
             };
 
             return await this.createKeystoneIbGibImpl({ data });
-
         } catch (error) {
-            console.error(`${lc} ${error.message}`);
+            console.error(`${lc} ${extractErrorMsg(error)}`);
             throw error;
+        } finally {
+            if (logalot) { console.log(`${lc} complete.`); }
         }
     }
 
@@ -102,8 +109,10 @@ export class KeystoneService_V1 {
         requiredChallengeIds?: string[];
         frameDetails?: any;
     }): Promise<KeystoneIbGib_V1> {
-        const lc = `[${KeystoneService_V1.name}.${this.sign.name}]`;
+        const lc = `${this.lc}[${this.sign.name}]`;
         try {
+            if (logalot) { console.log(`${lc} starting... (I: 519e0810cce8647ce83bdb3b5019a825)`); }
+
             const prevData = latestKeystone.data!;
 
             // 1. Locate Pool
@@ -193,8 +202,119 @@ export class KeystoneService_V1 {
             return await this.evolveKeystoneIbGibImpl({ prevIbGib: latestKeystone, newData });
 
         } catch (error) {
-            console.error(`${lc} ${error.message}`);
+            console.error(`${lc} ${extractErrorMsg(error)}`);
             throw error;
+        } finally {
+            if (logalot) { console.log(`${lc} complete.`); }
+        }
+    }
+
+    /**
+     * Validates the transition from Prev -> Curr.
+     * Enforces Cryptography AND Behavioral Policy.
+     */
+    async validate({
+        currentIbGib,
+        prevIbGib,
+    }: {
+        currentIbGib: KeystoneIbGib_V1;
+        prevIbGib: KeystoneIbGib_V1;
+    }): Promise<boolean> {
+        const lc = `${this.lc}[${this.validate.name}]`;
+        try {
+            const currData = currentIbGib.data!;
+            const prevData = prevIbGib.data!;
+
+            // 1. Validate all proofs in the current frame
+            for (const proof of currData.proofs) {
+                if (proof.solutions.length === 0) {
+                    console.warn(`${lc} Proof contains no solutions.`);
+                    return false;
+                }
+
+                // Identify the pool (Assume all solutions in a proof must come from same pool for V1?)
+                // Or allows mixed? Our Sign logic enforces single pool per proof.
+                const poolId = proof.solutions[0].poolId;
+                const pool = prevData.challengePools.find(p => p.id === poolId);
+                if (!pool) {
+                    console.warn(`${lc} Proof references unknown pool: ${poolId}`);
+                    return false;
+                }
+
+                // 2. Behavioral Policy Check: Sequential Requirements
+                // We need to verify that the signer consumed the correct *first* challenges
+                const behavior = pool.config.behavior;
+
+                // Get the ordered keys from the PREVIOUS state
+                const availableIdsInOrder = Object.keys(pool.challenges);
+
+                // Map solution IDs for easy lookup
+                const solutionIds = new Set(proof.solutions.map(s => s.challengeId));
+
+                // Check Sequential Count
+                if (behavior.selectSequentially > 0) {
+                    // The first N keys of the pool MUST be present in the solutions
+                    const requiredSeqIds = availableIdsInOrder.slice(0, behavior.selectSequentially);
+
+                    for (const reqId of requiredSeqIds) {
+                        if (!solutionIds.has(reqId)) {
+                            console.warn(`${lc} Policy Violation: Missing sequential challenge ${reqId}`);
+                            return false;
+                        }
+                    }
+                }
+
+                // Check Random/Total Count
+                // We can't strictly verify "randomness", but we can verify total count
+                const totalRequired = behavior.selectSequentially + behavior.selectRandomly;
+                if (proof.solutions.length < totalRequired) {
+                    console.warn(`${lc} Policy Violation: Insufficient solutions. Expected ${totalRequired}, got ${proof.solutions.length}`);
+                    return false;
+                }
+
+                // 3. Cryptographic Validation
+                const strategy = KeystoneStrategyFactory.create({ config: pool.config });
+
+                for (const solution of proof.solutions) {
+                    // Check existence
+                    const challenge = pool.challenges[solution.challengeId];
+                    if (!challenge) {
+                        console.warn(`${lc} Invalid ID: ${solution.challengeId} not found in previous pool.`);
+                        return false;
+                    }
+
+                    // Check Math
+                    const isValid = await strategy.validateSolution({ solution, challenge });
+                    if (!isValid) {
+                        console.warn(`${lc} Invalid solution for challenge: ${solution.challengeId}`);
+                        return false;
+                    }
+                }
+            }
+
+            // 4. Revocation Specific Logic
+            if (currData.revocationInfo) {
+                // Ensure the proof targets the correct previous identity
+                const target = currData.revocationInfo.proof.claim.target;
+                const expectedTarget = getIbGibAddr({ ibGib: prevIbGib });
+                if (target !== expectedTarget) {
+                    console.warn(`${lc} Revocation target mismatch. Expected ${expectedTarget}, got ${target}`);
+                    return false;
+                }
+
+                // Optional: Enforce that the revocation pool is now EMPTY in currData?
+                // Or that the 'consume' strategy was actually used?
+                // The cryptographic validation ensures the solutions were provided.
+                // The fact that they are removed from the Next Frame is a functional side effect,
+                // but strictly speaking, if the Proof is valid, the frame is valid.
+            }
+
+            return true;
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+            throw error;
+        } finally {
+            if (logalot) { console.log(`${lc} complete.`); }
         }
     }
 
@@ -217,7 +337,7 @@ export class KeystoneService_V1 {
         reason?: string;
         frameDetails?: any;
     }): Promise<KeystoneIbGib_V1> {
-        const lc = `[${KeystoneService_V1.name}.${this.revoke.name}]`;
+        const lc = `${this.lc}[${this.revoke.name}]`;
         try {
             const prevData = latestKeystone.data!;
 
@@ -257,14 +377,14 @@ export class KeystoneService_V1 {
                 config: pool.config
             });
 
-// 5. Construct Revocation Proof
-const proof: KeystoneProof = {
-    claim: {
-        verb: VERB_REVOKE,
-        target: getIbGibAddr({ ibGib: latestKeystone }), // Target THIS identity timeline (or address)
-    },
-    solutions,
-};
+            // 5. Construct Revocation Proof
+            const proof: KeystoneProof = {
+                claim: {
+                    verb: VERB_REVOKE,
+                    target: getIbGibAddr({ ibGib: latestKeystone }), // Target THIS identity timeline (or address)
+                },
+                solutions,
+            };
 
             const revocationInfo: KeystoneRevocationInfo = {
                 reason,
@@ -284,18 +404,19 @@ const proof: KeystoneProof = {
             return await this.evolveKeystoneIbGibImpl({ prevIbGib: latestKeystone, newData });
 
         } catch (error) {
-            console.error(`${lc} ${error.message}`);
+            console.error(`${lc} ${extractErrorMsg(error)}`);
             throw error;
+        } finally {
+            if (logalot) { console.log(`${lc} complete.`); }
         }
-    }
 
-    // #region Helpers
+    }
 
     /**
      * Generates an opaque, collision-resistant ID for a challenge.
      * Hash(Salt + Timestamp + Index)
      */
-    private async generateChallengeId({
+    private async generateOpaqueChallengeId({
         salt,
         timestamp,
         index
@@ -342,7 +463,7 @@ const proof: KeystoneProof = {
             // 2. Add New (Append)
             // We generate exactly as many as we removed
             for (let i = 0; i < consumedIds.length; i++) {
-                const newId = await this.generateChallengeId({
+                const newId = await this.generateOpaqueChallengeId({
                     salt: config.salt, timestamp, index: i
                 });
 
@@ -350,24 +471,25 @@ const proof: KeystoneProof = {
                 if (pool.challenges[newId]) {
                     // If collision, bump index or append entropy.
                     // For this impl, we'll just assume 64-bit space is sufficient.
+                    throw new Error(`(UNEXPECTED) collision in 64-bit space? newId (${newId}) already exists in pool (E: 102e781b63a87bdc38953c5854087825)`);
                 }
 
-                const sol = await strategy.generateSolution({
+                const solution = await strategy.generateSolution({
                     poolSecret, poolId: pool.id, challengeId: newId
                 });
-                pool.challenges[newId] = await strategy.generateChallenge({ solution: sol });
+                pool.challenges[newId] = await strategy.generateChallenge({ solution });
             }
         } else if (strategyType === KeystoneReplenishStrategy.replaceAll) {
             pool.challenges = {};
 
             for (let i = 0; i < behavior.size; i++) {
-                const newId = await this.generateChallengeId({
+                const newId = await this.generateOpaqueChallengeId({
                     salt: config.salt, timestamp, index: i
                 });
-                const sol = await strategy.generateSolution({
+                const solution = await strategy.generateSolution({
                     poolSecret, poolId: pool.id, challengeId: newId
                 });
-                pool.challenges[newId] = await strategy.generateChallenge({ solution: sol });
+                pool.challenges[newId] = await strategy.generateChallenge({ solution });
             }
         } else if (strategyType === KeystoneReplenishStrategy.consume) {
             // CONSUME STRATEGY
@@ -380,7 +502,29 @@ const proof: KeystoneProof = {
         return newPools;
     }
 
-    // ... Stubs ...
-    private async createKeystoneIbGibImpl({ data }: { data: KeystoneData_V1 }): Promise<KeystoneIbGib_V1> { throw new Error("Stub"); }
-    private async evolveKeystoneIbGibImpl({ prevIbGib, newData }: { prevIbGib: KeystoneIbGib_V1, newData: KeystoneData_V1 }): Promise<KeystoneIbGib_V1> { throw new Error("Stub"); }
+    private async createKeystoneIbGibImpl({ data }: { data: KeystoneData_V1 }): Promise<KeystoneIbGib_V1> {
+        const lc = `${this.lc}[${this.createKeystoneIbGibImpl.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting... (I: 5e32389700e9899e788cbefacef7c825)`); }
+            throw new Error(`not implemented (E: 8f20f85d90a8314cc84d7de8cdf9e825)`);
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+            throw error;
+        } finally {
+            if (logalot) { console.log(`${lc} complete.`); }
+        }
+    }
+
+    private async evolveKeystoneIbGibImpl({ prevIbGib, newData }: { prevIbGib: KeystoneIbGib_V1, newData: KeystoneData_V1 }): Promise<KeystoneIbGib_V1> {
+        const lc = `${this.lc}[${this.evolveKeystoneIbGibImpl.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting... (I: 8b10e8920f08b7842803665834cf8925)`); }
+            throw new Error(`not implemented (E: fa6fca0f5038ca524ca97d918f824825)`);
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+            throw error;
+        } finally {
+            if (logalot) { console.log(`${lc} complete.`); }
+        }
+    }
 }

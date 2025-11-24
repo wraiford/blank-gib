@@ -4,8 +4,8 @@ import {
     KeystonePoolBehavior,
     KeystoneReplenishStrategy,
     KeystonePoolConfigBase
-} from '../../keystone-types.mjs';
-import { POOL_ID_DEFAULT, POOL_ID_REVOKE } from '../../keystone-constants.mjs';
+} from './keystone-types.mjs';
+import { POOL_ID_DEFAULT, POOL_ID_REVOKE } from './keystone-constants.mjs';
 
 /**
  * Abstract Base Builder.
