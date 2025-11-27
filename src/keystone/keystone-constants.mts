@@ -1,3 +1,5 @@
+export const KEYSTONE_ATOM = "keystone";
+
 /**
  * The specific ibGib address for the 'revoke' verb.
  * Used in Claims to indicate the Keystone should be considered dead.

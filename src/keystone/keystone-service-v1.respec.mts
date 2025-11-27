@@ -116,6 +116,10 @@ await respecfully(sir, 'Suite A: Strategy Vectors (HashRevealV1)', async () => {
     });
 });
 
+// ===========================================================================
+// SUITE B: SERVICE LIFECYCLE (Genesis -> Sign -> Validate)
+// ===========================================================================
+
 await respecfullyDear(sir, 'Suite B: Service Lifecycle', async () => {
 
     const service = new KeystoneService_V1();

@@ -1,13 +1,16 @@
 import { IbGib_V1, IbGibData_V1, IbGibRel8ns_V1 } from "@ibgib/ts-gib/dist/V1/types.mjs";
 
+import { KEYSTONE_ATOM } from "./keystone-constants.mjs";
+
 /**
  * The discriminator for the mechanism.
  * 'hash-reveal-v1': Standard Hash chain (Sigma-like).
  */
 export type KeystoneChallengeType =
     | 'hash-reveal-v1'
-    | 'decrypt-v1' // Future
-    | 'pow-v1';    // Future
+    // | 'decrypt-v1' // Future
+    // | 'pow-v1';    // Future
+    ;
 
 // ===========================================================================
 // CONFIGURATION
@@ -79,6 +82,12 @@ export interface KeystonePoolBehavior {
      * Mitigates pre-computation attacks on the sequence.
      */
     selectRandomly: number;
+
+    /**
+     * Number of hex characters from the Target's Gib to match.
+     * @default 0
+     */
+    targetBindingChars: number;
 }
 
 export interface KeystonePoolConfigBase {
@@ -155,6 +164,11 @@ export interface KeystoneChallengePool {
      */
     id: string;
 
+    /**
+     * Parameterization of this pool.
+     *
+     * Signing and validating this pool must observe this config.
+     */
     config: KeystonePoolConfig;
 
     /**
@@ -168,6 +182,14 @@ export interface KeystoneChallengePool {
      * Key: The unique Challenge ID (e.g. "poolSalt_0").
      */
     challenges: { [challengeId: string]: KeystoneChallenge };
+
+    /**
+     * Explicit Buckets for Target Binding.
+     * Key: Hex Character ('0'-'f').
+     * Value: Array of Challenge IDs that satisfy this bucket.
+     * Note: A single ID may appear in multiple buckets (Coverage Strategy).
+     */
+    bindingMap: { [hexChar: string]: string[] };
 }
 
 /**
@@ -194,6 +216,13 @@ export interface KeystoneProof {
      * The solutions required to validate this claim.
      */
     solutions: KeystoneSolution[];
+
+    /**
+     * The list of specific Challenge IDs that were mandatorily requested
+     * by the verifier/context during the signing process.
+     * Essential for deterministic validation.
+     */
+    requiredChallengeIds?: string[];
 }
 
 /**
@@ -207,6 +236,10 @@ export interface KeystoneRevocationInfo {
 // ===========================================================================
 // TOP LEVEL IBGIB DATA
 // ===========================================================================
+
+export interface KeystoneIbInfo_V1 {
+    atom: typeof KEYSTONE_ATOM;
+}
 
 export interface KeystoneData_V1 extends IbGibData_V1 {
     /**
