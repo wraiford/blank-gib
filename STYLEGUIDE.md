@@ -202,6 +202,24 @@ Since bare imports are such a headache and difficult to troubleshoot, agents sho
 
 Today's tooling has amazing capabilities for automatically adding import statements correctly, and it is good to leverage this until there is more ESM training data that references *.mjs files.
 
+#### JavaScript Quirks
+
+JavaScript has quirks and we try to obviate them as much as possible.
+
+##### always use explicit `===` for equality, never `==`
+
+Avoid weird casting issues.
+
+##### always use explicit blocks for `if`, `else` blocks
+
+Even for one liners, use curly brackets, e.g.:
+
+```
+if (isValid) { foo(); }
+```
+
+NEVER skip using these curly brackets. Although most changes should be laser-focused on the concrete issue at hand (bug/feature/etc.), this is one where you should fix ASAP if it's noticed.
+
 ### Markdown
 
 * Use asterisks for bullets.
