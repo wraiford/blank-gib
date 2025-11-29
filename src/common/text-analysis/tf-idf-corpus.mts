@@ -58,11 +58,11 @@
 
 //         // 2. Get the analysis for the specific document
 //         const doc = this.documents.get(docId);
-//         if (!doc) return 0;
+//         if (!doc) { return 0; }
 
 //         // 3. Calculate TF for the term within the specified construct
 //         const constructMap = doc.analysis.constructs[constructName];
-//         if (!constructMap) return 0;
+//         if (!constructMap) { return 0; }
 
 //         const termCount = constructMap[term.toLowerCase()] || 0;
 //         const totalTermsInConstruct = Object.values(constructMap).reduce((s, c) => s + c, 0);
@@ -184,10 +184,10 @@
 //         docId: string,
 //     }): number {
 //         const doc = this.documents.get(docId);
-//         if (!doc) return 0;
+//         if (!doc) { return 0; }
 
 //         const { wordFrequency, wordCount } = doc.analysis;
-//         if (wordCount === 0) return 0;
+//         if (wordCount === 0) { return 0; }
 
 //         const termCount = wordFrequency[term.toLowerCase()] ?? 0;
 //         return termCount / wordCount;
@@ -213,7 +213,7 @@
 //             this.ensureIdfIsFresh();
 
 //             const doc = this.documents.get(docId);
-//             if (!doc) return 0;
+//             if (!doc) { return 0; }
 
 //             const tf = this.getTf({ term, docId });
 //             // If a term is not in the IDF map, it means it appeared in zero documents
@@ -246,7 +246,7 @@
 //     }): [string, number][] {
 //         this.ensureIdfIsFresh();
 //         const doc = this.documents.get(docId);
-//         if (!doc) return [];
+//         if (!doc) { return []; }
 
 //         const uniqueWords = Object.keys(doc.analysis.wordFrequency);
 //         const keywords = uniqueWords.map(word => {

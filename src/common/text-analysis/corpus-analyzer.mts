@@ -114,7 +114,7 @@ export class CorpusAnalyzer {
 
         for (const constructName of constructsToReport) {
             const termFreqMap = analysis.constructs[constructName];
-            if (!termFreqMap) continue;
+            if (!termFreqMap) { continue; }
 
             const totalTermsInConstruct = Object.values(termFreqMap).reduce((s, c) => s + c, 0);
             const idfMap = this.idfMaps.get(constructName) || new Map();
@@ -225,7 +225,7 @@ export class CorpusAnalyzer {
             if (logalot) { console.log(`${lc} starting... (I: 20b84cdc228836b07ee40a68085f4825)`); }
 
             const analysis = this.documents.get(docId);
-            if (!analysis) return {};
+            if (!analysis) { return {}; }
 
             const foundErrors: { [errorName: string]: TermFrequencyMap } = {};
             for (const [constructName, terms] of Object.entries(analysis.constructs)) {
@@ -249,7 +249,7 @@ export class CorpusAnalyzer {
      * calculation, run only when necessary.
      */
     private ensureIdfIsFresh(): void {
-        if (!this.isIdfCacheStale) return;
+        if (!this.isIdfCacheStale) { return; }
 
         const docFrequencies: Map<string, Map<string, number>> = new Map();
         const totalDocs = this.documents.size;

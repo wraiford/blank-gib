@@ -489,8 +489,7 @@ export class SidepanelComponentInstance
                     this.elements!.titleInputEl.disabled = true;
                     try {
                         const title = await getProjectTitleFromPageOrContent({ pageContentInfo, content: getNodeTextContent_keepspaces(this._currentDomRoot!), });
-                        if (title)
-                            this.elements!.titleInputEl.value = title;
+                        if (title) { this.elements!.titleInputEl.value = title; }
                     } finally {
                         this.elements!.titleInputEl.disabled = false;
                         resolve(undefined);

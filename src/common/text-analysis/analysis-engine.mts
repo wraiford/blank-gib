@@ -132,7 +132,7 @@ export class AnalysisEngine {
             visited.add(name);
 
             const rule = this.rules.get(name);
-            if (!rule) throw new Error(`Rule not found: ${name}`);
+            if (!rule) { throw new Error(`Rule not found: ${name}`); }
 
             let pattern = rule.pattern;
             const flagsSet = new Set<string>();

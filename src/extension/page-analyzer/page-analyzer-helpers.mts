@@ -148,22 +148,22 @@ export function getHeadingInfo(nodeInfo: DOMElementInfo): NodeHeadingInfo {
             switch (tagNameUpper) {
                 case 'H1':
                     score += HEADING_SCORE_H1;
-                    if (logalot) scoringLog.push('H1 tag -> 100');
+                    if (logalot) { scoringLog.push('H1 tag -> 100'); }
                     break;
                 case 'H2': score += HEADING_SCORE_H2;
-                    if (logalot) scoringLog.push('H2 tag -> 90');
+                    if (logalot) { scoringLog.push('H2 tag -> 90'); }
                     break;
                 case 'H3': score += HEADING_SCORE_H3;
-                    if (logalot) scoringLog.push('H3 tag -> 80');
+                    if (logalot) { scoringLog.push('H3 tag -> 80'); }
                     break;
                 case 'H4': score += HEADING_SCORE_H4;
-                    if (logalot) scoringLog.push('H4 tag -> 70');
+                    if (logalot) { scoringLog.push('H4 tag -> 70'); }
                     break;
                 case 'H5': score += HEADING_SCORE_H5;
-                    if (logalot) scoringLog.push('H5 tag -> 60');
+                    if (logalot) { scoringLog.push('H5 tag -> 60'); }
                     break;
                 case 'H6': score += HEADING_SCORE_H6;
-                    if (logalot) scoringLog.push('H6 tag -> 50');
+                    if (logalot) { scoringLog.push('H6 tag -> 50'); }
                     break;
                 default:
                     throw new Error(`(UNEXPECTED) all h tags in regexp are covered? tagNameUpper: ${tagNameUpper} (E: bcc8195fc848696798220f68584d8825)`);
@@ -184,7 +184,7 @@ export function getHeadingInfo(nodeInfo: DOMElementInfo): NodeHeadingInfo {
             if (hChildInfo.headingScore > 0) {
                 score += hChildInfo.headingScore;
                 headingText = hChildInfo.headingText!;
-                if (logalot) scoringLog.push(`Wikipedia-style H-child -> +${hChildInfo}`);
+                if (logalot) { scoringLog.push(`Wikipedia-style H-child -> +${hChildInfo}`); }
             } else {
                 if (logalot) {
                     const emsg = `Wikipedia-style but hChildScore less than 0?`;
@@ -234,7 +234,8 @@ export function getHeadingInfo(nodeInfo: DOMElementInfo): NodeHeadingInfo {
                     const grandChild = firstChild.content?.[0];
                     if (typeof grandChild === 'object' && grandChild.tagName?.toUpperCase() === 'STRONG') {
                         strongChild = grandChild;
-                        score += 45; if (logalot) scoringLog.push('P>SPAN>STRONG structure -> +45');
+                        score += 45;
+                        if (logalot) { scoringLog.push('P>SPAN>STRONG structure -> +45'); }
                     }
                 } else if (firstChild.tagName.toUpperCase() === 'STRONG') {
                     strongChild = firstChild;
@@ -242,29 +243,35 @@ export function getHeadingInfo(nodeInfo: DOMElementInfo): NodeHeadingInfo {
             }
 
             if (strongChild) {
-                score += 45; if (logalot) scoringLog.push('P>STRONG structure -> +45');
+                score += 45;
+                if (logalot) { scoringLog.push('P>STRONG structure -> +45'); }
                 textToAnalyze = getNodeTextContent(strongChild).trim();
                 headingText = textToAnalyze;
 
                 const emChild = strongChild.content?.at(0);
                 if (typeof emChild === 'object' && emChild.tagName?.toUpperCase() === 'EM') {
-                    score += 15; if (logalot) scoringLog.push('P>STRONG>EM structure -> +15');
+                    score += 15;
+                    if (logalot) { scoringLog.push('P>STRONG>EM structure -> +15'); }
                     textToAnalyze = getNodeTextContent(emChild).trim();
                     headingText = textToAnalyze;
                 }
 
                 if (textToAnalyze) {
                     if (textToAnalyze.toUpperCase() === textToAnalyze && textToAnalyze.length > 3) {
-                        score += 25; if (logalot) scoringLog.push(`ALL CAPS bonus -> +25`);
+                        score += 25;
+                        if (logalot) { scoringLog.push(`ALL CAPS bonus -> +25`); }
                     }
                     if (/^\d+\.\s+/.test(textToAnalyze)) {
-                        score += 35; if (logalot) scoringLog.push(`Numbered list bonus -> +35`);
+                        score += 35;
+                        if (logalot) { scoringLog.push(`Numbered list bonus -> +35`); }
                     }
                     if (_isTitleCase(textToAnalyze)) {
-                        score += 15; if (logalot) scoringLog.push(`Title Case bonus -> +15`);
+                        score += 15;
+                        if (logalot) { scoringLog.push(`Title Case bonus -> +15`); }
                     }
                     if (textToAnalyze.endsWith(':')) {
-                        score += 5; if (logalot) scoringLog.push(`Ends with colon bonus -> +5`);
+                        score += 5;
+                        if (logalot) { scoringLog.push(`Ends with colon bonus -> +5`); }
                     }
                 }
 
@@ -272,7 +279,7 @@ export function getHeadingInfo(nodeInfo: DOMElementInfo): NodeHeadingInfo {
                 const potentialSpillNode = nodeInfo.content?.[1];
                 if (typeof potentialSpillNode === 'string' && potentialSpillNode.trim() !== '') {
                     spilledContent = potentialSpillNode.trim();
-                    if (logalot) scoringLog.push(`Found spilled content: \"${spilledContent.substring(0, 15)}...\"`);
+                    if (logalot) { scoringLog.push(`Found spilled content: \"${spilledContent.substring(0, 15)}...\"`); }
                 }
             }
         } else {
