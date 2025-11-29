@@ -5,7 +5,7 @@ import {
     KeystoneReplenishStrategy,
     KeystonePoolConfigBase
 } from './keystone-types.mjs';
-import { POOL_ID_DEFAULT, POOL_ID_REVOKE } from './keystone-constants.mjs';
+import { POOL_ID_DEFAULT, POOL_ID_REVOKE, VERB_REVOKE } from './keystone-constants.mjs';
 
 /**
  * Abstract Base Builder.
@@ -19,6 +19,9 @@ export abstract class KeystoneConfigBuilderBase<TConfig extends KeystonePoolConf
     protected _replenish: KeystoneReplenishStrategy = 'top-up';
     protected _seq: number = 0;
     protected _rand: number = 0;
+    protected _verbs: string[] = [];
+    protected _targetBinding: number = 0; // Default 0
+
 
     /**
      * Sets the unique salt/ID for this pool.
@@ -33,6 +36,15 @@ export abstract class KeystoneConfigBuilderBase<TConfig extends KeystonePoolConf
      */
     withSize(size: number): this {
         this._size = size;
+        return this;
+    }
+
+    /**
+    * Binds challenge selection to the content address of the target.
+    * @param chars Number of hex characters to match (e.g. 4).
+    */
+    withTargetBinding(chars: number): this {
+        this._targetBinding = chars;
         return this;
     }
 
@@ -83,7 +95,26 @@ export abstract class KeystoneConfigBuilderBase<TConfig extends KeystonePoolConf
             replenish: this._replenish,
             selectSequentially: this._seq,
             selectRandomly: this._rand,
+            targetBindingChars: this._targetBinding,
         };
+    }
+
+    /**
+     * Restricts this pool to specific verbs.
+     * @param verbs List of verb addresses (e.g. 'revoke^gib')
+     */
+    forVerbs(verbs: string[]): this {
+        this._verbs = verbs;
+        return this;
+    }
+
+    protected buildBase(): KeystonePoolConfigBase {
+        // Helper to keep the concrete build() clean
+        return {
+            type: 'hash-reveal-v1', // This is overridden by concrete/interface usually, but needed for base shape
+            salt: this._salt,
+            allowedVerbs: this._verbs
+        } as any;
     }
 
     abstract build(): TConfig;
@@ -109,6 +140,7 @@ export class KeystoneConfigBuilder_HashV1 extends KeystoneConfigBuilderBase<Keys
         return {
             type: 'hash-reveal-v1',
             salt: this._salt,
+            allowedVerbs: this._verbs, // <--- Mapped here
             behavior: this.buildBehavior(),
             algo: this._algo,
             rounds: this._rounds,
@@ -137,7 +169,7 @@ export function createStandardPoolConfig(salt: string = POOL_ID_DEFAULT): Keysto
     return KeystoneConfig.hash()
         .withSalt(salt)
         .withSize(100)
-        .withHybrid(1, 1)
+        .withHybrid(2, 2)
         .withReplenishStrategy('top-up')
         .build();
 }
@@ -149,5 +181,6 @@ export function createRevocationPoolConfig(salt: string = POOL_ID_REVOKE): Keyst
         .withSize(500)
         .withHybrid(10, 10)
         .withReplenishStrategy('replace-all')
+        .forVerbs([VERB_REVOKE])
         .build();
 }

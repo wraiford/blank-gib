@@ -97,6 +97,17 @@ export interface KeystonePoolConfigBase {
      */
     salt: string;
     behavior: KeystonePoolBehavior;
+    /**
+     * The list of Verbs (primitive ibGib addresses) this pool is authorized to sign.
+     * e.g. ["revoke^gib", "admin^gib"]
+     *
+     * If undefined or empty, this pool is considered a "General/Default" pool
+     * and can sign any verb NOT explicitly claimed by another pool (implementation detail of selection)
+     * or simply any verb at all (permissive).
+     *
+     * For V1 Security: If this is set, Validation MUST enforce it.
+     */
+    allowedVerbs: string[];
 }
 
 export interface KeystonePoolConfig_HashV1 extends KeystonePoolConfigBase {

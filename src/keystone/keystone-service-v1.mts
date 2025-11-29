@@ -1,8 +1,11 @@
 import { extractErrorMsg, hash } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 import { getIbGibAddr } from '@ibgib/ts-gib/dist/helper.mjs';
+import { mut8 } from '@ibgib/ts-gib/dist/V1/transforms/mut8.mjs';
 import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.mjs';
 import { MetaspaceService } from '@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs';
+import { mut8Timeline } from '@ibgib/core-gib/dist/timeline/timeline-api.mjs';
 
+import { GLOBAL_LOG_A_LOT } from '../constants.mjs';
 import {
     KeystoneData_V1,
     KeystoneIbGib_V1,
@@ -16,8 +19,10 @@ import {
 } from './keystone-types.mjs';
 import { KeystoneStrategyFactory } from './strategy/keystone-strategy-factory.mjs';
 import { POOL_ID_REVOKE, VERB_REVOKE } from './keystone-constants.mjs';
-import { GLOBAL_LOG_A_LOT } from '../constants.mjs';
-import { addToBindingMap, getKeystoneIbGib } from './keystone-helpers.mjs';
+import {
+    addToBindingMap, getDeterministicRequirements, getKeystoneIbGib,
+    removeFromBindingMap,
+} from './keystone-helpers.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -35,13 +40,13 @@ export class KeystoneService_V1 {
     async genesis({
         masterSecret,
         configs,
-        space,
         metaspace,
+        space,
     }: {
         masterSecret: string;
         configs: KeystonePoolConfig[];
-        space: IbGibSpaceAny;
         metaspace: MetaspaceService;
+        space: IbGibSpaceAny;
     }): Promise<KeystoneIbGib_V1> {
         const lc = `${this.lc}[${this.genesis.name}]`;
         try {
@@ -80,15 +85,13 @@ export class KeystoneService_V1 {
                     id: config.salt,
                     config,
                     challenges,
-                    bindingMap // <--- New
+                    bindingMap
                 });
             }
 
             const data: KeystoneData_V1 = { challengePools, proofs: [] };
-            const ibGib = await this.createKeystoneIbGibImpl({ data, metaspace, space });
-
-
-            return ibGib;
+            const keystoneIbGib = await this.createKeystoneIbGibImpl({ data, metaspace, space });
+            return keystoneIbGib;
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
             throw error;
@@ -106,25 +109,63 @@ export class KeystoneService_V1 {
         masterSecret,
         claim,
         poolId,
-        space,
         requiredChallengeIds = [],
         frameDetails,
+        metaspace,
+        space,
     }: {
         latestKeystone: KeystoneIbGib_V1;
         masterSecret: string;
         claim: Partial<KeystoneClaim>;
-        poolId: string;
-        space: IbGibSpaceAny;
+        poolId?: string;
         requiredChallengeIds?: string[];
         frameDetails?: any;
+        metaspace: MetaspaceService;
+        space: IbGibSpaceAny;
     }): Promise<KeystoneIbGib_V1> {
         const lc = `${this.lc}[${this.sign.name}]`;
         try {
             if (logalot) { console.log(`${lc} starting... (I: 519e0810cce8647ce83bdb3b5019a825)`); }
 
             const prevData = latestKeystone.data!;
-            const pool = prevData.challengePools.find(p => p.id === poolId);
-            if (!pool) { throw new Error(`Pool not found: ${poolId}`); }
+
+            if (prevData.revocationInfo) { throw new Error(`keystone has been revoked (latestKeystone.data.revocationInfo is truthy).  (E: 4f2198c39116d15c48ba191940316825)`); }
+
+            let pool: KeystoneChallengePool | undefined;
+
+            // ---------------------------------------------------------------
+            // 0. POOL RESOLUTION (Deterministic Mapping)
+            // ---------------------------------------------------------------
+            if (poolId) {
+                // Explicit selection
+                pool = prevData.challengePools.find(p => p.id === poolId);
+                if (!pool) { throw new Error(`Pool not found: ${poolId} (E: genuuid)`); }
+
+                // Enforce Policy on Explicit Selection
+                if (pool.config.allowedVerbs && claim.verb) {
+                    if (!pool.config.allowedVerbs.includes(claim.verb)) {
+                        throw new Error(`Pool ${poolId} is not authorized for verb: ${claim.verb} (E: genuuid)`);
+                    }
+                }
+            } else {
+                // Automatic Resolution based on Verb
+                if (!claim.verb) { throw new Error(`Cannot auto-resolve pool without a verb in the claim. (E: genuuid)`); }
+
+                // 1. Look for Specific Match
+                pool = prevData.challengePools.find(p =>
+                    p.config.allowedVerbs && p.config.allowedVerbs.includes(claim.verb!)
+                );
+
+                // 2. Look for General/Default (No restrictions)
+                if (!pool) {
+                    pool = prevData.challengePools.find(p =>
+                        !p.config.allowedVerbs || p.config.allowedVerbs.length === 0
+                    );
+                }
+
+                if (!pool) { throw new Error(`No suitable pool found for verb: ${claim.verb} (E: genuuid)`); }
+            }
+
 
             // 1. Get Deterministic Requirements (Demands -> Binding -> FIFO)
             const { mandatoryIds, availableIds } = getDeterministicRequirements({
@@ -154,10 +195,10 @@ export class KeystoneService_V1 {
             const solutions: KeystoneSolution[] = [];
 
             for (const id of finalSelectedIds) {
-                const sol = await strategy.generateSolution({
+                const solution = await strategy.generateSolution({
                     poolSecret, poolId: pool.id, challengeId: id,
                 });
-                solutions.push(sol);
+                solutions.push(solution);
             }
 
             // 4. Replenish
@@ -180,12 +221,10 @@ export class KeystoneService_V1 {
             const newData: KeystoneData_V1 = {
                 challengePools: nextPools,
                 proofs: [proof],
-                frameDetails
+                frameDetails,
             };
 
-            const newIbGib = await this.evolveKeystoneIbGibImpl({ prevIbGib: latestKeystone, newData });
-            await space.put({ ibGib: newIbGib });
-
+            const newIbGib = await this.evolveKeystoneIbGibImpl({ prevIbGib: latestKeystone, newData, metaspace, space });
             return newIbGib;
 
         } catch (error) {
@@ -206,6 +245,8 @@ export class KeystoneService_V1 {
     }: {
         currentIbGib: KeystoneIbGib_V1;
         prevIbGib: KeystoneIbGib_V1;
+        metaspace: MetaspaceService;
+        space: IbGibSpaceAny;
     }): Promise<boolean> {
         const lc = `${this.lc}[${this.validate.name}]`;
         try {
@@ -213,10 +254,21 @@ export class KeystoneService_V1 {
             const prevData = prevIbGib.data!;
 
             for (const proof of currData.proofs) {
-                if (proof.solutions.length === 0) return false;
+                if (proof.solutions.length === 0) { return false; }
                 const poolId = proof.solutions[0].poolId;
                 const pool = prevData.challengePools.find(p => p.id === poolId);
-                if (!pool) return false;
+                if (!pool) { return false; }
+
+                // -----------------------------------------------------------
+                // 0. VALIDATE VERB AUTHORIZATION
+                // -----------------------------------------------------------
+                if (pool.config.allowedVerbs && pool.config.allowedVerbs.length > 0) {
+                    // If the pool is restricted, the claim MUST match one of the verbs
+                    if (!proof.claim.verb || !pool.config.allowedVerbs.includes(proof.claim.verb)) {
+                        console.warn(`${lc} Policy Violation: Pool ${poolId} used for unauthorized verb ${proof.claim.verb} (E: genuuid)`);
+                        return false;
+                    }
+                }
 
                 // 1. Reconstruct Deterministic Requirements
                 // We use the 'requiredChallengeIds' embedded in the Proof itself
@@ -288,16 +340,22 @@ export class KeystoneService_V1 {
         latestKeystone,
         masterSecret,
         reason = "User initiated revocation",
-        frameDetails
+        frameDetails,
+        metaspace,
+        space,
     }: {
         latestKeystone: KeystoneIbGib_V1;
         masterSecret: string;
         reason?: string;
         frameDetails?: any;
+        metaspace: MetaspaceService;
+        space?: IbGibSpaceAny;
     }): Promise<KeystoneIbGib_V1> {
         const lc = `${this.lc}[${this.revoke.name}]`;
         try {
             const prevData = latestKeystone.data!;
+            space ??= await metaspace.getLocalUserSpace({ lock: true });
+            if (!space) { throw new Error(`(UNEXPECTED) space falsy and couldn't get default local user space? (E: d6ec08fda858f0fe989f0faea3612825)`); }
 
             // 1. Find Revocation Pool
             // We look for explicit ID, fallback to searching config for 'consume' strategy?
@@ -315,12 +373,12 @@ export class KeystoneService_V1 {
             const solutions: KeystoneSolution[] = [];
 
             for (const id of allIds) {
-                const sol = await strategy.generateSolution({
+                const solution = await strategy.generateSolution({
                     poolSecret,
                     poolId: pool.id,
                     challengeId: id,
                 });
-                solutions.push(sol);
+                solutions.push(solution);
             }
 
             // 4. Deplete the Pool (Replenish Strategy: Consume)
@@ -359,7 +417,12 @@ export class KeystoneService_V1 {
                 frameDetails
             };
 
-            return await this.evolveKeystoneIbGibImpl({ prevIbGib: latestKeystone, newData });
+            return await this.evolveKeystoneIbGibImpl({
+                prevIbGib: latestKeystone,
+                newData,
+                metaspace,
+                space,
+            });
 
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
@@ -414,7 +477,7 @@ export class KeystoneService_V1 {
 
         // Clean up Binding Map for consumed IDs
         consumedIds.forEach(id => {
-            if (pool.bindingMap) removeFromBindingMap(pool.bindingMap, id);
+            if (pool.bindingMap) { removeFromBindingMap(pool.bindingMap, id); }
         });
 
         if (strategyType === KeystoneReplenishStrategy.topUp) {
@@ -435,7 +498,7 @@ export class KeystoneService_V1 {
                 pool.challenges[newId] = await strategy.generateChallenge({ solution });
 
                 // Update Binding Map
-                if (!pool.bindingMap) pool.bindingMap = {};
+                if (!pool.bindingMap) { pool.bindingMap = {}; }
                 addToBindingMap(pool.bindingMap, newId);
             }
         } else if (strategyType === KeystoneReplenishStrategy.replaceAll) {
@@ -475,11 +538,19 @@ export class KeystoneService_V1 {
             space ??= await metaspace.getLocalUserSpace({ lock: false });
             if (!space) { throw new Error(`(UNEXPECTED) space was falsy and we couldn't get default local user space from metaspace? (E: 9a6498cf16a8801f19ec376749742225)`); }
 
-            const keystoneGraph = await getKeystoneIbGib({ keystoneData: data });
+            const keystoneIbGib = await getKeystoneIbGib({ keystoneData: data });
 
-            // todo: save graph in space
+            await metaspace.put({
+                ibGib: keystoneIbGib,
+                space,
+            });
 
-            throw new Error(`not implemented (E: 8f20f85d90a8314cc84d7de8cdf9e825)`);
+            await metaspace.registerNewIbGib({
+                ibGib: keystoneIbGib,
+                space,
+            });
+
+            return keystoneIbGib;
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
             throw error;
@@ -488,11 +559,59 @@ export class KeystoneService_V1 {
         }
     }
 
-    private async evolveKeystoneIbGibImpl({ prevIbGib, newData }: { prevIbGib: KeystoneIbGib_V1, newData: KeystoneData_V1 }): Promise<KeystoneIbGib_V1> {
+    private async evolveKeystoneIbGibImpl({
+        prevIbGib,
+        newData,
+        metaspace,
+        space,
+    }: {
+        prevIbGib: KeystoneIbGib_V1,
+        newData: KeystoneData_V1
+        metaspace: MetaspaceService,
+        space: IbGibSpaceAny,
+    }): Promise<KeystoneIbGib_V1> {
         const lc = `${this.lc}[${this.evolveKeystoneIbGibImpl.name}]`;
         try {
             if (logalot) { console.log(`${lc} starting... (I: 8b10e8920f08b7842803665834cf8925)`); }
-            throw new Error(`not implemented (E: fa6fca0f5038ca524ca97d918f824825)`);
+            if (!prevIbGib.data) { throw new Error(`(UNEXPECTED) prevIbGib.data falsy? (E: 5e84875bf992c585b979e6c8ed5bf225)`); }
+            if (prevIbGib.data.revocationInfo) { throw new Error(`Keystone has already been revoked (prevIbGib.data.revocationInfo truthy), so we cannot evolve the keystone. Keystone addr: ${getIbGibAddr({ ibGib: prevIbGib })} (E: 45d7f846556829de6b2a701838c3f825)`); }
+
+            /**
+             * we want to completely replace these keys, so we will remove them
+             * from the data. This occurs first in the underlying mut8
+             * transform.
+             * @see {@link mut8}
+             */
+            const dataToRemove: Partial<KeystoneData_V1> = {
+                proofs: [],
+                challengePools: [],
+                frameDetails: {},
+            };
+
+            const resMut8 = await mut8({
+                src: prevIbGib,
+                dataToRemove,
+                dataToAddOrPatch: newData,
+                // dna: false, // explicitly set to false just to show
+                nCounter: true,
+            });
+
+            if (!!resMut8.intermediateIbGibs) { throw new Error(`(UNEXPECTED) resMut8.intermediateIbGibs truthy? I'm not sure if we expect there to be intermediateIbGibs, but I feel like we shouldn't. Pretty sure we shouldn't, definitely don't *want* them. (E: ba40d55d7c2d36d438c413886f148625)`); }
+            if (!!resMut8.dnas) { throw new Error(`(UNEXPECTED) resMut8.dnas truthy? We do not want dnas with keystones. (E: 49470513d018f97d28024f4e82da3b25)`); }
+
+
+            const newKeystoneIbGib = resMut8.newIbGib as KeystoneIbGib_V1;
+
+            // run validation here? I think we should probably at least for awhile
+            console.warn(`${lc} running possibly yagni validate after evolving keystone timeline. (W: d6bb476f27a84ef51cf65948544d7f25)`)
+            await this.validate({
+                currentIbGib: newKeystoneIbGib,
+                prevIbGib,
+                metaspace,
+                space,
+            });
+
+
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
             throw error;

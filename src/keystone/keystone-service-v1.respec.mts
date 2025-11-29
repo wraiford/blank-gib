@@ -2,12 +2,66 @@ import {
     respecfully, iReckon, ifWe, firstOfAll, firstOfEach, lastOfAll, lastOfEach, respecfullyDear, ifWeMight
 } from '@ibgib/helper-gib/dist/respec-gib/respec-gib.mjs';
 const maam = `[${import.meta.url}]`, sir = maam;
+import { extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 
+import { MetaspaceService, } from '@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs';
+import { Metaspace_Innerspace } from '@ibgib/core-gib/dist/witness/space/metaspace/metaspace-innerspace/metaspace-innerspace.mts';
+
+import { GLOBAL_LOG_A_LOT } from '../constants.mts';
 import { KeystoneStrategyFactory } from './strategy/keystone-strategy-factory.mjs';
 import { KeystoneClaim, KeystoneIbGib_V1, KeystonePoolConfig_HashV1 } from './keystone-types.mjs';
 import { createStandardPoolConfig } from './keystone-config-builder.mjs';
 import { POOL_ID_DEFAULT } from './keystone-constants.mts';
-import {KeystoneService_V1} from './keystone-service-v1.mjs';
+import { KeystoneService_V1 } from './keystone-service-v1.mjs';
+
+const logalot = GLOBAL_LOG_A_LOT;
+
+
+/**
+ * not sure where to put this, but we probably will want to reuse this in the
+ * future (assuming it works)
+ * @returns metaspace service reference
+ */
+async function getNewInitializedInMemoryMetaspaceForTesting({
+    defaultSpaceName,
+}: {
+    defaultSpaceName: string,
+}): Promise<MetaspaceService> {
+    const lc = `[${getNewInitializedInMemoryMetaspaceForTesting.name}]`;
+    try {
+        if (logalot) { console.log(`${lc} starting... (I: 766d7596addcb73f4820586469233b25)`); }
+
+        let metaspace = new Metaspace_Innerspace(/*cacheSvc*/undefined);
+        if (logalot) { console.log(`${lc} creating metaspace complete. initializing... (I: 61b74d62e8832c9fa853e4b8c4c2d825)`); }
+
+        await metaspace.initialize({
+            spaceName: defaultSpaceName,
+            metaspaceFactory: undefined,
+            getFnAlert: () => { return async ({ title, msg }) => console.log(title, msg) },
+            getFnPrompt: () => {
+                return async ({ title, msg }) => {
+                    // if this is needed, we might set up some way for testing
+                    // to prepare either a queue of prompts or some kind of map
+                    // and put it on the metaspace itself
+                    throw new Error(`not implemented (E: c7ef688a02f8cb74487260f9274ac825)`);
+                    // promptForText({ title, msg, confirm: false });
+                }
+            },
+            getFnPromptPassword: () => {
+                return async () => {
+                    return 'password';
+                    // promptForSecret({ confirm: true })
+                }
+            },
+        });
+        return metaspace;
+    } catch (error) {
+        console.error(`${lc} ${extractErrorMsg(error)}`);
+        throw error;
+    } finally {
+        if (logalot) { console.log(`${lc} complete.`); }
+    }
+}
 
 // ===========================================================================
 // SUITE A: STRATEGY VECTORS (The Math)

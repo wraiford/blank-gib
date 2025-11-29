@@ -6,6 +6,7 @@ import { Factory_V1 } from "@ibgib/ts-gib/dist/V1/factory.mjs";
 import { GLOBAL_LOG_A_LOT } from "../constants.mjs";
 import { KEYSTONE_ATOM } from "./keystone-constants.mjs";
 import { KeystoneData_V1, KeystoneIbGib_V1, KeystoneIbInfo_V1, KeystoneChallengePool } from "./keystone-types.mjs";
+import { getGib } from "@ibgib/ts-gib/dist/V1/transforms/transform-helper.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -80,7 +81,7 @@ export async function getKeystoneIbGib({
     keystoneData,
 }: {
     keystoneData: KeystoneData_V1,
-}): Promise<TransformResult<KeystoneIbGib_V1>> {
+}): Promise<KeystoneIbGib_V1> {
     const lc = `[${getKeystoneIb.name}]`;
     try {
         if (logalot) { console.log(`${lc} starting... (I: f557bbe2e61d446658a2e13980e96d25)`); }
@@ -113,10 +114,9 @@ export async function getKeystoneIbGib({
         }
 
         keystoneIbGib.rel8ns.past = [];
-        keystoneIbGib.gib
+        keystoneIbGib.gib = await getGib({ ibGib: keystoneIbGib });
 
-
-        return resFirstGen;
+        return keystoneIbGib;
     } catch (error) {
         console.error(`${lc} ${extractErrorMsg(error)}`);
         throw error;
@@ -171,8 +171,8 @@ export function getDeterministicRequirements({
             }
             // Strict: Consume it.
             if (!available.includes(id)) {
-                 // Should be caught by check above, but handles duplicates in 'demands'
-                 continue;
+                // Should be caught by check above, but handles duplicates in 'demands'
+                continue;
             }
             mandatory.add(id);
         }
