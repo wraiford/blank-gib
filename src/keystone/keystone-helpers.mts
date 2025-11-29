@@ -71,61 +71,6 @@ export async function parseKeystoneIb({
     }
 }
 
-/**
- * Creates the initial keystone.
- *
- * Note that keystones are slightly different than other ibgibs, as each
- * iteration of the keystone must be valid.
- */
-export async function getKeystoneIbGib({
-    keystoneData,
-}: {
-    keystoneData: KeystoneData_V1,
-}): Promise<KeystoneIbGib_V1> {
-    const lc = `[${getKeystoneIb.name}]`;
-    try {
-        if (logalot) { console.log(`${lc} starting... (I: f557bbe2e61d446658a2e13980e96d25)`); }
-
-        const parentIbGib = Factory_V1.primitive({ ib: KEYSTONE_ATOM });
-
-        const resFirstGen = await Factory_V1.firstGen({
-            parentIbGib,
-            ib: await getKeystoneIb({ keystoneData }),
-            data: keystoneData,
-            // just showing rel8ns for completeness. in the future when we have
-            // composite keystones, this will probably change to a truthy value
-            // rel8ns: undefined,
-            dna: false,
-            nCounter: true,
-            tjp: {
-                timestamp: true,
-                uuid: true,
-            },
-        }) as TransformResult<KeystoneIbGib_V1>;
-
-        // at this point, the first gen has an interstitial ibgib and its past
-        // is not empty. We need to change this so that the past is indeed
-        // empty.
-
-        const keystoneIbGib = resFirstGen.newIbGib;
-        if (!keystoneIbGib.rel8ns) { throw new Error(`(UNEXPECTED) keystoneIbGib.rel8ns falsy? we expect the rel8ns to have ancestor and past. (E: 20cb7723dc33ae1ef808fe76d1bf4b25)`); }
-        if (!keystoneIbGib.rel8ns.past || keystoneIbGib.rel8ns.past.length === 0) {
-            throw new Error(`(UNEXPECTED) keystoneIbGib.rel8ns.past falsy or empty? we expect the firstGen call to generate an interstitial ibgib that we will splice out. (E: 0fd8388d045ab9f37834c27d67e78825)`);
-        }
-
-        keystoneIbGib.rel8ns.past = [];
-        keystoneIbGib.gib = await getGib({ ibGib: keystoneIbGib });
-
-        return keystoneIbGib;
-    } catch (error) {
-        console.error(`${lc} ${extractErrorMsg(error)}`);
-        throw error;
-    } finally {
-        if (logalot) { console.log(`${lc} complete.`); }
-    }
-}
-
-
 export interface DeterministicResult {
     /**
      * The Set of IDs that MUST be present in the solution.

@@ -1,4 +1,4 @@
-import { extractErrorMsg, hash } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
+import { extractErrorMsg, hash, pretty } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 import { getIbGibAddr } from '@ibgib/ts-gib/dist/helper.mjs';
 import { mut8 } from '@ibgib/ts-gib/dist/V1/transforms/mut8.mjs';
 import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.mjs';
@@ -18,11 +18,14 @@ import {
     KeystoneRevocationInfo,
 } from './keystone-types.mjs';
 import { KeystoneStrategyFactory } from './strategy/keystone-strategy-factory.mjs';
-import { POOL_ID_REVOKE, VERB_REVOKE } from './keystone-constants.mjs';
+import { KEYSTONE_ATOM, POOL_ID_REVOKE, VERB_REVOKE } from './keystone-constants.mjs';
 import {
-    addToBindingMap, getDeterministicRequirements, getKeystoneIbGib,
+    addToBindingMap, getDeterministicRequirements, getKeystoneIb,
     removeFromBindingMap,
 } from './keystone-helpers.mjs';
+import { Factory_V1 } from '@ibgib/ts-gib/dist/V1/factory.mjs';
+import { getGib } from '@ibgib/ts-gib/dist/V1/transforms/transform-helper.mjs';
+import { TransformResult } from '@ibgib/ts-gib/dist/types.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -364,6 +367,7 @@ export class KeystoneService_V1 {
             if (!pool) { throw new Error(`Revocation pool not found (E: genuuid)`); }
 
             // 2. Select ALL Challenges
+            // TODO: change this from all ids to config based and add a "consume-clear" behavior that consumes the required challenges and then clears out the rest (but does not show the solutions for them).
             const allIds = Object.keys(pool.challenges);
             if (allIds.length === 0) { throw new Error(`Revocation pool empty. Already revoked? (E: genuuid)`); }
 
@@ -490,7 +494,11 @@ export class KeystoneService_V1 {
                     salt: config.salt, timestamp, index: i
                 });
 
-                // TODO: Collision Check?
+                // Collision Check? No. Better than this is the configuration
+                // that requires multiple challenges. So we should assume that a
+                // very small number of repeats is going to happen, but that the
+                // overall security remains intact due to multiple layers of
+                // challenges (multiple FIFO, Stochastic, Binding, etc.).
 
                 const solution = await strategy.generateSolution({
                     poolSecret, poolId: pool.id, challengeId: newId
@@ -522,6 +530,9 @@ export class KeystoneService_V1 {
         return newPools;
     }
 
+    /**
+     * Creates a new keystone ibgib that has no dna and no past.
+     */
     private async createKeystoneIbGibImpl({
         data,
         metaspace,
@@ -538,17 +549,42 @@ export class KeystoneService_V1 {
             space ??= await metaspace.getLocalUserSpace({ lock: false });
             if (!space) { throw new Error(`(UNEXPECTED) space was falsy and we couldn't get default local user space from metaspace? (E: 9a6498cf16a8801f19ec376749742225)`); }
 
-            const keystoneIbGib = await getKeystoneIbGib({ keystoneData: data });
+            // create the actual keystoneIbGib
+            const resFirstGen = await Factory_V1.firstGen({
+                parentIbGib: Factory_V1.primitive({ ib: KEYSTONE_ATOM }),
+                ib: await getKeystoneIb({ keystoneData: data }),
+                data,
+                // just showing rel8ns for completeness. in the future when we have
+                // composite keystones, this will probably change to a truthy value
+                // rel8ns: undefined,
+                dna: false,
+                nCounter: true,
+                tjp: {
+                    timestamp: true,
+                    uuid: true,
+                },
+            }) as TransformResult<KeystoneIbGib_V1>;
+            const keystoneIbGib = resFirstGen.newIbGib;
 
-            await metaspace.put({
-                ibGib: keystoneIbGib,
-                space,
-            });
+            // at this point, the first gen result has an interstitial ibgib and
+            // its past is not empty. We need to change this so that the past is
+            // indeed empty. We then will drop the interstitial and re-calculate
+            // the gib (hash).
+            console.error(`${lc} NOT AN ERROR. JUST A TEMP LOG MSG TO BE REMOVED. I WANT TO SEE WHAT THIS LOOKS LIKE IN DEBUGGING. specifically, I am looking at n & isTjp and whether we need to manually adjust them.\nkeystoneIbGib... (I: 2ce3b821ba739cd3e821625811315525)`);
+            console.dir(keystoneIbGib);
+            if (!keystoneIbGib.data) { throw new Error(`(UNEXPECTED) keystoneIbGib.data falsy? We expect the data to be populated with real keystone data. (E: 38a358facdb89d16d81d48c8520d3d25)`); }
+            if (!keystoneIbGib.rel8ns) { throw new Error(`(UNEXPECTED) keystoneIbGib.rel8ns falsy? we expect the rel8ns to have ancestor and past. (E: 20cb7723dc33ae1ef808fe76d1bf4b25)`); }
+            if (!keystoneIbGib.rel8ns.past || keystoneIbGib.rel8ns.past.length === 0) {
+                throw new Error(`(UNEXPECTED) keystoneIbGib.rel8ns.past falsy or empty? we expect the firstGen call to generate an interstitial ibgib that we will splice out. (E: 0fd8388d045ab9f37834c27d67e78825)`);
+            }
+            keystoneIbGib.data.n = 0;
+            keystoneIbGib.data.isTjp = true;
+            keystoneIbGib.rel8ns.past = [];
+            keystoneIbGib.gib = await getGib({ ibGib: keystoneIbGib });
 
-            await metaspace.registerNewIbGib({
-                ibGib: keystoneIbGib,
-                space,
-            });
+            // save and register
+            await metaspace.put({ ibGib: keystoneIbGib, space, });
+            await metaspace.registerNewIbGib({ ibGib: keystoneIbGib, space, });
 
             return keystoneIbGib;
         } catch (error) {
@@ -559,6 +595,13 @@ export class KeystoneService_V1 {
         }
     }
 
+    /**
+     * for signing/revoking, the newData is entirely new per frame, i.e., we
+     * replace all relevant keystone information. IOW we are not just patching
+     * the data by adding or replacing keys, we are providing all pools, claim,
+     * solutions, required, and frameDetails. So this implementation is required
+     * to remove each of the old keys in the call to {@link mut8}.
+     */
     private async evolveKeystoneIbGibImpl({
         prevIbGib,
         newData,
@@ -573,6 +616,7 @@ export class KeystoneService_V1 {
         const lc = `${this.lc}[${this.evolveKeystoneIbGibImpl.name}]`;
         try {
             if (logalot) { console.log(`${lc} starting... (I: 8b10e8920f08b7842803665834cf8925)`); }
+
             if (!prevIbGib.data) { throw new Error(`(UNEXPECTED) prevIbGib.data falsy? (E: 5e84875bf992c585b979e6c8ed5bf225)`); }
             if (prevIbGib.data.revocationInfo) { throw new Error(`Keystone has already been revoked (prevIbGib.data.revocationInfo truthy), so we cannot evolve the keystone. Keystone addr: ${getIbGibAddr({ ibGib: prevIbGib })} (E: 45d7f846556829de6b2a701838c3f825)`); }
 
@@ -604,14 +648,16 @@ export class KeystoneService_V1 {
 
             // run validation here? I think we should probably at least for awhile
             console.warn(`${lc} running possibly yagni validate after evolving keystone timeline. (W: d6bb476f27a84ef51cf65948544d7f25)`)
-            await this.validate({
+            const isValid = await this.validate({
                 currentIbGib: newKeystoneIbGib,
                 prevIbGib,
                 metaspace,
                 space,
             });
 
+            if (!isValid) { throw new Error(`(UNEXPECTED) invalid keystone after we just evolved it? (E: ae2c58406c1db7687879dfb89fc1f825)`); }
 
+            return newKeystoneIbGib;
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
             throw error;
