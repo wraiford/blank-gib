@@ -208,7 +208,7 @@ JavaScript has quirks and we try to obviate them as much as possible.
 
 ##### always use explicit `===` for equality, never `==`
 
-Avoid weird casting issues.
+Avoid difficult-to-track casting issues.
 
 ##### always use explicit blocks for `if`, `else` blocks
 
@@ -219,6 +219,14 @@ if (isValid) { foo(); }
 ```
 
 NEVER skip using these curly brackets. Although most changes should be laser-focused on the concrete issue at hand (bug/feature/etc.), this is one where you should fix ASAP if it's noticed.
+
+#### Use truthy assertions with ! as a last resort
+
+Actual ! assertions, like `ibGib.data!.myProp` should be AVOIDED almost always. Instead, throw an error.
+
+_note: In this particular case of `ibGib.data`, this would be an UNEXPECTED error which is detailed elsewhere in this styleguide._
+
+thrownewun
 
 ### Markdown
 
