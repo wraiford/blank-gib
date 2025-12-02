@@ -3,7 +3,7 @@ import { statSync } from 'node:fs';
 import * as pathUtils from 'path';
 import * as esbuild from 'esbuild';
 
-import { extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
+import { extractErrorMsg, unique } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 
 import { Build } from './types.mjs';
 import * as constants from './constants.mjs';
@@ -25,7 +25,7 @@ class BuildTest extends Build {
             console.log(`${lc} starting...`);
 
             const respecFiles = await this.getRespecFileFullPaths(constants.SRC_DIR, []);
-            console.log(`${lc} found ${respecFiles.length} respec files.`);
+            console.log(`${lc} found ${respecFiles.length} respecFiles: ${respecFiles.join('\n')}`);
 
             const allEntryPoints = [
                 `${constants.SRC_DIR}/respec-gib.node.mts`,
@@ -108,7 +108,9 @@ class BuildTest extends Build {
                 const subfound = await this.getRespecFileFullPaths(dirs[i], found);
                 found = found.concat(subfound);
             }
-            return Array.from(new Set(found)); // unique
+
+            const uniqueFilepaths = unique(found);
+            return uniqueFilepaths;
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
             throw error;

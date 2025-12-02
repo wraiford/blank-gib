@@ -7,15 +7,20 @@ import { getGlobalRespecGib } from '@ibgib/helper-gib/dist/respec-gib/respec-gib
 import { respecFileHasExtraRespec } from '@ibgib/helper-gib/dist/respec-gib/respec-gib-helper.mjs';
 
 import { GLOBAL_LOG_A_LOT } from './constants.mjs';
+const lc = `[respec-gib.node.mts]`;
 
 // #region settings
 /**
  * This is how I enable/disable verbose logging. Do with it what you will.
  */
-const logalot = GLOBAL_LOG_A_LOT || false;
+const logalot = GLOBAL_LOG_A_LOT;
 
 /** set this to the root of the respecs to look at */
 const RESPEC_ROOT_DIR_RELATIVE_TO_BASE = './dist';
+
+const RESPEC_EXCLUDE_DIRS = [
+    'dist/apps/web1',
+];
 
 /** change this to suit your naming convention */
 const RESPEC_FILE_REG_EXP = /^.+respec\.mjs$/;
@@ -59,7 +64,7 @@ if (logalot) { console.log(`srcPath: ${srcPath}`); }
 const respecGib = getGlobalRespecGib();
 const allRespecPaths = await getRespecFileFullPaths(srcPath, []);
 
-if (logalot) { console.log(`allRespecPaths: ${allRespecPaths} (I: f5182a455375a8cf2aa6e1127a082423)`); }
+if (logalot) { console.log(`allRespecPaths: (I: f5182a455375a8cf2aa6e1127a082423)\n${allRespecPaths.join('\n')} (I: f5182a455375a8cf2aa6e1127a082423)`); }
 let filteredRespecPaths: string[] | undefined = undefined;
 
 if (LOOK_FOR_EXTRA_RESPEC) {
@@ -79,6 +84,27 @@ if (LOOK_FOR_EXTRA_RESPEC) {
     } else {
         console.log(`filteredRespecPaths for extra respec: ${filteredRespecPaths} (I: b98f54656899646025eecb4c028ab523)`);
         respecGib.extraRespecOnly = true;
+    }
+}
+
+let filteredByExcludeDirs: string[] = [];
+if (RESPEC_EXCLUDE_DIRS.length > 0) {
+    // filter out the excluded dirs
+    console.log(`RESPEC_EXCLUDE_DIRS: ${RESPEC_EXCLUDE_DIRS}`);
+
+    filteredByExcludeDirs = filteredRespecPaths ? filteredRespecPaths.concat() : allRespecPaths.concat();
+    filteredByExcludeDirs = filteredByExcludeDirs.filter(respecPath => {
+        const isExcluded = RESPEC_EXCLUDE_DIRS.some(excludeDir => {
+            const resolvedPath = pathUtils.join(basePath, excludeDir);
+            const startsWithExcludedDir = respecPath.startsWith(resolvedPath);
+            // if (respecPath.includes('node_modules')) { console.log(`${lc} node_modules path:\n${respecPath}\n${resolvedPath}`) } // debug
+            return startsWithExcludedDir;
+        });
+        if (isExcluded && logalot) { console.log(`${lc} excluding ${respecPath}`); }
+        return !isExcluded;
+    });
+    if (filteredByExcludeDirs.length > 0) {
+        filteredRespecPaths = filteredByExcludeDirs;
     }
 }
 

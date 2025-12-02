@@ -6,7 +6,18 @@ I'm doing per upgrade. This should be automatically created per "commit", and
 really this should just be a regular part of the "chat" that is this project.
 We'll get there eventually!
 
-## current/v0.15.6 ish
+## v0.15.10
+* progress: testing for keystone mechanics
+  * innerspace and metaspace_innerspace still not functional for testing
+    * I think it has something to do with needing singletons for space ibgibs,
+      which is a non-trivial problem (for any singleton ibgib)
+  * using a mock metaspace and space, seems to be working okay
+  * Suite A and B tests are passing
+  * Currently working on Suite C which is failing. We are moving to a better
+    validation function that will provide validation errors instead of an
+    opaque boolean.
+
+## v0.15.6
 * impl: upgraded build to handle respec-gib testing
   * npm run test did not work, as this was still configured for the simpler
     pre-esbuild build process.

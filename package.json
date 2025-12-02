@@ -32,7 +32,7 @@
     "test": "npm run build:test && npm run test:node",
     "test:both": "npm run build:test && npm run test:node:nobuild && npm run test:browser:nobuild",
     "pretest:node": "npm run build:test",
-    "test:node": "node dist/respec-gib.node.mjs",
+    "test:node": "node --trace-warnings dist/respec-gib.node.mjs",
     "test:node:nobuild": "node dist/respec-gib.node.mjs --inspect",
     "test:browser": "npm run build:test && echo \"not implemented yet\"",
     "test:browser:nobuild": "echo \"not implemented yet\"",

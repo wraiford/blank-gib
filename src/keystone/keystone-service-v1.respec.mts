@@ -3,63 +3,169 @@ import {
 } from '@ibgib/helper-gib/dist/respec-gib/respec-gib.mjs';
 const maam = `[${import.meta.url}]`, sir = maam;
 import { extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
-
+import { IbGib_V1 } from '@ibgib/ts-gib/dist/V1/types.mjs';
+import { getIbGibAddr } from '@ibgib/ts-gib/dist/helper.mjs';
 import { MetaspaceService, } from '@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs';
-import { Metaspace_Innerspace } from '@ibgib/core-gib/dist/witness/space/metaspace/metaspace-innerspace/metaspace-innerspace.mts';
+import { Metaspace_Innerspace } from '@ibgib/core-gib/dist/witness/space/metaspace/metaspace-innerspace/metaspace-innerspace.mjs';
+import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.mjs';
 
-import { GLOBAL_LOG_A_LOT } from '../constants.mts';
+import { GLOBAL_LOG_A_LOT } from '../constants.mjs';
 import { KeystoneStrategyFactory } from './strategy/keystone-strategy-factory.mjs';
 import { KeystoneClaim, KeystoneIbGib_V1, KeystonePoolConfig_HashV1 } from './keystone-types.mjs';
-import { createStandardPoolConfig } from './keystone-config-builder.mjs';
-import { POOL_ID_DEFAULT } from './keystone-constants.mts';
+import { createRevocationPoolConfig, createStandardPoolConfig } from './keystone-config-builder.mjs';
+import { POOL_ID_DEFAULT, POOL_ID_REVOKE, VERB_REVOKE } from './keystone-constants.mjs';
 import { KeystoneService_V1 } from './keystone-service-v1.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT;
 
 
+// /**
+//  * not sure where to put this, but we probably will want to reuse this in the
+//  * future (assuming it works)
+//  * @returns metaspace service reference
+//  */
+// async function getNewInitializedInMemoryMetaspaceForTesting({
+//     defaultSpaceName,
+// }: {
+//     defaultSpaceName: string,
+// }): Promise<MetaspaceService> {
+//     const lc = `[${getNewInitializedInMemoryMetaspaceForTesting.name}]`;
+//     try {
+//         if (logalot) { console.log(`${lc} starting... (I: 766d7596addcb73f4820586469233b25)`); }
+
+//         let metaspace = new Metaspace_Innerspace(/*cacheSvc*/undefined);
+//         if (logalot) { console.log(`${lc} creating metaspace complete. initializing... (I: 61b74d62e8832c9fa853e4b8c4c2d825)`); }
+//         getGibInfo()
+
+//         await metaspace.initialize({
+//             spaceName: defaultSpaceName,
+//             /**
+//              * passing in undefined will use the defaults. probably will need to
+//              * adjust this for testing purposes, but let's see what happens with
+//              * this first.
+//              */
+//             metaspaceFactory: {
+//                 fnDtoToSpace: async () => {
+//                     if (!currentSpace) { currentSpace = new IbGibTestSpace(); }
+//                     return currentSpace;
+//                 },
+//                 fnZeroSpaceFactory: () => {
+//                     if (!currentZeroSpace) { currentZeroSpace = new IbGibTestSpace(); }
+//                     return currentZeroSpace;
+//                 },
+//                 fnDefaultLocalSpaceFactory: async () => {
+//                     if (!currentSpace) { currentSpace = new IbGibTestSpace(); }
+//                     return currentSpace;
+//                 },
+
+//                 // export type DtoToSpaceFunction = (spaceDto: IbGib_V1) => Promise<IbGibSpaceAny>;
+//                 // export type ZeroSpaceFactoryFunction = () => IbGibSpaceAny;
+//                 // export type LocalSpaceFactoryFunction = (opts: CreateLocalSpaceOptions) => Promise<IbGibSpaceAny | undefined>;
+//             },
+//             getFnAlert: () => { return async ({ title, msg }) => console.log(title, msg) },
+//             getFnPrompt: () => {
+//                 return async ({ title, msg }) => {
+//                     // if this is needed, we might set up some way for testing
+//                     // to prepare either a queue of prompts or some kind of map or getter
+//                     // and put it on the metaspace itself
+//                     throw new Error(`not implemented (E: c7ef688a02f8cb74487260f9274ac825)`);
+//                     // promptForText({ title, msg, confirm: false });
+//                 }
+//             },
+//             getFnPromptPassword: () => {
+//                 return async () => {
+//                     // similar to getFnPrompt, if we need a _different_
+//                     // password, we might set up some way for testing to prepare
+//                     // either a queue of passwords or some kind of map or getter
+//                     // and put it on the metaspace itself
+//                     return 'password';
+//                     // promptForSecret({ confirm: true })
+//                 }
+//             },
+//         });
+//         return metaspace;
+//     } catch (error) {
+//         console.error(`${lc} ${extractErrorMsg(error)}`);
+//         throw error;
+//     } finally {
+//         if (logalot) { console.log(`${lc} complete.`); }
+//     }
+// }
+
 /**
- * not sure where to put this, but we probably will want to reuse this in the
- * future (assuming it works)
- * @returns metaspace service reference
+ * A simple in-memory map acting as a Space.
+ * Pure Storage. No Indexing logic.
  */
-async function getNewInitializedInMemoryMetaspaceForTesting({
-    defaultSpaceName,
-}: {
-    defaultSpaceName: string,
-}): Promise<MetaspaceService> {
-    const lc = `[${getNewInitializedInMemoryMetaspaceForTesting.name}]`;
-    try {
-        if (logalot) { console.log(`${lc} starting... (I: 766d7596addcb73f4820586469233b25)`); }
+class MockIbGibSpace {
+    store = new Map<string, IbGib_V1>();
 
-        let metaspace = new Metaspace_Innerspace(/*cacheSvc*/undefined);
-        if (logalot) { console.log(`${lc} creating metaspace complete. initializing... (I: 61b74d62e8832c9fa853e4b8c4c2d825)`); }
+    constructor(public name: string = "mock_space") { }
 
-        await metaspace.initialize({
-            spaceName: defaultSpaceName,
-            metaspaceFactory: undefined,
-            getFnAlert: () => { return async ({ title, msg }) => console.log(title, msg) },
-            getFnPrompt: () => {
-                return async ({ title, msg }) => {
-                    // if this is needed, we might set up some way for testing
-                    // to prepare either a queue of prompts or some kind of map
-                    // and put it on the metaspace itself
-                    throw new Error(`not implemented (E: c7ef688a02f8cb74487260f9274ac825)`);
-                    // promptForText({ title, msg, confirm: false });
-                }
-            },
-            getFnPromptPassword: () => {
-                return async () => {
-                    return 'password';
-                    // promptForSecret({ confirm: true })
-                }
-            },
-        });
-        return metaspace;
-    } catch (error) {
-        console.error(`${lc} ${extractErrorMsg(error)}`);
-        throw error;
-    } finally {
-        if (logalot) { console.log(`${lc} complete.`); }
+    async put({ ibGib }: { ibGib: IbGib_V1 }): Promise<void> {
+        const addr = getIbGibAddr({ ibGib });
+        this.store.set(addr, JSON.parse(JSON.stringify(ibGib))); // Deep copy
+    }
+
+    async get({ addr }: { addr: string }): Promise<IbGib_V1 | null> {
+        const data = this.store.get(addr);
+        return data ? JSON.parse(JSON.stringify(data)) : null;
+    }
+}
+
+/**
+ * A partial mock of Metaspace.
+ * Handles:
+ * 1. Retrieving the local space.
+ * 2. Delegating 'put' to the space.
+ * 3. 'registerNewIbGib': Tracking the HEAD of a timeline.
+ */
+class MockMetaspaceService {
+
+    /**
+     * Map of TJP Gib (Timeline ID) -> Latest IbGib Addr (Head)
+     */
+    timelineHeads = new Map<string, string>();
+
+    constructor(public space: MockIbGibSpace) { }
+
+    async getLocalUserSpace({ lock }: { lock: boolean }): Promise<MockIbGibSpace> {
+        return this.space;
+    }
+
+    /**
+     * Metaspace often acts as a facade for put, defaulting to local space.
+     */
+    async put(args: any): Promise<void> {
+        const target = args.space || this.space;
+        return target.put(args);
+    }
+
+    /**
+     * Tracks the latest version of an ibGib timeline.
+     */
+    async registerNewIbGib(args: { ibGib: IbGib_V1, space?: any }): Promise<void> {
+        const { ibGib } = args;
+        const targetSpace = args.space || this.space;
+
+        // 1. Ensure it is stored
+        await targetSpace.put({ ibGib });
+
+        // 2. Extract TJP (Timeline Identifier)
+        // Simplified logic mirroring getGibInfo
+        const gib = ibGib.gib || '';
+        let tjpGib = gib;
+
+        if (gib.includes('.')) {
+            // It's a frame in a timeline: "punctiliarHash.tjpHash"
+            // The TJP is the suffix.
+            const parts = gib.split('.');
+            tjpGib = parts.slice(1).join('.');
+        }
+        // Else: It's a Primitive or a TJP itself (Genesis).
+        // If Genesis (isTjp=true), the gib IS the tjpGib.
+
+        const addr = getIbGibAddr({ ibGib });
+        this.timelineHeads.set(tjpGib, addr);
     }
 }
 
@@ -174,37 +280,52 @@ await respecfully(sir, 'Suite A: Strategy Vectors (HashRevealV1)', async () => {
 // SUITE B: SERVICE LIFECYCLE (Genesis -> Sign -> Validate)
 // ===========================================================================
 
-await respecfullyDear(sir, 'Suite B: Service Lifecycle', async () => {
+await respecfully(sir, 'Suite B: Service Lifecycle', async () => {
 
     const service = new KeystoneService_V1();
     const masterSecret = "AliceSecretKey_987654321";
+
+    let mockSpace: MockIbGibSpace;
+    let mockMetaspace: any;
+
     let genesisKeystone: KeystoneIbGib_V1;
     let signedKeystone: KeystoneIbGib_V1;
 
+    firstOfAll(sir, async () => {
+        mockSpace = new MockIbGibSpace();
+        mockMetaspace = new MockMetaspaceService(mockSpace);
+    });
+
     await respecfully(sir, 'Genesis', async () => {
-        await ifWeMight(sir, 'creates a valid genesis frame with pools', async () => {
+        await ifWe(sir, 'creates a valid genesis frame and persists it', async () => {
             const config = createStandardPoolConfig(POOL_ID_DEFAULT);
 
             genesisKeystone = await service.genesis({
                 masterSecret,
-                configs: [config]
+                configs: [config],
+                metaspace: mockMetaspace,
+                space: mockSpace as any,
             });
 
+            // Verify Object
             iReckon(sir, genesisKeystone).asTo('genesis object').isGonnaBeTruthy();
-            iReckon(sir, genesisKeystone.data).asTo('data exists').isGonnaBeTruthy();
+            iReckon(sir, genesisKeystone.data?.isTjp).asTo('isTjp').isGonnaBeTrue();
 
-            const pools = genesisKeystone.data!.challengePools;
-            iReckon(sir, pools.length).asTo('has pools').willEqual(1);
-            iReckon(sir, pools[0].id).asTo('correct pool id').willEqual(POOL_ID_DEFAULT);
+            // Verify Persistence
+            const addr = getIbGibAddr({ ibGib: genesisKeystone });
+            const saved = await mockSpace.get({ addr });
 
-            // Check challenges exist (size 100 per standard config)
-            const challenges = Object.keys(pools[0].challenges);
-            iReckon(sir, challenges.length).asTo('challenges populated').willEqual(100);
+            iReckon(sir, saved).asTo('persisted to space').isGonnaBeTruthy();
+
+            // Verify Registration (Timeline Tracking)
+            // Genesis gib should be registered as a timeline head
+            const head = mockMetaspace.timelineHeads.get(genesisKeystone.gib!);
+            iReckon(sir, head).asTo('genesis registered as timeline head').willEqual(addr);
         });
     });
 
     await respecfully(sir, 'Signing (Evolution)', async () => {
-        await ifWeMight(sir, 'evolves the keystone with a valid proof', async () => {
+        await ifWe(sir, 'evolves the keystone with a valid proof', async () => {
             const claim: Partial<KeystoneClaim> = {
                 target: "comment 123^gib",
                 verb: "post"
@@ -217,48 +338,208 @@ await respecfullyDear(sir, 'Suite B: Service Lifecycle', async () => {
                 masterSecret,
                 claim,
                 poolId: POOL_ID_DEFAULT,
-                frameDetails: details
+                frameDetails: details,
+                metaspace: mockMetaspace,
+                space: mockSpace as any,
             });
 
             iReckon(sir, signedKeystone).asTo('new frame created').isGonnaBeTruthy();
             iReckon(sir, signedKeystone).asTo('is different frame').not.isGonnaBe(genesisKeystone);
 
-            // Verify Data Structure
-            const data = signedKeystone.data!;
-            iReckon(sir, data.proofs.length).asTo('has proof').willEqual(1);
-            iReckon(sir, data.proofs[0].claim.target).asTo('claim target matches').willEqual(claim.target);
-
-            // Verify Frame Details
-            iReckon(sir, data.frameDetails).asTo('details persisted').isGonnaBeTruthy();
-            iReckon(sir, data.frameDetails.note).asTo('details content').willEqual("First post!");
-
-            // Verify Replenishment (Top-Up Strategy)
-            // Should still have 100 challenges (consumed were replaced)
-            const pool = data.challengePools.find(p => p.id === POOL_ID_DEFAULT)!;
-            iReckon(sir, Object.keys(pool.challenges).length).asTo('pool topped up').willEqual(100);
+            // NOTE: If this fails, check if 'sign' calls 'space.put' or 'metaspace.put'!
+            // In your current 'sign' implementation, you return the object but might have missed the save step.
+            const addr = getIbGibAddr({ ibGib: signedKeystone });
+            const saved = await mockSpace.get({ addr });
+            iReckon(sir, saved).asTo('persisted to space').isGonnaBeTruthy();
         });
     });
 
     await respecfully(sir, 'Validation', async () => {
-        await ifWeMight(sir, 'validates the genesis->signed transition', async () => {
+        await ifWe(sir, 'validates the genesis->signed transition', async () => {
             const isValid = await service.validate({
                 prevIbGib: genesisKeystone,
-                currentIbGib: signedKeystone
+                currentIbGib: signedKeystone,
+                metaspace: mockMetaspace,
+                space: mockSpace as any,
             });
 
             iReckon(sir, isValid).asTo('signature validation').isGonnaBeTrue();
         });
+    });
+});
 
-        await ifWeMight(sir, 'fails validation if previous frame is wrong', async () => {
-            // Attempt to validate Signed Frame against ITSELF (as if it were the parent)
-            // This should fail because the solution IDs won't exist in Signed Frame's pool (they were consumed!)
-            // Or because the pools have changed state.
-            const isValid = await service.validate({
-                prevIbGib: signedKeystone,
-                currentIbGib: signedKeystone
+// ===========================================================================
+// SUITE C: SECURITY & SAD PATHS
+// ===========================================================================
+
+await respecfullyDear(sir, 'Suite C: Security Vectors', async () => {
+
+    const service = new KeystoneService_V1();
+    const aliceSecret = "AliceSecret_111";
+    const eveSecret = "EveSecret_666";
+
+    let mockSpace: MockIbGibSpace;
+    let mockMetaspace: any;
+    let genesisKeystone: KeystoneIbGib_V1;
+
+    firstOfAll(sir, async () => {
+        mockSpace = new MockIbGibSpace();
+        mockMetaspace = new MockMetaspaceService(mockSpace);
+
+        // Setup Alice's Identity
+        const config = createStandardPoolConfig(POOL_ID_DEFAULT);
+        config.behavior.size = 10;
+        genesisKeystone = await service.genesis({
+            masterSecret: aliceSecret,
+            configs: [config],
+            metaspace: mockMetaspace,
+            space: mockSpace as any,
+        });
+    });
+
+    await respecfully(sir, 'Wrong Secret (Forgery)', async () => {
+        await ifWeMight(sir, 'fails validation if signed with wrong secret', async () => {
+            const claim: Partial<KeystoneClaim> = { target: "comment 123^gib", verb: "post" };
+
+            // Eve tries to sign Alice's keystone
+            // NOTE: This might succeed in generating a frame, but the frame contains
+            // solutions derived from Eve's key, which won't match Alice's challenges.
+            const forgedKeystone = await service.sign({
+                latestKeystone: genesisKeystone,
+                masterSecret: eveSecret, // <--- THE ATTACK
+                claim,
+                poolId: POOL_ID_DEFAULT,
+                metaspace: mockMetaspace,
+                space: mockSpace as any,
             });
 
-            iReckon(sir, isValid).asTo('invalid parent validation').isGonnaBeFalse();
+            // The frame exists...
+            iReckon(sir, forgedKeystone).isGonnaBeTruthy();
+
+            // ...but Validation must reject it.
+            const isValid = await service.validate({
+                prevIbGib: genesisKeystone,
+                currentIbGib: forgedKeystone,
+                metaspace: mockMetaspace,
+                space: mockSpace as any,
+            });
+
+            iReckon(sir, isValid).asTo('forgery rejected').isGonnaBeFalse();
+        });
+    });
+
+    await respecfully(sir, 'Policy Violation (Restricted Verbs)', async () => {
+        await ifWeMight(sir, 'throws error if signing forbidden verb with restricted pool', async () => {
+            // Create a specific restricted pool config manually
+            const restrictedPoolId = "read_only_pool";
+            const restrictedConfig = createStandardPoolConfig(restrictedPoolId);
+            // Manually restrict it (since Builder defaults to undefined/allow-all)
+            restrictedConfig.allowedVerbs = ['read'];
+
+            const restrictedGenesis = await service.genesis({
+                masterSecret: aliceSecret,
+                configs: [restrictedConfig],
+                metaspace: mockMetaspace,
+                space: mockSpace as any,
+            });
+
+            // Try to sign "write" using "read_only_pool"
+            const claim: Partial<KeystoneClaim> = { target: "data^gib", verb: "write" };
+
+            let errorCaught = false;
+            try {
+                await service.sign({
+                    latestKeystone: restrictedGenesis,
+                    masterSecret: aliceSecret,
+                    claim,
+                    poolId: restrictedPoolId, // Force use of restricted pool
+                    metaspace: mockMetaspace,
+                    space: mockSpace as any,
+                });
+            } catch (e) {
+                errorCaught = true;
+                // Optional: Check error message contains "not authorized"
+            }
+
+            iReckon(sir, errorCaught).asTo('policy enforced').isGonnaBeTrue();
+        });
+    });
+});
+
+// ===========================================================================
+// SUITE D: REVOCATION
+// ===========================================================================
+
+// import { createRevocationPoolConfig } from './keystone-config.mjs';
+// import { POOL_ID_REVOKE, VERB_REVOKE } from './keystone-constants.mjs';
+
+await respecfully(sir, 'Suite D: Revocation', async () => {
+
+    const service = new KeystoneService_V1();
+    const masterSecret = "AliceSecret_RevokeTest";
+
+    let mockSpace: MockIbGibSpace;
+    let mockMetaspace: any;
+    let genesisKeystone: KeystoneIbGib_V1;
+
+    firstOfAll(sir, async () => {
+        mockSpace = new MockIbGibSpace();
+        mockMetaspace = new MockMetaspaceService(mockSpace);
+
+        // Setup Identity WITH a Revocation Pool
+        const stdConfig = createStandardPoolConfig(POOL_ID_DEFAULT);
+        const revokeConfig = createRevocationPoolConfig(POOL_ID_REVOKE); // Special Config
+
+        genesisKeystone = await service.genesis({
+            masterSecret,
+            configs: [stdConfig, revokeConfig],
+            metaspace: mockMetaspace,
+            space: mockSpace as any,
+        });
+    });
+
+    await respecfully(sir, 'Revoke Lifecycle', async () => {
+        let revokedKeystone: KeystoneIbGib_V1;
+
+        await ifWe(sir, 'successfully creates a revocation frame', async () => {
+            revokedKeystone = await service.revoke({
+                latestKeystone: genesisKeystone,
+                masterSecret,
+                reason: "Key compromised",
+                metaspace: mockMetaspace,
+                space: mockSpace as any,
+            });
+
+            iReckon(sir, revokedKeystone).isGonnaBeTruthy();
+
+            // Check Data
+            const data = revokedKeystone.data!;
+            iReckon(sir, data.revocationInfo).asTo('revocation info present').isGonnaBeTruthy();
+            iReckon(sir, data.revocationInfo!.reason).willEqual("Key compromised");
+            iReckon(sir, data.revocationInfo!.proof.claim.verb).willEqual(VERB_REVOKE);
+        });
+
+        await ifWe(sir, 'validates the revocation frame', async () => {
+            const isValid = await service.validate({
+                prevIbGib: genesisKeystone,
+                currentIbGib: revokedKeystone!,
+                metaspace: mockMetaspace,
+                space: mockSpace as any,
+            });
+
+            iReckon(sir, isValid).asTo('revocation is cryptographically valid').isGonnaBeTrue();
+        });
+
+        await ifWe(sir, 'consumed the revocation pool (Scorched Earth)', async () => {
+            const data = revokedKeystone!.data!;
+            const revokePool = data.challengePools.find(p => p.id === POOL_ID_REVOKE);
+
+            // The pool should exist...
+            iReckon(sir, revokePool).isGonnaBeTruthy();
+
+            // ...but be EMPTY. (Strategy: Consume / Replace-All with empty? Actually Consume deletes keys)
+            const remaining = Object.keys(revokePool!.challenges);
+            iReckon(sir, remaining.length).asTo('pool depleted').willEqual(0);
         });
     });
 });

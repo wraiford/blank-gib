@@ -1,9 +1,11 @@
 import { extractErrorMsg, hash, pretty } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 import { getIbGibAddr } from '@ibgib/ts-gib/dist/helper.mjs';
 import { mut8 } from '@ibgib/ts-gib/dist/V1/transforms/mut8.mjs';
+import { Factory_V1 } from '@ibgib/ts-gib/dist/V1/factory.mjs';
+import { getGib } from '@ibgib/ts-gib/dist/V1/transforms/transform-helper.mjs';
+import { TransformResult } from '@ibgib/ts-gib/dist/types.mjs';
 import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.mjs';
 import { MetaspaceService } from '@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs';
-import { mut8Timeline } from '@ibgib/core-gib/dist/timeline/timeline-api.mjs';
 
 import { GLOBAL_LOG_A_LOT } from '../constants.mjs';
 import {
@@ -23,9 +25,6 @@ import {
     addToBindingMap, getDeterministicRequirements, getKeystoneIb,
     removeFromBindingMap,
 } from './keystone-helpers.mjs';
-import { Factory_V1 } from '@ibgib/ts-gib/dist/V1/factory.mjs';
-import { getGib } from '@ibgib/ts-gib/dist/V1/transforms/transform-helper.mjs';
-import { TransformResult } from '@ibgib/ts-gib/dist/types.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -145,7 +144,8 @@ export class KeystoneService_V1 {
                 if (!pool) { throw new Error(`Pool not found: ${poolId} (E: genuuid)`); }
 
                 // Enforce Policy on Explicit Selection
-                if (pool.config.allowedVerbs && claim.verb) {
+                // FIX: Check length > 0. If empty, it's a default pool (allow all).
+                if (pool.config.allowedVerbs && pool.config.allowedVerbs.length > 0 && claim.verb) {
                     if (!pool.config.allowedVerbs.includes(claim.verb)) {
                         throw new Error(`Pool ${poolId} is not authorized for verb: ${claim.verb} (E: genuuid)`);
                     }
@@ -225,6 +225,7 @@ export class KeystoneService_V1 {
                 challengePools: nextPools,
                 proofs: [proof],
                 frameDetails,
+                // isTjp: false,
             };
 
             const newIbGib = await this.evolveKeystoneIbGibImpl({ prevIbGib: latestKeystone, newData, metaspace, space });
@@ -253,6 +254,8 @@ export class KeystoneService_V1 {
     }): Promise<boolean> {
         const lc = `${this.lc}[${this.validate.name}]`;
         try {
+            if (!currentIbGib) { throw new Error(`(UNEXPECTED) currentIbGib falsy? (E: 0461485506ce96a818ff9138d7c78825)`); }
+            if (!prevIbGib) { throw new Error(`(UNEXPECTED) prevIbGib falsy? (E: 41ff58962e2b6c216b0f8c08c00ff325)`); }
             const currData = currentIbGib.data!;
             const prevData = prevIbGib.data!;
 
@@ -570,17 +573,29 @@ export class KeystoneService_V1 {
             // its past is not empty. We need to change this so that the past is
             // indeed empty. We then will drop the interstitial and re-calculate
             // the gib (hash).
-            console.error(`${lc} NOT AN ERROR. JUST A TEMP LOG MSG TO BE REMOVED. I WANT TO SEE WHAT THIS LOOKS LIKE IN DEBUGGING. specifically, I am looking at n & isTjp and whether we need to manually adjust them.\nkeystoneIbGib... (I: 2ce3b821ba739cd3e821625811315525)`);
-            console.dir(keystoneIbGib);
+            // console.error(`${lc} PART 1 - NOT AN ERROR. JUST A TEMP LOG MSG TO BE REMOVED. I WANT TO SEE WHAT THIS LOOKS LIKE IN DEBUGGING. specifically, I am looking at n & isTjp and whether we need to manually adjust them.\nkeystoneIbGib... (I: 2ce3b821ba739cd3e821625811315525)`);
+            // console.dir(keystoneIbGib);
+            // console.log(pretty(keystoneIbGib)); // uncomment this to see the actual full object (it's big though)
             if (!keystoneIbGib.data) { throw new Error(`(UNEXPECTED) keystoneIbGib.data falsy? We expect the data to be populated with real keystone data. (E: 38a358facdb89d16d81d48c8520d3d25)`); }
             if (!keystoneIbGib.rel8ns) { throw new Error(`(UNEXPECTED) keystoneIbGib.rel8ns falsy? we expect the rel8ns to have ancestor and past. (E: 20cb7723dc33ae1ef808fe76d1bf4b25)`); }
             if (!keystoneIbGib.rel8ns.past || keystoneIbGib.rel8ns.past.length === 0) {
                 throw new Error(`(UNEXPECTED) keystoneIbGib.rel8ns.past falsy or empty? we expect the firstGen call to generate an interstitial ibgib that we will splice out. (E: 0fd8388d045ab9f37834c27d67e78825)`);
             }
+
+            // reset n
             keystoneIbGib.data.n = 0;
+            // reset tjp
             keystoneIbGib.data.isTjp = true;
-            keystoneIbGib.rel8ns.past = [];
+            delete keystoneIbGib.rel8ns.tjp;
+            // reset past
+            delete keystoneIbGib.rel8ns.past;
+
+            // recalculate gib
             keystoneIbGib.gib = await getGib({ ibGib: keystoneIbGib });
+
+            // console.error(`${lc} PART 2 - NOT AN ERROR. JUST A TEMP LOG MSG TO BE REMOVED. I WANT TO SEE WHAT THIS LOOKS LIKE IN DEBUGGING. specifically, I am looking at n & isTjp and whether we need to manually adjust them.\nkeystoneIbGib... (I: db9f181938184d9d9832fac8fa25a325)`);
+            // console.dir(keystoneIbGib);
+            // console.log(pretty(keystoneIbGib)); // uncomment this to see the actual full object (it's big though)
 
             // save and register
             await metaspace.put({ ibGib: keystoneIbGib, space, });
@@ -620,17 +635,18 @@ export class KeystoneService_V1 {
             if (!prevIbGib.data) { throw new Error(`(UNEXPECTED) prevIbGib.data falsy? (E: 5e84875bf992c585b979e6c8ed5bf225)`); }
             if (prevIbGib.data.revocationInfo) { throw new Error(`Keystone has already been revoked (prevIbGib.data.revocationInfo truthy), so we cannot evolve the keystone. Keystone addr: ${getIbGibAddr({ ibGib: prevIbGib })} (E: 45d7f846556829de6b2a701838c3f825)`); }
 
+            const prevData = prevIbGib.data;
             /**
              * we want to completely replace these keys, so we will remove them
              * from the data. This occurs first in the underlying mut8
              * transform.
              * @see {@link mut8}
              */
-            const dataToRemove: Partial<KeystoneData_V1> = {
-                proofs: [],
-                challengePools: [],
-                frameDetails: {},
-            };
+            let dataToRemove: Partial<KeystoneData_V1> | undefined = {}
+            if (prevData.proofs) { dataToRemove.proofs = []; }
+            if (prevData.challengePools) { dataToRemove.challengePools = []; }
+            if (prevData.frameDetails) { dataToRemove.frameDetails = {}; }
+            if (Object.keys(dataToRemove).length === 0) { dataToRemove = undefined; }
 
             const resMut8 = await mut8({
                 src: prevIbGib,
@@ -655,7 +671,14 @@ export class KeystoneService_V1 {
                 space,
             });
 
-            if (!isValid) { throw new Error(`(UNEXPECTED) invalid keystone after we just evolved it? (E: ae2c58406c1db7687879dfb89fc1f825)`); }
+            if (!isValid) {
+                console.error(`${lc} TAKE THIS OUT OF PRODUCTION. invalid keystone after we just evolved it:\n${pretty(newKeystoneIbGib)} (E: 466a52230e7ece724fd119f39fbce825)`)
+                throw new Error(`(UNEXPECTED) invalid keystone after we just evolved it? (E: ae2c58406c1db7687879dfb89fc1f825)`);
+            }
+
+            // save and register
+            await metaspace.put({ ibGib: newKeystoneIbGib, space, });
+            await metaspace.registerNewIbGib({ ibGib: newKeystoneIbGib, space, });
 
             return newKeystoneIbGib;
         } catch (error) {
