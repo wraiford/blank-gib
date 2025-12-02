@@ -6,6 +6,14 @@ I'm doing per upgrade. This should be automatically created per "commit", and
 really this should just be a regular part of the "chat" that is this project.
 We'll get there eventually!
 
+## v0.15.12
+* progress: keystone respecs passing Suite A - D
+  * still working on low level improvements
+  * stopping now at the point before breaking out validate code to also
+    include validating individual frame and validating the entire keystone
+    graph/timeline intrinsically.
+
+
 ## v0.15.10
 * progress: testing for keystone mechanics
   * innerspace and metaspace_innerspace still not functional for testing
