@@ -187,7 +187,7 @@ await respecfully(sir, 'Suite A: Strategy Vectors (HashRevealV1)', async () => {
 
     await respecfully(sir, 'Derivation Logic', async () => {
 
-        await ifWe(sir, 'derivePoolSecret with same inputs returns same output', async () => {
+        await ifWeMight(sir, 'derivePoolSecret with same inputs returns same output', async () => {
             const strategy = KeystoneStrategyFactory.create({ config });
 
             const secretA = await strategy.derivePoolSecret({ masterSecret });
@@ -197,7 +197,7 @@ await respecfully(sir, 'Suite A: Strategy Vectors (HashRevealV1)', async () => {
             iReckon(sir, secretA).asTo('secret length').isGonnaBeTruthy();
         });
 
-        await ifWe(sir, 'derivePoolSecret with different master secret returns different output', async () => {
+        await ifWeMight(sir, 'derivePoolSecret with different master secret returns different output', async () => {
             const strategy = KeystoneStrategyFactory.create({ config });
 
             const secretA = await strategy.derivePoolSecret({ masterSecret });
@@ -206,7 +206,7 @@ await respecfully(sir, 'Suite A: Strategy Vectors (HashRevealV1)', async () => {
             iReckon(sir, secretA).asTo('secrets differ').not.willEqual(secretB);
         });
 
-        await ifWe(sir, 'derivePoolSecret with different salt returns different output', async () => {
+        await ifWeMight(sir, 'derivePoolSecret with different salt returns different output', async () => {
             // Modify salt in a copy of config
             const configB = { ...config, salt: "OtherPool" };
             const strategyA = KeystoneStrategyFactory.create({ config });
@@ -221,7 +221,7 @@ await respecfully(sir, 'Suite A: Strategy Vectors (HashRevealV1)', async () => {
 
     await respecfully(sir, 'Challenge/Solution Logic', async () => {
 
-        await ifWe(sir, 'generateSolution -> generateChallenge -> validateSolution loop works', async () => {
+        await ifWeMight(sir, 'generateSolution -> generateChallenge -> validateSolution loop works', async () => {
             const strategy = KeystoneStrategyFactory.create({ config });
             const poolSecret = await strategy.derivePoolSecret({ masterSecret });
             const challengeId = "a3ff7843552870fc28bef2b"; // arbitrary random challengeId
@@ -240,7 +240,7 @@ await respecfully(sir, 'Suite A: Strategy Vectors (HashRevealV1)', async () => {
             iReckon(sir, isValid).asTo('valid pair should pass').isGonnaBeTrue();
         });
 
-        await ifWe(sir, 'validateSolution fails for mismatched values', async () => {
+        await ifWeMight(sir, 'validateSolution fails for mismatched values', async () => {
             const strategy = KeystoneStrategyFactory.create({ config });
             const poolSecret = await strategy.derivePoolSecret({ masterSecret });
             const challengeId = "8c994f3ed598f150e25513"; // arbitrary random challengeId
@@ -256,7 +256,7 @@ await respecfully(sir, 'Suite A: Strategy Vectors (HashRevealV1)', async () => {
             iReckon(sir, isValid).asTo('tampered solution should fail').isGonnaBeFalse();
         });
 
-        await ifWe(sir, 'validateSolution fails for mismatched challenge hashes', async () => {
+        await ifWeMight(sir, 'validateSolution fails for mismatched challenge hashes', async () => {
             const strategy = KeystoneStrategyFactory.create({ config });
             const poolSecret = await strategy.derivePoolSecret({ masterSecret });
 
@@ -297,7 +297,7 @@ await respecfully(sir, 'Suite B: Service Lifecycle', async () => {
     });
 
     await respecfully(sir, 'Genesis', async () => {
-        await ifWe(sir, 'creates a valid genesis frame and persists it', async () => {
+        await ifWeMight(sir, 'creates a valid genesis frame and persists it', async () => {
             const config = createStandardPoolConfig(POOL_ID_DEFAULT);
 
             genesisKeystone = await service.genesis({
@@ -325,7 +325,7 @@ await respecfully(sir, 'Suite B: Service Lifecycle', async () => {
     });
 
     await respecfully(sir, 'Signing (Evolution)', async () => {
-        await ifWe(sir, 'evolves the keystone with a valid proof', async () => {
+        await ifWeMight(sir, 'evolves the keystone with a valid proof', async () => {
             const claim: Partial<KeystoneClaim> = {
                 target: "comment 123^gib",
                 verb: "post"
@@ -355,15 +355,15 @@ await respecfully(sir, 'Suite B: Service Lifecycle', async () => {
     });
 
     await respecfully(sir, 'Validation', async () => {
-        await ifWe(sir, 'validates the genesis->signed transition', async () => {
-            const isValid = await service.validate({
+        await ifWeMight(sir, 'validates the genesis->signed transition', async () => {
+            const errors = await service.validate({
                 prevIbGib: genesisKeystone,
                 currentIbGib: signedKeystone,
                 metaspace: mockMetaspace,
                 space: mockSpace as any,
             });
 
-            iReckon(sir, isValid).asTo('signature validation').isGonnaBeTrue();
+            iReckon(sir, errors.length).asTo('signature validation has no errors').willEqual(0);
         });
     });
 });
@@ -372,7 +372,7 @@ await respecfully(sir, 'Suite B: Service Lifecycle', async () => {
 // SUITE C: SECURITY & SAD PATHS
 // ===========================================================================
 
-await respecfullyDear(sir, 'Suite C: Security Vectors', async () => {
+await respecfully(sir, 'Suite C: Security Vectors', async () => {
 
     const service = new KeystoneService_V1();
     const aliceSecret = "AliceSecret_111";
@@ -398,33 +398,31 @@ await respecfullyDear(sir, 'Suite C: Security Vectors', async () => {
     });
 
     await respecfully(sir, 'Wrong Secret (Forgery)', async () => {
-        await ifWeMight(sir, 'fails validation if signed with wrong secret', async () => {
+        await ifWeMight(sir, 'prevents creation of forged frames', async () => {
             const claim: Partial<KeystoneClaim> = { target: "comment 123^gib", verb: "post" };
 
-            // Eve tries to sign Alice's keystone
-            // NOTE: This might succeed in generating a frame, but the frame contains
-            // solutions derived from Eve's key, which won't match Alice's challenges.
-            const forgedKeystone = await service.sign({
-                latestKeystone: genesisKeystone,
-                masterSecret: eveSecret, // <--- THE ATTACK
-                claim,
-                poolId: POOL_ID_DEFAULT,
-                metaspace: mockMetaspace,
-                space: mockSpace as any,
-            });
+            let errorCaught = false;
+            let errorMsg = "";
 
-            // The frame exists...
-            iReckon(sir, forgedKeystone).isGonnaBeTruthy();
+            try {
+                // Eve tries to sign Alice's keystone.
+                // This MUST fail because sign() calls evolve(), which calls validate().
+                await service.sign({
+                    latestKeystone: genesisKeystone,
+                    masterSecret: eveSecret,
+                    claim,
+                    poolId: POOL_ID_DEFAULT,
+                    metaspace: mockMetaspace,
+                    space: mockSpace as any,
+                });
+            } catch (e: any) {
+                errorCaught = true;
+                errorMsg = e.message;
+            }
 
-            // ...but Validation must reject it.
-            const isValid = await service.validate({
-                prevIbGib: genesisKeystone,
-                currentIbGib: forgedKeystone,
-                metaspace: mockMetaspace,
-                space: mockSpace as any,
-            });
-
-            iReckon(sir, isValid).asTo('forgery rejected').isGonnaBeFalse();
+            iReckon(sir, errorCaught).asTo('service rejected forgery').isGonnaBeTrue();
+            // Verify it was a crypto error, not something else
+            iReckon(sir, errorMsg).asTo('error mentions crypto violation').includes('Crypto Violation');
         });
     });
 
@@ -470,10 +468,7 @@ await respecfullyDear(sir, 'Suite C: Security Vectors', async () => {
 // SUITE D: REVOCATION
 // ===========================================================================
 
-// import { createRevocationPoolConfig } from './keystone-config.mjs';
-// import { POOL_ID_REVOKE, VERB_REVOKE } from './keystone-constants.mjs';
-
-await respecfully(sir, 'Suite D: Revocation', async () => {
+await respecfullyDear(sir, 'Suite D: Revocation', async () => {
 
     const service = new KeystoneService_V1();
     const masterSecret = "AliceSecret_RevokeTest";
@@ -501,7 +496,7 @@ await respecfully(sir, 'Suite D: Revocation', async () => {
     await respecfully(sir, 'Revoke Lifecycle', async () => {
         let revokedKeystone: KeystoneIbGib_V1;
 
-        await ifWe(sir, 'successfully creates a revocation frame', async () => {
+        await ifWeMight(sir, 'successfully creates a revocation frame', async () => {
             revokedKeystone = await service.revoke({
                 latestKeystone: genesisKeystone,
                 masterSecret,
@@ -519,25 +514,25 @@ await respecfully(sir, 'Suite D: Revocation', async () => {
             iReckon(sir, data.revocationInfo!.proof.claim.verb).willEqual(VERB_REVOKE);
         });
 
-        await ifWe(sir, 'validates the revocation frame', async () => {
-            const isValid = await service.validate({
+        await ifWeMight(sir, 'validates the revocation frame', async () => {
+            const errors = await service.validate({
                 prevIbGib: genesisKeystone,
                 currentIbGib: revokedKeystone!,
                 metaspace: mockMetaspace,
                 space: mockSpace as any,
             });
 
-            iReckon(sir, isValid).asTo('revocation is cryptographically valid').isGonnaBeTrue();
+            iReckon(sir, errors.length).asTo('no validation errors').willEqual(0);
         });
 
-        await ifWe(sir, 'consumed the revocation pool (Scorched Earth)', async () => {
+        await ifWeMight(sir, 'consumed the revocation pool (Scorched Earth)', async () => {
             const data = revokedKeystone!.data!;
             const revokePool = data.challengePools.find(p => p.id === POOL_ID_REVOKE);
 
             // The pool should exist...
             iReckon(sir, revokePool).isGonnaBeTruthy();
 
-            // ...but be EMPTY. (Strategy: Consume / Replace-All with empty? Actually Consume deletes keys)
+            // Should be empty (0 challenges)
             const remaining = Object.keys(revokePool!.challenges);
             iReckon(sir, remaining.length).asTo('pool depleted').willEqual(0);
         });

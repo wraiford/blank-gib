@@ -180,7 +180,7 @@ export function createRevocationPoolConfig(salt: string = POOL_ID_REVOKE): Keyst
         .withHash('SHA-256', 10)
         .withSize(500)
         .withHybrid(10, 10)
-        .withReplenishStrategy('replace-all')
+        .withReplenishStrategy(KeystoneReplenishStrategy.scorchedEarth)
         .forVerbs([VERB_REVOKE])
         .build();
 }

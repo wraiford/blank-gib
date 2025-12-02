@@ -32,10 +32,16 @@ export const KEYSTONE_REPLENISH_STRATEGY_REPLACE_ALL = 'replace-all';
  * adding this for revocation
  */
 export const KEYSTONE_REPLENISH_STRATEGY_CONSUME = 'consume';
+/**
+ * Deletes ALL challenges in the pool, regardless of how many were used.
+ * The "Nuclear Option" for revocation.
+ */
+export const KEYSTONE_REPLENISH_STRATEGY_SCORCHED_EARTH = 'scorched-earth';
 export type KeystoneReplenishStrategy =
     | typeof KEYSTONE_REPLENISH_STRATEGY_TOP_UP
     | typeof KEYSTONE_REPLENISH_STRATEGY_REPLACE_ALL
     | typeof KEYSTONE_REPLENISH_STRATEGY_CONSUME
+    | typeof KEYSTONE_REPLENISH_STRATEGY_SCORCHED_EARTH
     ;
 /**
  * @see {@link KeystonePoolBehavior.replenish}
@@ -53,6 +59,10 @@ export const KeystoneReplenishStrategy = {
      * @see {@link KEYSTONE_REPLENISH_STRATEGY_CONSUME}
      */
     consume: KEYSTONE_REPLENISH_STRATEGY_CONSUME,
+    /**
+     * @see {@link KEYSTONE_REPLENISH_STRATEGY_SCORCHED_EARTH}
+     */
+    scorchedEarth: KEYSTONE_REPLENISH_STRATEGY_SCORCHED_EARTH,
 } satisfies { [key: string]: KeystoneReplenishStrategy };
 export const KEYSTONE_REPLENISH_STRATEGY_VALID_VALUES = Object.values(KeystoneReplenishStrategy);
 export function isKeystoneReplenishStrategy(x: any): x is KeystoneReplenishStrategy {

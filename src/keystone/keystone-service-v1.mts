@@ -4,6 +4,7 @@ import { mut8 } from '@ibgib/ts-gib/dist/V1/transforms/mut8.mjs';
 import { Factory_V1 } from '@ibgib/ts-gib/dist/V1/factory.mjs';
 import { getGib } from '@ibgib/ts-gib/dist/V1/transforms/transform-helper.mjs';
 import { TransformResult } from '@ibgib/ts-gib/dist/types.mjs';
+import { validateIbGibIntrinsically } from '@ibgib/ts-gib/dist/V1/validate-helper.mjs';
 import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.mjs';
 import { MetaspaceService } from '@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs';
 
@@ -18,6 +19,7 @@ import {
     KeystoneSolution,
     KeystoneReplenishStrategy,
     KeystoneRevocationInfo,
+    KEYSTONE_REPLENISH_STRATEGY_VALID_VALUES,
 } from './keystone-types.mjs';
 import { KeystoneStrategyFactory } from './strategy/keystone-strategy-factory.mjs';
 import { KEYSTONE_ATOM, POOL_ID_REVOKE, VERB_REVOKE } from './keystone-constants.mjs';
@@ -25,6 +27,7 @@ import {
     addToBindingMap, getDeterministicRequirements, getKeystoneIb,
     removeFromBindingMap,
 } from './keystone-helpers.mjs';
+import { getDependencyGraph } from '@ibgib/core-gib/dist/common/other/graph-helper.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -242,6 +245,8 @@ export class KeystoneService_V1 {
     /**
      * Validates the transition from Prev -> Curr.
      * Enforces Cryptography AND Behavioral Policy.
+     *
+     * @returns Array of validation error strings. Empty array means Valid.
      */
     async validate({
         currentIbGib,
@@ -251,33 +256,42 @@ export class KeystoneService_V1 {
         prevIbGib: KeystoneIbGib_V1;
         metaspace: MetaspaceService;
         space: IbGibSpaceAny;
-    }): Promise<boolean> {
+    }): Promise<string[]> {
         const lc = `${this.lc}[${this.validate.name}]`;
+        const errors: string[] = [];
         try {
-            if (!currentIbGib) { throw new Error(`(UNEXPECTED) currentIbGib falsy? (E: 0461485506ce96a818ff9138d7c78825)`); }
-            if (!prevIbGib) { throw new Error(`(UNEXPECTED) prevIbGib falsy? (E: 41ff58962e2b6c216b0f8c08c00ff325)`); }
+            if (!currentIbGib) { throw new Error(`(UNEXPECTED) currentIbGib falsy? (E: 3c0f02655fa8279e386a079ebb604b25)`); }
+            if (!prevIbGib) { throw new Error(`(UNEXPECTED) prevIbGib falsy? (E: 0d07c812634d839c784f31b8848ba825)`); }
+
+            validateIbGibIntrinsically
+            getDependencyGraph
+
             const currData = currentIbGib.data!;
             const prevData = prevIbGib.data!;
 
             for (const proof of currData.proofs) {
-                if (proof.solutions.length === 0) { return false; }
+                if (proof.solutions.length === 0) {
+                    errors.push(`Proof ${proof.id || 'unknown'} has no solutions.`);
+                    continue;
+                }
+
                 const poolId = proof.solutions[0].poolId;
                 const pool = prevData.challengePools.find(p => p.id === poolId);
-                if (!pool) { return false; }
+                if (!pool) {
+                    errors.push(`Proof references unknown pool: ${poolId}`);
+                    continue;
+                }
 
                 // -----------------------------------------------------------
                 // 0. VALIDATE VERB AUTHORIZATION
                 // -----------------------------------------------------------
                 if (pool.config.allowedVerbs && pool.config.allowedVerbs.length > 0) {
-                    // If the pool is restricted, the claim MUST match one of the verbs
                     if (!proof.claim.verb || !pool.config.allowedVerbs.includes(proof.claim.verb)) {
-                        console.warn(`${lc} Policy Violation: Pool ${poolId} used for unauthorized verb ${proof.claim.verb} (E: genuuid)`);
-                        return false;
+                        errors.push(`Policy Violation: Pool ${poolId} used for unauthorized verb ${proof.claim.verb}`);
                     }
                 }
 
                 // 1. Reconstruct Deterministic Requirements
-                // We use the 'requiredChallengeIds' embedded in the Proof itself
                 const { mandatoryIds, availableIds } = getDeterministicRequirements({
                     pool,
                     requiredChallengeIds: proof.requiredChallengeIds,
@@ -289,27 +303,22 @@ export class KeystoneService_V1 {
                 // 2. Verify Mandatory Compliance
                 for (const id of mandatoryIds) {
                     if (!proofIds.has(id)) {
-                        console.warn(`${lc} Policy Violation: Missing mandatory challenge ${id}`);
-                        return false;
+                        errors.push(`Policy Violation: Missing mandatory challenge ${id}`);
                     }
                 }
 
                 // 3. Verify Stochastic Compliance
-                // Filter out mandatory ones from the proof
                 const randomCandidates = [...proofIds].filter(id => !mandatoryIds.has(id));
                 const requiredRandomCount = pool.config.behavior.selectRandomly;
 
                 if (randomCandidates.length < requiredRandomCount) {
-                    console.warn(`${lc} Policy Violation: Insufficient random count.`);
-                    return false;
+                    errors.push(`Policy Violation: Insufficient random count. Need ${requiredRandomCount}, got ${randomCandidates.length}`);
                 }
 
                 // 4. Verify Validity (Existence & Double-Dip Check)
-                // Every candidate MUST be in 'availableIds' (meaning it wasn't used by deterministic step)
                 for (const id of randomCandidates) {
                     if (!availableIds.includes(id)) {
-                        console.warn(`${lc} Policy Violation: ID ${id} is invalid or double-dipped.`);
-                        return false;
+                        errors.push(`Policy Violation: ID ${id} is invalid or double-dipped.`);
                     }
                 }
 
@@ -317,18 +326,30 @@ export class KeystoneService_V1 {
                 const strategy = KeystoneStrategyFactory.create({ config: pool.config });
                 for (const solution of proof.solutions) {
                     const challenge = pool.challenges[solution.challengeId];
-                    if (!challenge || !(await strategy.validateSolution({ solution, challenge }))) {
-                        return false;
+                    if (!challenge) {
+                        errors.push(`Crypto Violation: Challenge ${solution.challengeId} not found in pool.`);
+                    } else {
+                        const isValid = await strategy.validateSolution({ solution, challenge });
+                        if (!isValid) {
+                            errors.push(`Crypto Violation: Solution for ${solution.challengeId} is invalid.`);
+                        }
                     }
                 }
             }
 
-            // Revocation Logic ... (Same as before)
+            // Revocation Logic
+            if (currData.revocationInfo) {
+                const target = currData.revocationInfo.proof.claim.target;
+                const expectedTarget = getIbGibAddr({ ibGib: prevIbGib });
+                if (target !== expectedTarget) {
+                    errors.push(`Revocation target mismatch. Expected ${expectedTarget}, got ${target}`);
+                }
+            }
 
-            return true;
+            return errors;
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
-            throw error;
+            throw error; // System errors still throw
         } finally {
             if (logalot) { console.log(`${lc} complete.`); }
         }
@@ -360,65 +381,73 @@ export class KeystoneService_V1 {
         const lc = `${this.lc}[${this.revoke.name}]`;
         try {
             const prevData = latestKeystone.data!;
-            space ??= await metaspace.getLocalUserSpace({ lock: true });
-            if (!space) { throw new Error(`(UNEXPECTED) space falsy and couldn't get default local user space? (E: d6ec08fda858f0fe989f0faea3612825)`); }
+            space ??= await metaspace.getLocalUserSpace({ lock: false });
+            if (!space) { throw new Error(`(UNEXPECTED) space falsy and couldn't get default local user space from the metaspace? (E: 73c8bfc0e7383a540ea1d6b14b020125)`); }
 
             // 1. Find Revocation Pool
-            // We look for explicit ID, fallback to searching config for 'consume' strategy?
-            // For V1, we enforce the constant ID.
             const pool = prevData.challengePools.find(p => p.id === POOL_ID_REVOKE);
-            if (!pool) { throw new Error(`Revocation pool not found (E: genuuid)`); }
+            if (!pool) { throw new Error(`Revocation pool not found (E: 8c4f18c5461c1d601283108878c79825)`); }
 
-            // 2. Select ALL Challenges
-            // TODO: change this from all ids to config based and add a "consume-clear" behavior that consumes the required challenges and then clears out the rest (but does not show the solutions for them).
-            const allIds = Object.keys(pool.challenges);
-            if (allIds.length === 0) { throw new Error(`Revocation pool empty. Already revoked? (E: genuuid)`); }
+            // 2. Select Challenges (Standard Policy, NOT ALL)
+            // We want to satisfy the security policy (e.g. 10 sequential + 10 random)
+            // without revealing the all of the keys in the pool.
+            const claim: Partial<KeystoneClaim> = {
+                verb: VERB_REVOKE,
+                target: getIbGibAddr({ ibGib: latestKeystone })
+            };
 
-            // 3. Solve them all
+            const { mandatoryIds, availableIds } = getDeterministicRequirements({
+                pool,
+                requiredChallengeIds: [], // Revocation usually doesn't have external demands
+                targetAddr: claim.target
+            });
+
+            // Stochastic Selection
+            const randomCount = pool.config.behavior.selectRandomly;
+            const randomIds: string[] = [];
+            if (randomCount > 0) {
+                if (availableIds.length < randomCount) { throw new Error(`Insufficient challenges. availableIds.length (${availableIds.length}) is less than required random count (${randomCount}) (E: b2e3570ab998dfdbab5fbdda1e43d825)`); }
+                const shuffled = availableIds.sort(() => 0.5 - Math.random());
+                randomIds.push(...shuffled.slice(0, randomCount));
+            }
+
+            const selectedIds = [...mandatoryIds, ...randomIds];
+            if (selectedIds.length === 0) { throw new Error(`Revocation policy selected 0 challenges? Check config for pool. id: ${pool.id}. pool.config: ${pretty(pool.config)} (E: 97e5a8356d241ae7b882db791cb1f825)`); }
+
+            // 3. Solve Selected
             const strategy = KeystoneStrategyFactory.create({ config: pool.config });
             const poolSecret = await strategy.derivePoolSecret({ masterSecret });
             const solutions: KeystoneSolution[] = [];
 
-            for (const id of allIds) {
+            for (const id of selectedIds) {
                 const solution = await strategy.generateSolution({
-                    poolSecret,
-                    poolId: pool.id,
-                    challengeId: id,
+                    poolSecret, poolId: pool.id, challengeId: id,
                 });
                 solutions.push(solution);
             }
 
-            // 4. Deplete the Pool (Replenish Strategy: Consume)
-            // We assume the pool config is already set to 'consume',
-            // but we pass it explicitly to our helper logic anyway.
+            // 4. The default revocation behavior is to delete all of the
+            // challenges so that the challenge pool is empty.
+            // see KeystoneReplenishStrategy.scorchedEarth
             const nextPools = await this.applyReplenishmentStrategy({
                 prevPools: prevData.challengePools,
                 targetPoolId: pool.id,
-                consumedIds: allIds,
+                consumedIds: selectedIds,
                 masterSecret,
                 strategy,
                 config: pool.config
             });
 
-            // 5. Construct Revocation Proof
+            // 5. Construct Proof
             const proof: KeystoneProof = {
-                claim: {
-                    verb: VERB_REVOKE,
-                    target: getIbGibAddr({ ibGib: latestKeystone }), // Target THIS identity timeline (or address)
-                },
+                claim,
                 solutions,
             };
 
-            const revocationInfo: KeystoneRevocationInfo = {
-                reason,
-                proof
-            };
+            const revocationInfo: KeystoneRevocationInfo = { reason, proof };
 
             const newData: KeystoneData_V1 = {
                 challengePools: nextPools,
-                // Do we put the proof in the main 'proofs' array too?
-                // Usually 'proofs' authorizes the transition.
-                // Since this is a transition TO a dead state, yes, we include it.
                 proofs: [proof],
                 revocationInfo,
                 frameDetails
@@ -437,7 +466,6 @@ export class KeystoneService_V1 {
         } finally {
             if (logalot) { console.log(`${lc} complete.`); }
         }
-
     }
 
     /**
@@ -528,6 +556,12 @@ export class KeystoneService_V1 {
             }
         } else if (strategyType === KeystoneReplenishStrategy.consume) {
             consumedIds.forEach(id => delete pool.challenges[id]);
+        } else if (strategyType === KeystoneReplenishStrategy.scorchedEarth) {
+            // SCORCHED EARTH: Delete EVERYTHING.
+            pool.challenges = {};
+            pool.bindingMap = {};
+        } else {
+            throw new Error(`Unknown replenish strategy: ${strategyType}. Valid list: ${pretty(KEYSTONE_REPLENISH_STRATEGY_VALID_VALUES)} (E: 0acf56f1e1486240080e11e8046d0825)`);
         }
 
         return newPools;
@@ -663,17 +697,17 @@ export class KeystoneService_V1 {
             const newKeystoneIbGib = resMut8.newIbGib as KeystoneIbGib_V1;
 
             // run validation here? I think we should probably at least for awhile
-            console.warn(`${lc} running possibly yagni validate after evolving keystone timeline. (W: d6bb476f27a84ef51cf65948544d7f25)`)
-            const isValid = await this.validate({
+            // --- VALIDATION UPDATE ---
+            const errors = await this.validate({
                 currentIbGib: newKeystoneIbGib,
                 prevIbGib,
                 metaspace,
                 space,
             });
-
-            if (!isValid) {
-                console.error(`${lc} TAKE THIS OUT OF PRODUCTION. invalid keystone after we just evolved it:\n${pretty(newKeystoneIbGib)} (E: 466a52230e7ece724fd119f39fbce825)`)
-                throw new Error(`(UNEXPECTED) invalid keystone after we just evolved it? (E: ae2c58406c1db7687879dfb89fc1f825)`);
+            if (errors.length > 0) {
+                // console.error(`${lc} invalid keystone immediately after evolution. newKeystoneIbGib:\n${pretty(newKeystoneIbGib)} (E: 466a52230e7ece724fd119f39fbce825)`)
+                console.error(`${lc} Validation Failed:\n${errors.join('\n')}`);
+                throw new Error(`(UNEXPECTED) invalid keystone after we just evolved it? Errors: ${errors.join('; ')} (E: ae2c58406c1db7687879dfb89fc1f825)`);
             }
 
             // save and register
