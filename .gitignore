@@ -4,6 +4,7 @@
 # build products
 dist
 dist-ext
+published
 
 chat
 
