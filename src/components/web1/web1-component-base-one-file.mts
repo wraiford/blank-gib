@@ -5,19 +5,26 @@ import { IbGib_V1 } from "@ibgib/ts-gib/dist/V1/types.mjs";
 import { createCommentIbGib } from "@ibgib/core-gib/dist/common/comment/comment-helper.mjs";
 import { getTjpAddr, toDto } from "@ibgib/core-gib/dist/common/other/ibgib-helper.mjs";
 import { appendToTimeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
+import { AgentWitnessAny, getAddlMetadataTextForAgentText, taggifyForPrompt, } from "@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs";
+import { getGlobalMetaspace_waitIfNeeded, } from "@ibgib/web-gib/dist/helpers.mjs";
+import { highlightElement, unhighlightElement } from "@ibgib/web-gib/dist/helpers.web.mjs";
+import { TextSource } from "@ibgib/web-gib/dist/witness/agent/agent-constants.mjs";
+import { LiveProxyIbGib } from "@ibgib/web-gib/dist/witness/live-proxy-ibgib/live-proxy-ibgib-one-file.mjs";
+import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
+import {
+    IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase
+} from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
+import {
+    FnHandleRouteType, IbGibDynamicComponentInstance,
+    IbGibDynamicComponentInstanceInitOpts
+} from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
+import { AGENT_AVAILABLE_FUNCTIONS_PRIMARYAGENT } from "@ibgib/web-gib/dist/witness/agent/agent-one-file.app.mjs";
 
 import { GLOBAL_LOG_A_LOT, HARDCODED_PROMPT_TAG_TEXT } from "../../constants.mjs";
 import { getAppShellSvc } from "../../ui/shell/app-shell-service.mjs";
 import { CHAT_WITH_AGENT_PLACEHOLDER_PRIMARYAGENT } from "../../witness/app/blank-canvas/blank-canvas-constants.mjs";
-import { AgentWitnessAny, getAddlMetadataTextForAgentText, taggifyForPrompt, } from "../../witness/agent/agent-one-file.mjs";
-import { getGlobalMetaspace_waitIfNeeded, getIbGibGlobalThis_BlankGib, highlightElement, unhighlightElement } from "../../helpers.web.mjs";
-import { TextSource } from "../../witness/agent/agent-constants.mjs";
 import { AGENT_SPECIAL_IBGIB_TYPE_PRIMARYAGENT, } from "../../agent-texts/primary-agent-texts.mjs";
-import { LiveProxyIbGib } from "../../witness/live-proxy-ibgib/live-proxy-ibgib-one-file.mjs";
-import { getAgentsSvc } from "../../witness/agent/agents-service-v1.mjs";
-import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "../../ui/component/ibgib-dynamic-component-bases.mjs";
-import { FnHandleRouteType, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "../../ui/component/component-types.mjs";
-import { AGENT_AVAILABLE_FUNCTIONS_PRIMARYAGENT } from "../../witness/agent/agent-one-file.app.mjs";
+import { getComponentCtorArg, getIbGibGlobalThis_BlankGib } from "../../helpers.web.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -45,7 +52,7 @@ export abstract class Web1ComponentMetaBase
      * @see {@link IbGibDynamicComponentMeta.componentName}
      */
     protected abstract getComponentName(): string;
-        protected abstract getHtml(): string;
+    protected abstract getHtml(): string;
     protected abstract getCss(): string[] | undefined;
 
 
@@ -63,7 +70,7 @@ export abstract class Web1ComponentMetaBase
      *
      */
     constructor() {
-        super();
+        super(getComponentCtorArg());
         this.registerCustomElements();
     }
 

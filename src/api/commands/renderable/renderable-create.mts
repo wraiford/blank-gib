@@ -1,4 +1,9 @@
 import { pretty } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
+import { APIFunctionInfo } from "@ibgib/web-gib/dist/api/api-types.mjs";
+import { COMMAND_BASE_SCHEMA_PROPERTIES } from "@ibgib/web-gib/dist/api/commands/command-constants.mjs";
+import { getCommandService } from "@ibgib/web-gib/dist/api/commands/command-service-v1.mjs";
+import { FUNCTION_CALL_EXAMPLES_HEADER } from "@ibgib/web-gib/dist/api/api-constants.mjs";
+import { tweakGeminiSchema } from "@ibgib/web-gib/dist/api/commands/command-helpers.mjs";
 
 import { RENDERABLE_HANDLE_TYPE, RenderableShape, } from "../../../render/render-constants.mjs";
 import {
@@ -7,10 +12,6 @@ import {
     RenderableState,
 } from "../../../render/render-types.mjs";
 import { getRenderService, } from "../../../render/render-service-v1.mjs";
-import { APIFunctionInfo } from "../../api-types.mjs";
-import { COMMAND_BASE_SCHEMA_PROPERTIES } from "../command-constants.mjs";
-import { getCommandService } from "../command-service-v1.mjs";
-import { FUNCTION_CALL_EXAMPLES_HEADER } from "../../api-constants.mjs";
 import { GEMINI_SCHEMA_RENDERABLE_COLOR, GEMINI_SCHEMA_RENDERABLE_GEOMETRY_GROUP, GEMINI_SCHEMA_RENDERABLE_GEOMETRY_PATH, GEMINI_SCHEMA_RENDERABLE_GEOMETRY_RECT, GEMINI_SCHEMA_RENDERABLE_GEOMETRY_TEXT, GEMINI_SCHEMA_RENDERABLE_ISVISIBLE, GEMINI_SCHEMA_RENDERABLE_POSITION, GEMINI_SCHEMA_RENDERABLE_SCALE, GEMINI_SCHEMA_RENDERABLE_SVC_ID } from "./renderable-constants.mjs";
 import { RenderableCommandDataBase } from "./renderable-types.mjs";
 

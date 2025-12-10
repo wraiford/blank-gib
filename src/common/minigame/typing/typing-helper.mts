@@ -2,16 +2,17 @@ import { delay, extractErrorMsg, getSaferSubstring, getTimestamp, getTimestampIn
 import { Ib, IbGibAddr, TransformResult } from '@ibgib/ts-gib/dist/types.mjs';
 import { getIbGibAddr } from '@ibgib/ts-gib/dist/helper.mjs';
 import { getLatestTimelineIbGibDto_nonLocking, mut8Timeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
+import { alertUser, highlightElement, shadowRoot_getElementById } from '@ibgib/web-gib/dist/helpers.web.mjs';
+import { getGlobalMetaspace_waitIfNeeded, } from '@ibgib/web-gib/dist/helpers.mjs';
+import { AgentWitnessAny } from '@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs';
 
 import { GLOBAL_LOG_A_LOT } from '../../../constants.mjs';
 import {
     Minigame_TypingGameMeta, Minigame_TypingStimulus,
-    Minigame_TypingInteraction, StimulusEditInfo,
-    TypingEntryAndElementsInfo,
+    Minigame_TypingInteraction, StimulusEditInfo, TypingEntryAndElementsInfo,
     FocusAndElementsInfo
 } from './typing-types.mjs';
 import { MinigameData_V1, MinigameIbGib_V1 } from '../minigame-types.mjs';
-import { alertUser, getGlobalMetaspace_waitIfNeeded, highlightElement, shadowRoot_getElementById } from '../../../helpers.web.mjs';
 import { MinigameGameType } from '../minigame-constants.mjs';
 import { AnalysisResult } from '../../text-analysis/types.mjs';
 import { debounce, deleteAt, getShortenedStringWithEllipsis, insertAt } from '../../../helpers.mjs';
@@ -19,7 +20,6 @@ import { AnalysisEngine } from '../../text-analysis/analysis-engine.mjs';
 import { DEFAULT_TOKEN_CONSTRUCT_RULE } from '../../text-analysis/analysis-engine-constants.mjs';
 import { CorpusAnalyzer } from '../../text-analysis/corpus-analyzer.mjs';
 import { sentenceSplitter } from './sentence-helper.mjs';
-import { AgentWitnessAny } from '../../../witness/agent/agent-one-file.mjs';
 import { ExpectedResponseType } from './typing-constants.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT;

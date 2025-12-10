@@ -6,10 +6,10 @@ import rootCss from '../../../root.css';
 
 import { delay, extractErrorMsg } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
 import { IbGibAddr } from "@ibgib/ts-gib/dist/types.mjs";
+import { alertUser, highlightElement } from "@ibgib/web-gib/dist/helpers.web.mjs";
 
 import { GLOBAL_LOG_A_LOT } from "../../../constants.mjs";
 import { Web1ComponentInstanceBase, Web1ComponentMetaBase } from "../web1-component-base-one-file.mjs";
-import { alertUser, highlightElement } from "../../../helpers.web.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;
 

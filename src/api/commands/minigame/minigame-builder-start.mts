@@ -6,14 +6,17 @@ import { IbGibAddr, } from "@ibgib/ts-gib/dist/types.mjs";
 import { getGibInfo, isPrimitive } from "@ibgib/ts-gib/dist/V1/transforms/transform-helper.mjs";
 import { getTjpAddr } from "@ibgib/core-gib/dist/common/other/ibgib-helper.mjs";
 import { appendToTimeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
+import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
+import { GeminiModel } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
+import { registerDomainIbGibWithAgentIndex } from "@ibgib/web-gib/dist/witness/agent/agent-helpers.mjs";
 import { getGlobalMetaspace_waitIfNeeded, } from "@ibgib/web-gib/dist/helpers.mjs";
+import { APIFunctionInfo } from "@ibgib/web-gib/dist/api/api-types.mjs";
+import { COMMAND_BASE_SCHEMA_PROPERTIES } from "@ibgib/web-gib/dist/api/commands/command-constants.mjs";
+import { getCommandService } from "@ibgib/web-gib/dist/api/commands/command-service-v1.mjs";
+import { CommandDataBase } from "@ibgib/web-gib/dist/api/commands/command-types.mjs";
+import { FUNCTION_CALL_EXAMPLES_HEADER } from "@ibgib/web-gib/dist/api/api-constants.mjs";
 
 import { GLOBAL_LOG_A_LOT } from "../../../constants.mjs";
-import { APIFunctionInfo } from "../../api-types.mjs";
-import { COMMAND_BASE_SCHEMA_PROPERTIES } from "../command-constants.mjs";
-import { getCommandService } from "../command-service-v1.mjs";
-import { CommandDataBase } from "../command-types.mjs";
-import { FUNCTION_CALL_EXAMPLES_HEADER } from "../../api-constants.mjs";
 import { getDefaultFnGetAPIKey, } from "../../../helpers.web.mjs";
 import {
     AGENT_AVAILABLE_FUNCTIONS_MINIGAMEAGENT,
@@ -25,9 +28,6 @@ import {
     MinigameGameVariant,
 } from "../../../common/minigame/minigame-constants.mjs";
 import { createMinigameIbGib } from "../../../common/minigame/minigame-helper.mjs";
-import { getAgentsSvc } from "../../../witness/agent/agents-service-v1.mjs";
-import { GeminiModel } from "../../../witness/agent/gemini/gemini-constants.mjs";
-import { registerDomainIbGibWithAgentIndex } from "../../../witness/agent/agent-helpers.mjs";
 import { AGENT_INITIAL_CHAT_TEXT_MINIGAMEAGENT, AGENT_INITIAL_SYSTEM_TEXT_MINIGAMEAGENT, AGENT_SPECIAL_IBGIB_TYPE_MINIGAMEAGENT } from "../../../agent-texts/minigame-agent-texts.mjs";
 import { DEFAULT_MINIGAME_DATA_V1, MinigameIbGib_V1 } from "../../../common/minigame/minigame-types.mjs";
 

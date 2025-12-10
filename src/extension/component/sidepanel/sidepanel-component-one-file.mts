@@ -16,13 +16,14 @@ import { MetaspaceService } from '@ibgib/core-gib/dist/witness/space/metaspace/m
 import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.mjs';
 import { getTjpAddr } from '@ibgib/core-gib/dist/common/other/ibgib-helper.mjs';
 import { appendToTimeline, mut8Timeline } from '@ibgib/core-gib/dist/timeline/timeline-api.mjs';
+import { alertUser, highlightElement, shadowRoot_getElementById } from "@ibgib/web-gib/dist/helpers.web.mjs";
+import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
+import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
+import { getComponentSvc } from '@ibgib/web-gib/dist/ui/component/ibgib-component-service.mjs';
+import { createProjectIbGib, getProjects } from '@ibgib/web-gib/dist/common/project/project-helper.mjs';
+import { ProjectIbGib_V1 } from '@ibgib/web-gib/dist/common/project/project-types.mjs';
 
 import { GLOBAL_LOG_A_LOT, } from "../../../constants.mjs";
-import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "../../../ui/component/ibgib-dynamic-component-bases.mjs";
-import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "../../../ui/component/component-types.mjs";
-import { alertUser, highlightElement, shadowRoot_getElementById } from "../../../helpers.web.mjs";
-import { createProjectIbGib, getProjects } from '../../../common/project/project-helper.mjs';
-import { ProjectIbGib_V1 } from '../../../common/project/project-types.mjs';
 import {
     getChunkRel8nName, getGlobalMetaspace_waitIfNeeded,
     createChunkCommentIbGibs,
@@ -33,11 +34,10 @@ import { DOMElementInfo, PageContentInfo } from '../../page-analyzer/page-analyz
 import { addThinkingEntry, showThinkingLog, updateThinkingEntry } from '../../thinking-log.mjs';
 
 import { PROJECT_TJP_ADDR_PROPNAME } from '../../constants.mjs';
-import { getComponentSvc } from '../../../ui/component/ibgib-component-service.mjs';
 import { RABBIT_HOLE_COMMENT_COMPONENT_NAME, RabbitHoleCommentComponentInstance } from '../rabbit-hole-comment/rabbit-hole-comment-component-one-file.mjs';
 import { getCurrentTabURL } from '../../helpers.ext.mjs';
-import { autoChunkByHeadings, cleanDomTreeRecursive, getHeadingInfo, getNodeTextContent_keepspaces, } from '../../page-analyzer/page-analyzer-helpers.mjs';
-import { HEADING_SCORE_H1, HEADING_SCORE_ROOT } from '../../page-analyzer/page-analyzer-constants.mjs';
+import { autoChunkByHeadings, getHeadingInfo, getNodeTextContent_keepspaces, } from '../../page-analyzer/page-analyzer-helpers.mjs';
+import { getComponentCtorArg } from '../../../helpers.web.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT || true;
 
@@ -97,7 +97,7 @@ export class SidepanelComponentMeta extends IbGibDynamicComponentMetaBase {
     componentName: string = SIDEPANEL_COMPONENT_NAME;
 
     constructor() {
-        super();
+        super(getComponentCtorArg());
         customElements.define(this.componentName, SidepanelComponentInstance);
     }
 

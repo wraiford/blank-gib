@@ -1,25 +1,29 @@
 import { delay, extractErrorMsg, pretty } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
 import { ROOT_ADDR } from "@ibgib/ts-gib/dist/V1/constants.mjs";
 import { IbGibAddr } from "@ibgib/ts-gib/dist/types.mjs";
+import {
+    alertUser, document_getElementById,
+    highlightElement, isExecutingInBlankGibWebAppProper, promptForAPIKey,
+    promptForConfirm, updateAPIKeyInStorage,
+} from "@ibgib/web-gib/dist/helpers.web.mjs";
+import { storageGet, storagePut } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
+import { getExistingUIInfo } from "@ibgib/web-gib/dist/ui/ui-helpers.mjs";
+import { getComponentSvc, IbGibComponentService } from "@ibgib/web-gib/dist/ui/component/ibgib-component-service.mjs";
+import { IbGibDynamicComponentMeta } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
+import { getGlobalMetaspace_waitIfNeeded, getMaskedSecret } from "@ibgib/web-gib/dist/helpers.mjs";
 
 import {
-    ARMY_STORE, BLANK_GIB_DB_NAME, CONFIG_OPTION_GEMINI_API_KEY_LOCATION_HELP, GLOBAL_LOG_A_LOT,
+    ARMY_STORE, BEE_KEY, BLANK_GIB_DB_NAME, CONFIG_OPTION_GEMINI_API_KEY_LOCATION_HELP, GLOBAL_LOG_A_LOT,
+    HTML_META_APP_ID_CONTENT,
+    HTML_META_APP_ID_NAME,
     KEY_TUTORIAL_PANELS_EXPAND_ANIMATION_COUNT,
     TUTORIAL_PANELS_EXPAND_ANIMATION_COUNT_ENOUGH_ALREADY,
 } from "../../constants.mjs";
-import { getMaskedSecret } from "../../helpers.mjs";
 import {
     handleLocalSPAAnchorClick,
     simpleIbGibRouterSingleton as router,
 } from "../router/router-one-file.mjs";
 import { RouterAppName } from "../../common/app-constants.mjs";
-import {
-    alertUser, document_getElementById, getDefaultFnGetAPIKey,
-    getGlobalMetaspace_waitIfNeeded, getIbGibGlobalThis_BlankGib,
-    highlightElement, isExecutingInBlankGibWebAppProper, promptForAPIKey,
-    promptForConfirm, updateAPIKeyInStorage,
-} from "../../helpers.web.mjs";
-import { storageGet, storagePut } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 import {
     ID_APP_SHELL, ID_HEADER_PANEL, ID_PANEL_CONTAINER, ID_LEFT_PANEL,
     ID_LEFT_PANEL_CONTENT, ID_LEFT_PANEL_FOOTER, ID_LEFT_PANEL_HEADER,
@@ -35,8 +39,6 @@ import {
     ID_TAB_BUTTON_CHRONOLOGYS, ID_HEADER_PANEL_CONTENT, ID_IBGIB_COM_TITLE_LINK,
     ID_CHRONOLOGYS_CONTENT, ID_LEFT_PANEL_PROJECT_LIST,
 } from './shell-constants.mjs';
-import { getComponentSvc, IbGibComponentService } from "../component/ibgib-component-service.mjs";
-import { IbGibDynamicComponentMeta } from "../component/component-types.mjs";
 import { CanvasComponentMeta } from "../../components/canvas/canvas-component-one-file.mjs";
 import { ProjectsComponentMeta } from "../../components/projects/projects-component-one-file.mjs";
 import { ProjectComponentMeta } from "../../components/projects/project/project-component-one-file.mjs";
@@ -47,12 +49,13 @@ import { ChronologyComponentMeta } from "../../components/common/chronology/chro
 import { RawComponentMeta } from "../../components/common/raw/raw-component-one-file.mjs";
 import { TextEditorComponentMeta } from "../../components/common/text-editor/text-editor-component-one-file.mjs";
 // import { getExistingUIInfo } from "../ui-helpers.mjs";
-import { getExistingUIInfo } from "@ibgib/web-gib/dist/ui/ui-helpers.mjs";
 import { MinigameComponentMeta } from "../../components/minigame/minigame-component-one-file.mjs";
 import { TypingComponentMeta } from "../../components/minigame/typing/typing-component-one-file.mjs";
 import { PROJECTS_EXPLORER_COMPONENT_NAME, ProjectsExplorerComponentInstance, ProjectsExplorerComponentMeta } from "../../components/projects/projects-explorer/projects-explorer-component-one-file.mjs";
 import { componentsMeta_Web1 } from "../../components/web1/web1-constants.mjs";
 import { ExplorerItemComponentMeta } from "../../components/common/explorer-item/explorer-item-component-one-file.mjs";
+import { getDefaultFnGetAPIKey, getIbGibGlobalThis_BlankGib } from "../../helpers.web.mjs";
+import { CHAT_WITH_AGENT_NEED_API_KEY } from "../../witness/app/blank-canvas/blank-canvas-constants.mjs";
 
 
 const logalot = GLOBAL_LOG_A_LOT;
@@ -641,7 +644,12 @@ export class AppShellService {
 
                 const lcPopstate = `${lc}[popstate]`;
 
-                if (!isExecutingInBlankGibWebAppProper()) {
+                const isInWebAppProper = isExecutingInBlankGibWebAppProper({
+                    metaName_appId: HTML_META_APP_ID_NAME,
+                    metaContent_appId: HTML_META_APP_ID_CONTENT,
+                });
+
+                if (!isInWebAppProper) {
                     if (logalot) { console.log(`${lcPopstate} executing in iframe so returning early (I: b84172ceedb5fea0c5d0c1cfbd911b25)`); }
                     return; /* <<<< returns early */
                 }
@@ -753,15 +761,29 @@ export class AppShellService {
                     msg: `Your existing (masked) Gemini API key is ${existingApiKeyMasked}.\n\nWould you like to CLEAR/DELETE this now?\n\nNote: This will prevent you from any further interaction with any Gemini agents on this site, but your data won't be deleted.\n\nTo re-enable agents, you will have to enter an API key again with ${CONFIG_OPTION_GEMINI_API_KEY_LOCATION_HELP}.\n\n(apologies for the crappy workflow, but this would be a great time for funding or contribution!)`
                 });
                 if (clearAPIKey) {
-                    await updateAPIKeyInStorage({ apiKey: '', force: true }); // "deletes" the API key
+                    await updateAPIKeyInStorage({
+                        dbName: BLANK_GIB_DB_NAME,
+                        storeName: ARMY_STORE,
+                        key: BEE_KEY,
+                        apiKey: '',
+                        force: true
+                    }); // "deletes" the API key
                 } else {
                     await alertUser({ title: 'cancelled...', msg: 'Clear API key cancelled' });
                 }
             } else {
                 // user wants to enter API key anew
-                const apiKey = await promptForAPIKey();
+                const apiKey = await promptForAPIKey({
+                    msg: CHAT_WITH_AGENT_NEED_API_KEY,
+                });
                 if (apiKey) {
-                    await updateAPIKeyInStorage({ apiKey, force: false });
+                    await updateAPIKeyInStorage({
+                        dbName: BLANK_GIB_DB_NAME,
+                        storeName: ARMY_STORE,
+                        key: BEE_KEY,
+                        apiKey,
+                        force: false,
+                    });
                 } else {
                     console.log(`${lc} user cancelled (I: 4705481d1a7f629066737658ec455e25)`);
                 }
@@ -1161,7 +1183,12 @@ export class AppShellService {
         console.time(lc);
         return new Promise(async (resolve, reject) => {
             try {
-                if (!isExecutingInBlankGibWebAppProper()) {
+                const isInWebAppProper = isExecutingInBlankGibWebAppProper({
+                    metaName_appId: HTML_META_APP_ID_NAME,
+                    metaContent_appId: HTML_META_APP_ID_CONTENT,
+                });
+
+                if (!isInWebAppProper) {
                     if (logalot) { console.log(`${lc} executing in iframe so returning early (I: 7118fb26f44e791f46bb0301172bbd25)`); }
                     return; /* <<<< returns early */
                 }

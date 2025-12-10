@@ -8,9 +8,9 @@ import { getIbGibAddr } from '@ibgib/ts-gib/dist/helper.mjs';
 import { persistTransformResult } from '@ibgib/core-gib/dist/witness/space/space-helper.mjs';
 import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.mjs';
 import { getTimestampInfo } from '@ibgib/core-gib/dist/common/other/ibgib-helper.mjs';
+import { getGlobalMetaspace_waitIfNeeded } from '@ibgib/web-gib/dist/helpers.mjs';
 
 import { GLOBAL_LOG_A_LOT } from '../../constants.mjs';
-import { getGlobalMetaspace_waitIfNeeded } from '../../helpers.web.mjs';
 import {
     MINIGAME_ATOM, MINIGAME_DESC_REGEXP, MINIGAME_NAME_REGEXP,
     DEFAULT_MINIGAME_SAFE_NAME_LENGTH, DEFAULT_MINIGAME_ADDL_METADATA_LENGTH,
@@ -488,4 +488,3 @@ export async function validateMinigameIsReady({
         if (logalot) { console.log(`${lc} complete.`); }
     }
 }
-

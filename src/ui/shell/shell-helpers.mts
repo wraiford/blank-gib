@@ -1,12 +1,12 @@
 import { delay, extractErrorMsg } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
-import { GLOBAL_LOG_A_LOT, } from "../../constants.mjs";
+import { isExecutingInBlankGibWebAppProper } from "@ibgib/web-gib/dist/helpers.web.mjs";
+
+import { GLOBAL_LOG_A_LOT, HTML_META_APP_ID_CONTENT, HTML_META_APP_ID_NAME, } from "../../constants.mjs";
 import {
     handleLocalSPAAnchorClick,
-    simpleIbGibRouterSingleton as router
+    simpleIbGibRouterSingleton as router,
 } from "../router/router-one-file.mjs";
 import { RouterAppName } from "../../common/app-constants.mjs";
-import { isExecutingInBlankGibWebAppProper, } from "../../helpers.web.mjs";
-
 import {
     ID_APP_SHELL, ID_HEADER_PANEL, ID_PANEL_CONTAINER, ID_LEFT_PANEL,
     ID_LEFT_PANEL_CONTENT, ID_LEFT_PANEL_FOOTER, ID_LEFT_PANEL_HEADER,
@@ -109,8 +109,14 @@ function expandLeftPanel(): void {
 export function initLayout(): void {
     const lc = `[${initLayout.name}]`;
     document.addEventListener('DOMContentLoaded', () => {
-        const lcDOM = `${lc}[DOMContentLoaded]`
-        if (!isExecutingInBlankGibWebAppProper()) {
+        const lcDOM = `${lc}[DOMContentLoaded]`;
+
+        const isInWebAppProper = isExecutingInBlankGibWebAppProper({
+            metaName_appId: HTML_META_APP_ID_NAME,
+            metaContent_appId: HTML_META_APP_ID_CONTENT,
+        });
+
+        if (!isInWebAppProper) {
             if (logalot) { console.log(`${lcDOM} executing in iframe so returning early (I: 7118fb26f44e791f46bb0301172bbd25)`); }
             return; /* <<<< returns early */
         }
@@ -540,7 +546,12 @@ function initPopstateListener(): void {
 
             const lcPopstate = `${lc}[popstate]`;
 
-            if (!isExecutingInBlankGibWebAppProper()) {
+            const isInWebAppProper = isExecutingInBlankGibWebAppProper({
+                metaName_appId: HTML_META_APP_ID_NAME,
+                metaContent_appId: HTML_META_APP_ID_CONTENT,
+            });
+
+            if (!isInWebAppProper) {
                 if (logalot) { console.log(`${lcPopstate} executing in iframe so returning early (I: b84172ceedb5fea0c5d0c1cfbd911b25)`); }
                 return; /* <<<< returns early */
             }

@@ -22,6 +22,8 @@ import { APP_REL8N_NAME } from '@ibgib/core-gib/dist/witness/app/app-constants.m
 import { TAG_REL8N_NAME } from "@ibgib/core-gib/dist/common/tag/tag-constants.mjs";
 import { TagIbGib_V1 } from "@ibgib/core-gib/dist/common/tag/tag-types.mjs";
 import { SPACE_NAME_REGEXP } from "@ibgib/core-gib/dist/witness/space/space-constants.mjs";
+import { alertUser, promptForSecret, promptForText, } from "@ibgib/web-gib/dist/helpers.web.mjs";
+import { Metaspace_Webspace } from "@ibgib/web-gib/dist/witness/space/metaspace/metaspace-webspace/metaspace-webspace.mjs";
 
 import {
     GLOBAL_LOG_A_LOT,
@@ -36,10 +38,9 @@ import {
 } from "./witness/app/blank-canvas/blank-canvas-helper.mjs";
 import { RequestCommentIbGib_V1 } from "./types.mjs";
 import {
-    alertUser, promptForSecret, promptForText, getIbGibGlobalThis_BlankGib,
+    getIbGibGlobalThis_BlankGib,
 } from "./helpers.web.mjs";
 import type { IbGibGlobalThis_Common, } from "./types.mjs"
-import { Metaspace_Webspace } from "./witness/space/metaspace/metaspace-webspace/metaspace-webspace.mjs";
 import { BlankCanvasApp_V1, BlankCanvasApp_V1_Factory } from "./witness/app/blank-canvas/blank-canvas-app-v1.mjs";
 import {
     BlankCanvasAppData_V1, BlankCanvasAppRel8ns_V1,

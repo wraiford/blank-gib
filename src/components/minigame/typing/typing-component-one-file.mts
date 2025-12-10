@@ -15,19 +15,14 @@ import { MetaspaceService } from "@ibgib/core-gib/dist/witness/space/metaspace/m
 import { mut8Timeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
 import { tellUserFunctionInfo } from '@ibgib/web-gib/dist/api/commands/chat/tell-user.mjs';
 import { helloWorldFunctionInfo } from '@ibgib/web-gib/dist/api/commands/chat/hello-world.mjs';
+import { alertUser, highlightElement, promptForConfirm, promptForText, shadowRoot_getElementById, } from "@ibgib/web-gib/dist/helpers.web.mjs";
+import { getGlobalMetaspace_waitIfNeeded, } from "@ibgib/web-gib/dist/helpers.mjs";
+import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
+import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts, } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
 
 import {
     GLOBAL_LOG_A_LOT,
 } from "../../../constants.mjs";
-import {
-    alertUser,
-    getGlobalMetaspace_waitIfNeeded, highlightElement, promptForConfirm, promptForText, shadowRoot_getElementById,
-} from "../../../helpers.web.mjs";
-import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "../../../ui/component/ibgib-dynamic-component-bases.mjs";
-import {
-    ElementsBase, IbGibDynamicComponentInstance,
-    IbGibDynamicComponentInstanceInitOpts,
-} from "../../../ui/component/component-types.mjs";
 import { MinigameFiniteStateMachine, MinigameGamePhase, MinigameIbGib_V1 } from "../../../common/minigame/minigame-types.mjs";
 import { DEFAULT_ISO_639_LANGUAGE_CODES, DEFAULT_TYPING_GAMEMETA, DEFAULT_TYPING_GAMESTATE, ExpectedResponseType, MINIGAME_FOCUS_INFO, MINIGAME_STIMULTI_TO_ADD_INFO, MinigameGameVariant_Typing } from "../../../common/minigame/typing/typing-constants.mjs";
 import { Minigame_TypingGameState, Minigame_TypingGameMeta, MinigameTypingRawStats, Minigame_TypingStimulus, TypingEntryAndElementsInfo, FocusAndElementsInfo, } from "../../../common/minigame/typing/typing-types.mjs";
@@ -46,6 +41,7 @@ import { DEFAULT_TOKEN_CONSTRUCT_RULE } from "../../../common/text-analysis/anal
 import { minigameBuilderValidateAndReadyFunctionInfo, MinigameBuilderValidateAndReadyResult } from "../../../api/commands/minigame/minigame-builder-validate-and-ready.mjs";
 import { minigameBuilderEditStimuliFunctionInfo } from "../../../api/commands/minigame/minigame-builder-edit-stimuli.mjs";
 import { debounce } from "../../../helpers.mjs";
+import { getComponentCtorArg } from '../../../helpers.web.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -71,7 +67,7 @@ export class TypingComponentMeta extends IbGibDynamicComponentMetaBase {
     componentName: string = TYPING_COMPONENT_NAME;
 
     constructor() {
-        super();
+        super(getComponentCtorArg());
         customElements.define(this.componentName, TypingComponentInstance);
     }
 

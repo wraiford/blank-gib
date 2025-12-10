@@ -1,4 +1,5 @@
-import { APIFunctionInfo } from '../../api-types.mjs';
+import { APIFunctionInfo } from '@ibgib/web-gib/dist/api/api-types.mjs';
+
 import {
     RenderableCreateCommandData, renderableCreateGroupsFunctionInfo,
     renderableCreateRectsFunctionInfo, renderableCreatePathsFunctionInfo,

@@ -11,19 +11,17 @@ import { MetaspaceService } from "@ibgib/core-gib/dist/witness/space/metaspace/m
 import { CommentIbGib_V1 } from "@ibgib/core-gib/dist/common/comment/comment-types.mjs";
 import { createCommentIbGib } from "@ibgib/core-gib/dist/common/comment/comment-helper.mjs";
 import { appendToTimeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
-
-import {
-    ARMY_STORE,
-    BEE_KEY,
-    BLANK_GIB_DB_NAME,
-    GLOBAL_LOG_A_LOT,
-} from "../../../constants.mjs";
-import { InputInfo } from "./input-types.mjs";
-import { getGlobalMetaspace_waitIfNeeded, getDeterministicColorInfo, promptForAPIKey, updateAPIKeyInStorage } from "../../../helpers.web.mjs";
+import { getDeterministicColorInfo, getGlobalMetaspace_waitIfNeeded, } from "@ibgib/web-gib/dist/helpers.mjs";
+import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
+import { IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts, } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
+import { getAddlMetadataTextForAgentText } from '@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs';
 import { storageGet, } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
-import { getAddlMetadataTextForAgentText } from "../../../witness/agent/agent-one-file.mjs";
-import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "../../../ui/component/ibgib-dynamic-component-bases.mjs";
-import { IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "../../../ui/component/component-types.mjs";
+import { promptForAPIKey, updateAPIKeyInStorage } from '@ibgib/web-gib/dist/helpers.web.mjs';
+
+import { GLOBAL_LOG_A_LOT, ARMY_STORE, BEE_KEY, BLANK_GIB_DB_NAME, } from "../../../constants.mjs";
+import { InputInfo } from "./input-types.mjs";
+import { CHAT_WITH_AGENT_NEED_API_KEY } from '../../../witness/app/blank-canvas/blank-canvas-constants.mjs';
+import { getComponentCtorArg } from '../../../helpers.web.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -41,7 +39,7 @@ export class InputComponentMeta extends IbGibDynamicComponentMetaBase {
     componentName: string = INPUT_COMPONENT_NAME;
 
     constructor() {
-        super();
+        super(getComponentCtorArg());
         customElements.define(this.componentName, InputComponentInstance);
     }
 
@@ -447,14 +445,22 @@ export class InputComponentInstance
         try {
             if (logalot) { console.log(`${lc} starting... (I: b475d2686686ac016f0ea48ab51ef325)`); }
 
-            let resAPIKey = await promptForAPIKey();
+            let resAPIKey = await promptForAPIKey({
+                msg: CHAT_WITH_AGENT_NEED_API_KEY,
+            });
             if (resAPIKey === undefined) {
                 console.log(`${lc} user cancelled entering API key. (I: genuuid)`);
                 return; /* <<<< returns early */
             }
             this._apiKey = resAPIKey;
             if (this._apiKey) {
-                await updateAPIKeyInStorage({ apiKey: this._apiKey, force: false });
+                await updateAPIKeyInStorage({
+                    dbName: BLANK_GIB_DB_NAME,
+                    storeName: ARMY_STORE,
+                    key: BEE_KEY,
+                    apiKey: this._apiKey,
+                    force: false
+                });
             } else {
                 // clear it out b/c empty string?
                 // await updateAPIKeyInStorage({ apiKey: this._apiKey, force: true }); // clears it if empty string

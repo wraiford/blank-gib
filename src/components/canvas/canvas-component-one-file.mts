@@ -8,23 +8,24 @@ import { IbGibAddr } from "@ibgib/ts-gib/dist/types.mjs";
 import { ROOT } from "@ibgib/ts-gib/dist/V1/constants.mjs";
 import { IbGib_V1 } from "@ibgib/ts-gib/dist/V1/types.mjs";
 import { MetaspaceService } from "@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs";
+import { tellUserFunctionInfo } from '@ibgib/web-gib/dist/api/commands/chat/tell-user.mjs';
+import { getGlobalMetaspace_waitIfNeeded, } from "@ibgib/web-gib/dist/helpers.mjs";
+import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
+import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts, } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
+import { AgentWitnessAny, } from "@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs";
+import { getAgents } from "@ibgib/web-gib/dist/witness/agent/agent-helpers.mjs";
+import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
+import { GeminiModel } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
+import { storageGet, } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 
 import {
     GLOBAL_LOG_A_LOT, ARMY_STORE, BEE_KEY, BLANK_GIB_DB_NAME,
 } from "../../constants.mjs";
 import { getRenderService, RenderService_V1 } from "../../render/render-service-v1.mjs";
-import { AgentWitnessAny, } from "../../witness/agent/agent-one-file.mjs";
-import { getGlobalMetaspace_waitIfNeeded, } from "../../helpers.web.mjs";
-import { storageGet, } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
-import { getAgents } from "../../witness/agent/agent-helpers.mjs";
-import { getAgentsSvc } from "../../witness/agent/agents-service-v1.mjs";
-import { GeminiModel } from "../../witness/agent/gemini/gemini-constants.mjs";
-import { tellUserFunctionInfo } from "../../api/commands/chat/tell-user.mjs";
 import { getAppShellSvc } from "../../ui/shell/app-shell-service.mjs";
 import { RenderAgentFunctionInfos } from "../../api/commands/renderable/renderable-index.mjs";
-import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "../../ui/component/ibgib-dynamic-component-bases.mjs";
-import { IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "../../ui/component/component-types.mjs";
 import { AGENT_INITIAL_SYSTEM_TEXT_CANVASAGENT } from "../../agent-texts/canvas-agent-texts.mjs";
+import { getComponentCtorArg } from '../../helpers.web.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -51,7 +52,7 @@ export class CanvasComponentMeta extends IbGibDynamicComponentMetaBase {
     componentName: string = CANVAS_COMPONENT_NAME;
 
     constructor() {
-        super();
+        super(getComponentCtorArg());
         customElements.define(this.componentName, CanvasComponentInstance);
     }
 

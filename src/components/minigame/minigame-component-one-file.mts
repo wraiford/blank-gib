@@ -11,33 +11,28 @@ import { GIB_DELIMITER } from "@ibgib/ts-gib/dist/V1/constants.mjs";
 import { MetaspaceService } from "@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs";
 import { getTjpAddr } from "@ibgib/core-gib/dist/common/other/ibgib-helper.mjs";
 import { mut8Timeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
+import { tellUserFunctionInfo } from '@ibgib/web-gib/dist/api/commands/chat/tell-user.mjs';
+import { helloWorldFunctionInfo } from '@ibgib/web-gib/dist/api/commands/chat/hello-world.mjs';
+import { alertUser, highlightElement, promptForConfirm, promptForText, shadowRoot_getElementById, } from "@ibgib/web-gib/dist/helpers.web.mjs";
+import { getGlobalMetaspace_waitIfNeeded, } from "@ibgib/web-gib/dist/helpers.mjs";
+import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
+import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts, } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
+import { Settings_Minigame, } from "@ibgib/web-gib/dist/common/settings/settings-types.mjs";
+import { getSectionName, getSettingsSection } from "@ibgib/web-gib/dist/common/settings/settings-helpers.mjs";
+import { SettingsType } from "@ibgib/web-gib/dist/common/settings/settings-constants.mjs";
+import { getComponentSvc } from "@ibgib/web-gib/dist/ui/component/ibgib-component-service.mjs";
 
 import {
     GLOBAL_LOG_A_LOT,
     // ARMY_STORE, BEE_KEY, BLANK_GIB_DB_NAME,
 } from "../../constants.mjs";
-import {
-    alertUser,
-    getCurrentActiveProjectComponent,
-    getGlobalMetaspace_waitIfNeeded,
-    promptForConfirm,
-    shadowRoot_getElementById,
-} from "../../helpers.web.mjs";
-// import { storageGet, } from "../../storage/storage-helpers.web.mjs";
-import { MinigameData_V1, MinigameFiniteStateMachine, MinigameGamePhase, MinigameIbGib_V1 } from "../../common/minigame/minigame-types.mjs";
-import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "../../ui/component/ibgib-dynamic-component-bases.mjs";
-import {
-    ElementsBase, IbGibDynamicComponentInstance,
-    IbGibDynamicComponentInstanceInitOpts,
-} from "../../ui/component/component-types.mjs";
+import { getComponentCtorArg, getCurrentActiveProjectComponent, } from "../../helpers.web.mjs";
+import { MinigameFiniteStateMachine, MinigameGamePhase, MinigameIbGib_V1 } from "../../common/minigame/minigame-types.mjs";
 import { isMinigameIbGib_V1, } from "../../common/minigame/minigame-helper.mjs";
 import {
     AGENT_AVAILABLE_FUNCTIONS_MINIGAMEAGENT,
     MINIGAME_REL8N_NAME,
 } from "../../common/minigame/minigame-constants.mjs";
-import { Settings_Minigame, } from "../../common/settings/settings-types.mjs";
-import { getSectionName, getSettingsSection } from "../../common/settings/settings-helpers.mjs";
-import { SettingsType } from "../../common/settings/settings-constants.mjs";
 // import {
 //     Minigame_TypingGameState, Minigame_TypingGameMeta,
 // } from "../../common/minigame/typing/typing-types.mjs";
@@ -45,7 +40,6 @@ import { SettingsType } from "../../common/settings/settings-constants.mjs";
 //     MINIGAME_GAME_VARIANT_TYPING_VALUES, MinigameGameVariant_Typing
 // } from "../../common/minigame/typing/typing-constants.mjs";
 import { TYPING_COMPONENT_NAME, TypingComponentInstance } from "./typing/typing-component-one-file.mjs";
-import { getComponentSvc } from "../../ui/component/ibgib-component-service.mjs";
 import { getAppShellSvc } from "../../ui/shell/app-shell-service.mjs";
 import { Metronome } from "../../common/minigame/metronome.mjs";
 
@@ -66,7 +60,7 @@ export class MinigameComponentMeta extends IbGibDynamicComponentMetaBase {
     componentName: string = MINIGAME_COMPONENT_NAME;
 
     constructor() {
-        super();
+        super(getComponentCtorArg());
         customElements.define(this.componentName, MinigameComponentInstance);
     }
 

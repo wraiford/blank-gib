@@ -4,13 +4,13 @@ import { getIbAndGib, } from "@ibgib/ts-gib/dist/helper.mjs";
 import { IbGibAddr, } from "@ibgib/ts-gib/dist/types.mjs";
 import { isPrimitive } from "@ibgib/ts-gib/dist/V1/transforms/transform-helper.mjs";
 import { getGlobalMetaspace_waitIfNeeded } from "@ibgib/web-gib/dist/helpers.mjs";
+import { APIFunctionInfo } from "@ibgib/web-gib/dist/api/api-types.mjs";
+import { COMMAND_BASE_SCHEMA_PROPERTIES } from "@ibgib/web-gib/dist/api/commands/command-constants.mjs";
+import { getCommandService } from "@ibgib/web-gib/dist/api/commands/command-service-v1.mjs";
+import { CommandDataBase } from "@ibgib/web-gib/dist/api/commands/command-types.mjs";
+import { FUNCTION_CALL_EXAMPLES_HEADER } from "@ibgib/web-gib/dist/api/api-constants.mjs";
 
 import { GLOBAL_LOG_A_LOT } from "../../../constants.mjs";
-import { APIFunctionInfo } from "../../api-types.mjs";
-import { COMMAND_BASE_SCHEMA_PROPERTIES } from "../command-constants.mjs";
-import { getCommandService } from "../command-service-v1.mjs";
-import { CommandDataBase } from "../command-types.mjs";
-import { FUNCTION_CALL_EXAMPLES_HEADER } from "../../api-constants.mjs";
 import {
     GEMINI_SCHEMA_MINIGAME_CONTEXT_ADDR,
 } from "../../../common/minigame/minigame-constants.mjs";

@@ -1,11 +1,11 @@
-import { APIFunctionInfo } from "../../../api/api-types.mjs";
-import { SETTINGS_ATOM } from "../../settings/settings-constants.mjs";
+import { APIFunctionInfo } from "@ibgib/web-gib/dist/api/api-types.mjs";
+import { SETTINGS_ATOM } from "@ibgib/web-gib/dist/common/settings/settings-constants.mjs";
+import { getContextInfoFunctionInfo } from "@ibgib/web-gib/dist/api/commands/chat/get-context-info.mjs";
+import { getIbGibsFunctionInfo } from "@ibgib/web-gib/dist/api/commands/ibgib/get-ibgibs.mjs";
 // import { ChatAPIFunctionInfos } from "../../../api/commands/chat/chat-index.mjs";
 // import { IbGibAPIFunctionInfos } from "../../../api/commands/ibgib/ibgib-index.mjs";
 // import { editProjectFunctionInfo } from "../../../api/commands/project/project-edit.mjs";
 // import { TextAPIFunctionInfos } from "../../../api/commands/text/text-index.mjs";
-import { getContextInfoFunctionInfo } from "../../../api/commands/chat/get-context-info.mjs";
-import { getIbGibsFunctionInfo } from "../../../api/commands/ibgib/get-ibgibs.mjs";
 import { Minigame_TypingGameState, Minigame_TypingGameMeta } from "./typing-types.mjs";
 
 export const TYPING_ATOM = 'typingminigame';

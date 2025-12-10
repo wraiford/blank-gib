@@ -1,4 +1,4 @@
-import { CommandDataBase } from "../command-types.mjs";
+import { CommandDataBase } from "@ibgib/web-gib/dist/api/commands/command-types.mjs";
 
 export interface RenderableCommandDataBase<TCmdModifiers extends string[]>
     extends CommandDataBase<'renderable', TCmdModifiers> {

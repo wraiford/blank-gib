@@ -10,18 +10,18 @@
  */
 
 import { extractErrorMsg } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
+import { APIFunctionInfo } from "@ibgib/web-gib/dist/api/api-types.mjs";
+import { registerDeprecatedFunctionInfoName, registerFunctionInfos } from "@ibgib/web-gib/dist/api/api-index.mjs";
+import { IbGibAPIFunctionInfos } from "@ibgib/web-gib/dist/api/commands/ibgib/ibgib-index.mjs";
+import { ChatAPIFunctionInfos } from "@ibgib/web-gib/dist/api/commands/chat/chat-index.mjs";
+import { TextAPIFunctionInfos } from "@ibgib/web-gib/dist/api/commands/text/text-index.mjs";
+// import { ProjectFunctionInfos } from "../common/project/project-constants.mjs";
 
 import { GLOBAL_LOG_A_LOT } from "../constants.mjs";
-import { APIFunctionInfo } from "./api-types.mjs";
 import { RenderAgentFunctionInfos } from "./commands/renderable/renderable-index.mjs";
 import { UIAgentFunctionInfos } from "./commands/ui/ui-index.mjs";
 import { fetchWeb1PageFunctionInfo } from "./commands/website/fetch-web1-page.mjs";
-import { ProjectFunctionInfos } from "../common/project/project-constants.mjs";
-import { IbGibAPIFunctionInfos } from "./commands/ibgib/ibgib-index.mjs";
-import { ChatAPIFunctionInfos } from "./commands/chat/chat-index.mjs";
-import { TextAPIFunctionInfos } from "./commands/text/text-index.mjs";
 import { MinigameFunctionInfos } from "./commands/minigame/minigame-index.mjs";
-import { registerDeprecatedFunctionInfoName, registerFunctionInfos } from "./api-index.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -41,7 +41,7 @@ const AllFunctionInfos_Web: Map<string, APIFunctionInfo<any>> = new Map([
     fetchWeb1PageFunctionInfo,
 
     ...RenderAgentFunctionInfos,
-    ...ProjectFunctionInfos,
+    // ...ProjectFunctionInfos,
     ...UIAgentFunctionInfos,
     ...IbGibAPIFunctionInfos,
     ...MinigameFunctionInfos,

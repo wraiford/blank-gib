@@ -3,17 +3,18 @@ import breadcrumbCss from './breadcrumb.css';
 import stylesCss from '../../../styles.css';
 import rootCss from '../../../root.css';
 
-import { clone, extractErrorMsg, getUUID } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
+import { extractErrorMsg, } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
 import { IbGib_V1 } from "@ibgib/ts-gib/dist/V1/types.mjs";
 import { IbGibAddr } from "@ibgib/ts-gib/dist/types.mjs";
 import { MetaspaceService } from "@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs";
+import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
+import { IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts, } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
 
 import {
     GLOBAL_LOG_A_LOT, ARMY_STORE, BEE_KEY, BLANK_GIB_DB_NAME,
 } from "../../../constants.mjs";
 import { BreadcrumbInfo } from "./breadcrumb-types.mjs";
-import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "../../../ui/component/ibgib-dynamic-component-bases.mjs";
-import { IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "../../../ui/component/component-types.mjs";
+import { getComponentCtorArg } from '../../../helpers.web.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -32,7 +33,7 @@ export class BreadcrumbComponentMeta extends IbGibDynamicComponentMetaBase {
     componentName: string = BREADCRUMB_COMPONENT_NAME;
 
     constructor() {
-        super();
+        super(getComponentCtorArg());
         customElements.define(this.componentName, BreadcrumbComponentInstance);
     }
 

@@ -7,19 +7,19 @@ import { extractErrorMsg, } from "@ibgib/helper-gib/dist/helpers/utils-helper.mj
 import { IbGib_V1 } from "@ibgib/ts-gib/dist/V1/types.mjs";
 import { IbGibAddr, } from "@ibgib/ts-gib/dist/types.mjs";
 import { MetaspaceService } from "@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs";
+import { tellUserFunctionInfo } from '@ibgib/web-gib/dist/api/commands/chat/tell-user.mjs';
+import { helloWorldFunctionInfo } from '@ibgib/web-gib/dist/api/commands/chat/hello-world.mjs';
+import { alertUser, highlightElement, promptForConfirm, promptForText, shadowRoot_getElementById, } from "@ibgib/web-gib/dist/helpers.web.mjs";
+import { getGlobalMetaspace_waitIfNeeded, } from "@ibgib/web-gib/dist/helpers.mjs";
+import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
+import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts, } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
 
 import {
     GLOBAL_LOG_A_LOT,
     // ARMY_STORE, BEE_KEY, BLANK_GIB_DB_NAME,
 } from "../../../constants.mjs";
-import {
-    getGlobalMetaspace_waitIfNeeded, shadowRoot_getElementById,
-} from "../../../helpers.web.mjs";
-import { tellUserFunctionInfo } from "../../../api/commands/chat/tell-user.mjs";
-import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "../../../ui/component/ibgib-dynamic-component-bases.mjs";
-import { IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "../../../ui/component/component-types.mjs";
-import { helloWorldFunctionInfo } from "../../../api/commands/chat/hello-world.mjs";
 import { getPath } from "../../../ui/router/router-one-file.mjs";
+import { getComponentCtorArg } from '../../../helpers.web.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -45,7 +45,7 @@ export class ExplorerItemComponentMeta extends IbGibDynamicComponentMetaBase {
     componentName: string = EXPLORERITEM_COMPONENT_NAME;
 
     constructor() {
-        super();
+        super(getComponentCtorArg());
         customElements.define(this.componentName, ExplorerItemComponentInstance);
     }
 

@@ -1,7 +1,7 @@
-import thisHtml from './chronology.html';
-import thisCss from './chronology.css';
-import stylesCss from '../../../styles.css';
-import rootCss from '../../../root.css';
+import thisHtml from "./chronology.html";
+import thisCss from "./chronology.css";
+import stylesCss from "../../../styles.css";
+import rootCss from "../../../root.css";
 
 import { delay, extractErrorMsg, pretty } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
 import { getTimestampInfo } from "@ibgib/core-gib/dist/common/other/ibgib-helper.mjs";
@@ -11,13 +11,15 @@ import { getIbGibAddr } from "@ibgib/ts-gib/dist/helper.mjs";
 import { MetaspaceService } from "@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs";
 import { isComment, parseCommentIb } from "@ibgib/core-gib/dist/common/comment/comment-helper.mjs";
 import { tellUserFunctionInfo } from "@ibgib/web-gib/dist/api/commands/chat/tell-user.mjs";
-import {getGlobalMetaspace_waitIfNeeded } from "@ibgib/web-gib/dist/helpers.mjs";
+import { getGlobalMetaspace_waitIfNeeded } from "@ibgib/web-gib/dist/helpers.mjs";
 import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
 import { IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
+import { AgentWitnessAny, parseAddlMetadataTextForAgentText, } from "@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs";
+import { TextSource } from "@ibgib/web-gib/dist/witness/agent/agent-constants.mjs";
+import { ProjectIbGib_V1 } from "@ibgib/web-gib/dist/common/project/project-types.mjs";
+import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
 
-import {
-    GLOBAL_LOG_A_LOT,
-} from "../../../constants.mjs";
+import { GLOBAL_LOG_A_LOT, } from "../../../constants.mjs";
 import { getComponentCtorArg, getIbGibGlobalThis_BlankGib, } from "../../../helpers.web.mjs";
 import { ID_PRIMARY_AGENT_CHAT_LOG } from "../../../ui/shell/shell-constants.mjs";
 import {
@@ -26,13 +28,9 @@ import {
 } from "../../../agent-texts/common-agent-texts.mjs";
 import { AGENT_SPECIAL_IBGIB_TYPE_PRIMARYAGENT, } from "../../../agent-texts/primary-agent-texts.mjs";
 import { simpleIbGibRouterSingleton } from "../../../ui/router/router-one-file.mjs";
-import { AgentWitnessAny, parseAddlMetadataTextForAgentText, } from "../../../witness/agent/agent-one-file.mjs";
-import { TextSource } from "../../../witness/agent/agent-constants.mjs";
 import { isMinigameIbGib_V1 } from "../../../common/minigame/minigame-helper.mjs";
 import { MinigameIbGib_V1 } from "../../../common/minigame/minigame-types.mjs";
 import { ProjectComponentInstance } from "../../projects/project/project-component-one-file.mjs";
-import { ProjectIbGib_V1 } from "../../../common/project/project-types.mjs";
-import { getAgentsSvc } from '../../../witness/agent/agents-service-v1.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT;
 

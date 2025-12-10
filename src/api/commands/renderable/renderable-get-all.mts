@@ -1,9 +1,9 @@
+import { APIFunctionInfo } from "@ibgib/web-gib/dist/api/api-types.mjs";
+import { COMMAND_BASE_SCHEMA_PROPERTIES } from "@ibgib/web-gib/dist/api/commands/command-constants.mjs";
+import { getCommandService } from "@ibgib/web-gib/dist/api/commands/command-service-v1.mjs";
+
 import { RenderableGetAllHandlesResult, RenderableHandle, } from "../../../render/render-types.mjs";
 import { getRenderService } from "../../../render/render-service-v1.mjs";
-import { APIFunctionInfo } from "../../api-types.mjs";
-import { COMMAND_BASE_SCHEMA_PROPERTIES } from "../command-constants.mjs";
-import { getCommandService } from "../command-service-v1.mjs";
-import { CommandDataBase } from "../command-types.mjs";
 import { GEMINI_SCHEMA_RENDERABLE_SVC_ID } from "./renderable-constants.mjs";
 import { RenderableCommandDataBase } from "./renderable-types.mjs";
 

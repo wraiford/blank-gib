@@ -25,6 +25,16 @@ import { IbGibRobbotAny } from '@ibgib/core-gib/dist/witness/robbot/robbot-base-
 import { TAG_REL8N_NAME, } from '@ibgib/core-gib/dist/common/tag/tag-constants.mjs';
 import { SpecialIbGibType } from '@ibgib/core-gib/dist/common/other/other-types.mjs';
 import { TagIbGib_V1 } from '@ibgib/core-gib/dist/common/tag/tag-types.mjs';
+import { GeminiModel } from '@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs';
+import { AgentWitnessAny, } from '@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs';
+import {
+    promptForConfirm, alertUser, promptForText, promptForSecret,
+    getUserPreferredColorScheme,
+} from '@ibgib/web-gib/dist/helpers.web.mjs';
+import { storageGet, storagePut } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
+import { getAgentsSvc } from '@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs';
+import { getAgents, getTag_Agents } from '@ibgib/web-gib/dist/witness/agent/agent-helpers.mjs';
+import { AGENT_AVAILABLE_FUNCTIONS_PRIMARYAGENT } from '@ibgib/web-gib/dist/witness/agent/agent-one-file.app.mjs';
 
 import { GLOBAL_LOG_A_LOT, ARMY_STORE, BEE_KEY, BLANK_GIB_DB_NAME, } from '../../../constants.mjs';
 import {
@@ -45,31 +55,21 @@ import {
     addToChatLogKluge, isRequestComment, parseCommandRawTextIntoArgs,
 } from './blank-canvas-helper.web.mjs';
 import {
-    promptForConfirm, alertUser, promptForText, promptForSecret,
-    getUserPreferredColorScheme,
-} from '../../../helpers.web.mjs';
-import {
     DEFAULT_COMMAND_ESCAPE_STRING, PARAM_INFOS, BlankCanvasCommand,
     RCLI_COMMANDS, RCLI_COMMAND_IDENTIFIERS, PARAM_INFO_INTERACTIVE,
     CHAT_WITH_AGENT_PLACEHOLDER_PRIMARYAGENT,
     CHAT_WITH_AGENT_NEED_API_KEY,
 } from './blank-canvas-constants.mjs';
 import { RequestCommentIbGib_V1 } from '../../../types.mjs';
-import { storageGet, storagePut } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 import {
     AGENT_INITIAL_CHAT_TEXT_PRIMARYAGENT,
     AGENT_INITIAL_SYSTEM_TEXT_PRIMARYAGENT,
     AGENT_SPECIAL_IBGIB_NAME_PRIMARYAGENT,
     AGENT_SPECIAL_IBGIB_TYPE_PRIMARYAGENT,
 } from '../../../agent-texts/primary-agent-texts.mjs';
-import { GeminiModel } from '../../agent/gemini/gemini-constants.mjs';
-import { AgentWitnessAny, } from '../../agent/agent-one-file.mjs';
 import { ROUTER_APP_NAME_TAGS } from '../../../common/app-constants.mjs';
 import { ID_TAG_NAV } from '../../../ui/shell/shell-constants.mjs';
-import { getAgentsSvc } from '../../agent/agents-service-v1.mjs';
 import { getAppShellSvc } from '../../../ui/shell/app-shell-service.mjs';
-import { getAgents, getTag_Agents } from '../../agent/agent-helpers.mjs';
-import { AGENT_AVAILABLE_FUNCTIONS_PRIMARYAGENT } from '../../agent/agent-one-file.app.mjs';
 
 // import { rcliCmdHandlerInit } from './rcli-cmd-handlers/handle-init.mjs';
 // import { rcliCmdHandlerHelp } from './rcli-cmd-handlers/handle-help.mjs';

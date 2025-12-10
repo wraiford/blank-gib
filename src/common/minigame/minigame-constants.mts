@@ -1,9 +1,10 @@
-import { APIFunctionInfo } from "../../api/api-types.mjs";
-import { SETTINGS_ATOM } from "../settings/settings-constants.mjs";
+import { ChatAPIFunctionInfos } from "@ibgib/web-gib/dist/api/commands/chat/chat-index.mjs";
+import { IbGibAPIFunctionInfos } from "@ibgib/web-gib/dist/api/commands/ibgib/ibgib-index.mjs";
+import { APIFunctionInfo } from "@ibgib/web-gib/dist/api/api-types.mjs";
+import { SETTINGS_ATOM } from "@ibgib/web-gib/dist/common/settings/settings-constants.mjs";
+import { TextAPIFunctionInfos } from "@ibgib/web-gib/dist/api/commands/text/text-index.mjs";
+
 import { MinigameFunctionInfos } from "../../api/commands/minigame/minigame-index.mjs";
-import { ChatAPIFunctionInfos } from "../../api/commands/chat/chat-index.mjs";
-import { IbGibAPIFunctionInfos } from "../../api/commands/ibgib/ibgib-index.mjs";
-import { TextAPIFunctionInfos } from "../../api/commands/text/text-index.mjs";
 import { MinigameGameVariant_Typing } from "./typing/typing-constants.mjs";
 import { delay } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
 

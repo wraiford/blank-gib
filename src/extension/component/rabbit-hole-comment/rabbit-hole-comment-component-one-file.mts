@@ -3,7 +3,7 @@ import thisCss from './rabbit-hole-comment.css';
 import stylesCss from '../../styles.css';
 import rootCss from '../../../root.css';
 
-import { delay, extractErrorMsg, getSaferSubstring, pretty, } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
+import { extractErrorMsg, getSaferSubstring, pretty, } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
 import { IbGibAddr } from "@ibgib/ts-gib/dist/types.mjs";
 import { IbGib_V1 } from "@ibgib/ts-gib/dist/V1/types.mjs";
 import { getGibInfo, } from '@ibgib/ts-gib/dist/V1/index.mjs';
@@ -11,21 +11,31 @@ import { CommentIbGib_V1 } from '@ibgib/core-gib/dist/common/comment/comment-typ
 import { getLatestTimelineIbGibDto_nonLocking, mut8Timeline } from '@ibgib/core-gib/dist/timeline/timeline-api.mjs';
 import { fnObs } from '@ibgib/core-gib/dist/common/pubsub/observer/observer-helper.mjs';
 import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.mjs';
+import { promptForConfirm, shadowRoot_getElementById } from "@ibgib/web-gib/dist/helpers.web.mjs";
+import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
+import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
+import { getComponentSvc } from '@ibgib/web-gib/dist/ui/component/ibgib-component-service.mjs';
+import { ProjectIbGib_V1 } from '@ibgib/web-gib/dist/common/project/project-types.mjs';
 
 import { GLOBAL_LOG_A_LOT } from '../../../constants.mjs';
-import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from '../../../ui/component/ibgib-dynamic-component-bases.mjs';
-import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "../../../ui/component/component-types.mjs";
-import { getChunkRel8nName, getGlobalMetaspace_waitIfNeeded, getSummaryTextKeyForIbGib, getTitleFromSummarizer, getTocHeader_FromIbGib, getTranslationTextKeyForIbGib, parseTranslationTextKeyForIbGib, } from '../../helpers.mjs';
+import {
+    getChunkRel8nName, getGlobalMetaspace_waitIfNeeded,
+    getSummaryTextKeyForIbGib, getTitleFromSummarizer, getTocHeader_FromIbGib,
+    getTranslationTextKeyForIbGib,
+} from '../../helpers.mjs';
 import { debounce } from '../../../helpers.mjs';
-import { promptForConfirm, shadowRoot_getElementById } from '../../../helpers.web.mjs';
-import { CHUNK_REL8N_NAME_DEFAULT_CONTEXT_SCOPE, PROJECT_TJP_ADDR_PROPNAME, SUMMARY_TEXT_ATOM, TRANSLATION_TEXT_ATOM, } from '../../constants.mjs';
-import { ProjectIbGib_V1 } from '../../../common/project/project-types.mjs';
+import { PROJECT_TJP_ADDR_PROPNAME, } from '../../constants.mjs';
 import { LiveProxyIbGib } from '../../../witness/live-proxy-ibgib/live-proxy-ibgib-one-file.mjs';
 import { updateThinkingEntry } from '../../thinking-log.mjs';
 import { SummarizerLength, SummarizerType } from '../../chrome-ai.mjs';
-import { getComponentSvc } from '../../../ui/component/ibgib-component-service.mjs';
-import { getPriorityQueueSvc, PriorityQueueInfo, QUEUE_SERVICE_PRIORITY_SUMMARY_TITLE, QUEUE_SERVICE_PRIORITY_USER_JUST_CLICKED, SummaryQueueInfo, TaskStatus, TranslationQueueInfo } from '../../priority-queue-service-one-file.mjs';
+import {
+    getPriorityQueueSvc, PriorityQueueInfo,
+    QUEUE_SERVICE_PRIORITY_SUMMARY_TITLE,
+    QUEUE_SERVICE_PRIORITY_USER_JUST_CLICKED, SummaryQueueInfo,
+    TranslationQueueInfo
+} from '../../priority-queue-service-one-file.mjs';
 import { ChunkCommentData_V1 } from '../../types.mjs';
+import { getComponentCtorArg } from '../../../helpers.web.mjs';
 
 
 const logalot = GLOBAL_LOG_A_LOT || true;
@@ -45,7 +55,7 @@ export class RabbitHoleCommentComponentMeta extends IbGibDynamicComponentMetaBas
     componentName: string = RABBIT_HOLE_COMMENT_COMPONENT_NAME;
 
     constructor() {
-        super();
+        super(getComponentCtorArg());
         customElements.define(this.componentName, RabbitHoleCommentComponentInstance);
     }
 

@@ -1,4 +1,5 @@
-import { APIFunctionInfo } from "../../api-types.mjs";
+import { APIFunctionInfo } from "@ibgib/web-gib/dist/api/api-types.mjs";
+
 import { minigameBuilderEditStimuliFunctionInfo } from "./minigame-builder-edit-stimuli.mjs";
 import { minigameBuilderStartFunctionInfo } from "./minigame-builder-start.mjs";
 import { minigameBuilderValidateAndReadyFunctionInfo } from "./minigame-builder-validate-and-ready.mjs";
