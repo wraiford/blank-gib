@@ -14,6 +14,9 @@ tmp2.md
 # freezing auto-generated version file that changes when publish
 src/AUTO-GENERATED-version.mts
 
+# src excluded by some other pattern
+!src/api/commands/chat/
+
 # misc
 .env
 .vscode

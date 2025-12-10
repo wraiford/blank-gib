@@ -17,21 +17,36 @@ import { getTjpAddr } from "@ibgib/core-gib/dist/common/other/ibgib-helper.mjs";
 import { SpaceId } from "@ibgib/core-gib/dist/witness/space/space-types.mjs";
 import { CommentIbGib_V1 } from "@ibgib/core-gib/dist/common/comment/comment-types.mjs";
 import { isComment } from "@ibgib/core-gib/dist/common/comment/comment-helper.mjs";
+import { tellUserFunctionInfo } from "@ibgib/web-gib/dist/api/commands/chat/tell-user.mjs";
+import {
+    getDeterministicColorInfo, getGlobalMetaspace_waitIfNeeded,
+} from "@ibgib/web-gib/dist/helpers.mjs";
+import {
+    IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase,
+    IbGibDynamicComponentInstanceBase_ParentOfTabs,
+} from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
+import {
+    ElementsBase, ChildInfoBase, IbGibDynamicComponentInstance,
+    IbGibDynamicComponentInstanceInitOpts,
+} from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
+import { storageGet, } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
+import { getComponentSvc } from "@ibgib/web-gib/dist/ui/component/ibgib-component-service.mjs";
+import { getColorStrings, } from "@ibgib/web-gib/dist/helpers.mjs";
+import {
+    alertUser, copyToClipboard, highlightElement, promptForText,
+    shadowRoot_getElementById,
+} from "@ibgib/web-gib/dist/helpers.web.mjs";
+import {
+    getAgentForDomainIbGib, getAgents, registerDomainIbGibWithAgentIndex
+} from "@ibgib/web-gib/dist/witness/agent/agent-helpers.mjs";
+import { AgentWitnessAny, } from "@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs";
+import { GeminiModel } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
+import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
 
 import {
     GLOBAL_LOG_A_LOT, ARMY_STORE, BEE_KEY, BLANK_GIB_DB_NAME,
 } from "../../constants.mjs";
-import { AgentWitnessAny, } from "../../witness/agent/agent-one-file.mjs";
-import {
-    getGlobalMetaspace_waitIfNeeded, getDeterministicColorInfo,
-    getIbGibGlobalThis_BlankGib, getColorStrings, alertUser, copyToClipboard,
-    highlightElement,
-    promptForText,
-    shadowRoot_getElementById,
-} from "../../helpers.web.mjs";
-import { storageGet, } from "../../storage/storage-helpers.web.mjs";
-import { GeminiModel } from "../../witness/agent/gemini/gemini-constants.mjs";
-import { tellUserFunctionInfo } from "../../api/commands/chat/tell-user.mjs";
+import { getComponentCtorArg, getIbGibGlobalThis_BlankGib, } from "../../helpers.web.mjs";
 import { createProjectIbGib, isProjectIbGib_V1, } from "../../common/project/project-helper.mjs";
 import { DEFAULT_PROJECT_DESCRIPTION, ProjectIbGib_V1 } from "../../common/project/project-types.mjs";
 import {
@@ -49,13 +64,6 @@ import {
 } from "./project/project-component-one-file.mjs";
 import { getAppShellSvc } from "../../ui/shell/app-shell-service.mjs";
 import { simpleIbGibRouterSingleton } from "../../ui/router/router-one-file.mjs";
-import {
-    getAgentForDomainIbGib, getAgents, registerDomainIbGibWithAgentIndex
-} from "../../witness/agent/agent-helpers.mjs";
-import { getAgentsSvc } from "../../witness/agent/agents-service-v1.mjs";
-import { IbGibDynamicComponentInstanceBase_ParentOfTabs, IbGibDynamicComponentMetaBase } from "../../ui/component/ibgib-dynamic-component-bases.mjs";
-import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts, ChildInfoBase } from "../../ui/component/component-types.mjs";
-import { getComponentSvc } from "../../ui/component/ibgib-component-service.mjs";
 import {
     AGENT_INITIAL_CHAT_TEXT_PROJECTSAGENT,
     AGENT_INITIAL_SYSTEM_TEXT_PROJECTSAGENT
@@ -93,7 +101,7 @@ export class ProjectsComponentMeta extends IbGibDynamicComponentMetaBase {
     componentName: string = PROJECTS_COMPONENT_NAME;
 
     constructor() {
-        super();
+        super(getComponentCtorArg());
         customElements.define(this.componentName, ProjectsComponentInstance);
     }
 

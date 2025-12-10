@@ -1,10 +1,11 @@
 import { delay, extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 
 import { GLOBAL_LOG_A_LOT } from './constants.mjs';
-import { dynamicallyLoadBootstrapScript, initIbGibGlobalThis, } from './helpers.web.mjs';
+import {
+    dynamicallyLoadBootstrapScript, initIbGibGlobalThis, initBlankGibStorage,
+} from './helpers.web.mjs';
 import { simpleIbGibRouterSingleton as router } from './ui/router/router-one-file.mjs';
 import { getAppShellSvc } from './ui/shell/app-shell-service.mjs';
-import { initBlankGibStorage } from './storage/storage-helpers.web.mjs';
 // import { initRegisterServiceWorker } from './init-service-worker.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT;

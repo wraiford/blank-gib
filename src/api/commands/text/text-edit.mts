@@ -18,6 +18,7 @@
 import { extractErrorMsg, getTimestamp, getTimestampInTicks, pretty } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 import { IbGib_V1 } from '@ibgib/ts-gib/dist/V1/types.mjs';
 import { getCommentIb } from '@ibgib/core-gib/dist/common/comment/comment-helper.mjs';
+import { mut8Timeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
 
 import { GLOBAL_LOG_A_LOT } from '../../../constants.mjs';
 import { APIFunctionInfo } from "../../api-types.mjs";
@@ -25,7 +26,6 @@ import { COMMAND_BASE_SCHEMA_PROPERTIES } from "../command-constants.mjs";
 import { getCommandService } from "../command-service-v1.mjs";
 import { CommandDataBase } from "../command-types.mjs";
 import { getGlobalMetaspace_waitIfNeeded } from '../../../helpers.web.mjs';
-import { mut8Timeline } from '../../timeline/timeline-api.mjs';
 import { FUNCTION_CALL_EXAMPLES_HEADER } from '../../api-constants.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT;

@@ -15,7 +15,7 @@ import {
 import { getRenderService, RenderService_V1 } from "../../render/render-service-v1.mjs";
 import { AgentWitnessAny, } from "../../witness/agent/agent-one-file.mjs";
 import { getGlobalMetaspace_waitIfNeeded, } from "../../helpers.web.mjs";
-import { storageGet, } from "../../storage/storage-helpers.web.mjs";
+import { storageGet, } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 import { getAgents } from "../../witness/agent/agent-helpers.mjs";
 import { getAgentsSvc } from "../../witness/agent/agents-service-v1.mjs";
 import { GeminiModel } from "../../witness/agent/gemini/gemini-constants.mjs";

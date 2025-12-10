@@ -1,5 +1,3 @@
-import { addTimeToDate, clone, getTimestamp } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
-import { DecryptArgs, EncryptArgs } from "@ibgib/encrypt-gib/dist/types.mjs";
 import { tagTextToIb } from "@ibgib/core-gib/dist/common/other/ibgib-helper.mjs";
 
 export const GLOBAL_LOG_A_LOT = false;

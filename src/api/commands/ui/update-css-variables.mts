@@ -1,4 +1,8 @@
 import { extractErrorMsg, pretty } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
+import { storagePut } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
+import { UIThemeInfo } from "@ibgib/web-gib/dist/ui/ui-types.mjs";
+import { getExistingUIInfo } from "@ibgib/web-gib/dist/ui/ui-helpers.mjs";
+import { UI_THEME_INFO_KEY, VALID_CSS_VARIABLES } from "@ibgib/web-gib/dist/ui/ui-constants.mjs";
 
 import { ARMY_STORE, BLANK_GIB_DB_NAME, GLOBAL_LOG_A_LOT } from "../../../constants.mjs";
 import { APIFunctionInfo } from "../../api-types.mjs";
@@ -6,10 +10,6 @@ import { COMMAND_BASE_SCHEMA_PROPERTIES } from "../command-constants.mjs";
 import { getCommandService } from "../command-service-v1.mjs";
 import { CommandDataBase } from "../command-types.mjs";
 import { FUNCTION_CALL_EXAMPLES_HEADER } from "../../api-constants.mjs";
-import { UI_THEME_INFO_KEY, VALID_CSS_VARIABLES } from "../../../ui/ui-constants.mjs";
-import { storagePut } from "../../../storage/storage-helpers.web.mjs";
-import { UIThemeInfo } from "../../../ui/ui-types.mjs";
-import { getExistingUIInfo } from "../../../ui/ui-helpers.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -124,7 +124,7 @@ async function updateCSSVariablesImpl(opts: UpdateCSSVariablesOpts): Promise<voi
         }
 
         // update the theme in the options
-        const existingUIInfo = await getExistingUIInfo() ?? { cssVariableOverrides: {}, };
+        const existingUIInfo = await getExistingUIInfo({dbName: BLANK_GIB_DB_NAME, storeName: ARMY_STORE,}) ?? { cssVariableOverrides: {}, };
         const newUIInfo: UIThemeInfo = {
             ...existingUIInfo,
             cssVariableOverrides: {

@@ -1,8 +1,8 @@
 import { delay, extractErrorMsg, } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
 
-import { ARMY_STORE, BLANK_GIB_DB_NAME, GLOBAL_LOG_A_LOT } from "../constants.mjs";
+import { GLOBAL_LOG_A_LOT } from "../constants.mjs";
 import { UIThemeInfo } from "./ui-types.mjs";
-import { storageGet } from "../storage/storage-helpers.web.mjs";
+import { storageGet } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 import { UI_THEME_INFO_KEY } from "./ui-constants.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;
@@ -182,16 +182,26 @@ export async function showFullscreenDialog(opts: {
     }
 }
 
-export async function getExistingUIInfo(): Promise<UIThemeInfo | undefined> {
+export async function getExistingUIInfo({
+    dbName,
+    storeName,
+    key = UI_THEME_INFO_KEY,
+}: {
+    dbName: string,
+    storeName: string,
+    key?: string,
+}): Promise<UIThemeInfo | undefined> {
     const lc = `[${getExistingUIInfo.name}]`;
     try {
         if (logalot) { console.log(`${lc} starting... (I: 4c9d7c7f1e8bfcc917d405b842438825)`); }
 
+        key ??= UI_THEME_INFO_KEY;
+
         let existingUIInfo: UIThemeInfo | undefined = undefined;
         const existingUIInfoAsString = await storageGet({
-            dbName: BLANK_GIB_DB_NAME,
-            storeName: ARMY_STORE,
-            key: UI_THEME_INFO_KEY,
+            dbName,
+            storeName,
+            key,
         });
         if (existingUIInfoAsString) {
             try {

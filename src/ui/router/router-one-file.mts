@@ -3,20 +3,20 @@ import { GIB, ROOT_ADDR } from "@ibgib/ts-gib/dist/V1/constants.mjs";
 import { Gib, Ib, IbGibAddr } from "@ibgib/ts-gib/dist/types.mjs";
 import { getIbAndGib, getIbGibAddr } from "@ibgib/ts-gib/dist/helper.mjs";
 import { validateGib, validateIb } from "@ibgib/ts-gib/dist/V1/validate-helper.mjs";
+import { isPrimitive } from "@ibgib/ts-gib/dist/V1/index.mjs";
+import { isExecutingInBlankGibWebAppProper, } from "@ibgib/web-gib/dist/helpers.web.mjs";
+import { document_getElementById } from "@ibgib/web-gib/dist/helpers.web.mjs";
+import { getComponentSvc } from "@ibgib/web-gib/dist/ui/component/ibgib-component-service.mjs";
 
-import { GLOBAL_LOG_A_LOT } from "../../constants.mjs";
+import {
+    GLOBAL_LOG_A_LOT, HTML_META_APP_ID_CONTENT, HTML_META_APP_ID_NAME
+} from "../../constants.mjs";
 import {
     ROUTER_APP_NAME_WEB1, RouterAppName, VALID_ROUTER_APP_NAMES,
     WEB1_FILENAME_HOME, isValidRouterAppName,
 } from "../../common/app-constants.mjs";
-import {
-    document_getElementById,
-    isExecutingInBlankGibWebAppProper,
-} from "../../helpers.web.mjs";
-import { getComponentSvc } from "../component/ibgib-component-service.mjs";
 import { ID_CENTER_PANEL_CONTENT } from "../shell/shell-constants.mjs";
 import { AppShellService, getAppShellSvc } from "../shell/app-shell-service.mjs";
-import { isPrimitive } from "@ibgib/ts-gib/dist/V1/index.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -153,7 +153,12 @@ async function route(path: string): Promise<void> {
     try {
         if (logalot) { console.log(`${lc} starting... (I: a1b2c3d4e5f67890)`); }
 
-        if (!isExecutingInBlankGibWebAppProper()) {
+        const isInWebAppProper = isExecutingInBlankGibWebAppProper({
+            metaName_appId: HTML_META_APP_ID_NAME,
+            metaContent_appId: HTML_META_APP_ID_CONTENT,
+        });
+
+        if (!isInWebAppProper) {
             if (logalot) { console.log(`${lc} executing in iframe so returning early without routing (I: b84172ceedb5fea0c5d0c1cfbd911b25)`); }
             return; /* <<<< returns early */
         }

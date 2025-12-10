@@ -15,7 +15,7 @@ import { CommentIbGib_V1 } from '@ibgib/core-gib/dist/common/comment/comment-typ
 import { MetaspaceService } from '@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs';
 import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.mjs';
 import { getTjpAddr } from '@ibgib/core-gib/dist/common/other/ibgib-helper.mjs';
-import { appendToTimeline } from '@ibgib/core-gib/dist/timeline/timeline-api.mjs';
+import { appendToTimeline, mut8Timeline } from '@ibgib/core-gib/dist/timeline/timeline-api.mjs';
 
 import { GLOBAL_LOG_A_LOT, } from "../../../constants.mjs";
 import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "../../../ui/component/ibgib-dynamic-component-bases.mjs";
@@ -31,7 +31,7 @@ import {
 import { ChromeAIAvailability, } from '../../chrome-ai.mjs';
 import { DOMElementInfo, PageContentInfo } from '../../page-analyzer/page-analyzer-types.mjs';
 import { addThinkingEntry, showThinkingLog, updateThinkingEntry } from '../../thinking-log.mjs';
-import { mut8Timeline } from '../../../api/timeline/timeline-api.mjs';
+
 import { PROJECT_TJP_ADDR_PROPNAME } from '../../constants.mjs';
 import { getComponentSvc } from '../../../ui/component/ibgib-component-service.mjs';
 import { RABBIT_HOLE_COMMENT_COMPONENT_NAME, RabbitHoleCommentComponentInstance } from '../rabbit-hole-comment/rabbit-hole-comment-component-one-file.mjs';

@@ -13,25 +13,35 @@ import { createCommentIbGib } from "@ibgib/core-gib/dist/common/comment/comment-
 import { getTjpAddr } from "@ibgib/core-gib/dist/common/other/ibgib-helper.mjs";
 import { fnObs } from "@ibgib/core-gib/dist/common/pubsub/observer/observer-helper.mjs";
 import { IbGibTimelineUpdateInfo } from "@ibgib/core-gib/dist/common/other/other-types.mjs";
+import { appendToTimeline, mut8Timeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
+import {
+    getDeterministicColorInfo, getGlobalMetaspace_waitIfNeeded,
+} from "@ibgib/web-gib/dist/helpers.mjs";
+import {
+    IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase,
+    IbGibDynamicComponentInstanceBase_ParentOfTabs,
+} from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
+import {
+    ElementsBase, ChildInfoBase, IbGibDynamicComponentInstance,
+    IbGibDynamicComponentInstanceInitOpts,
+} from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
+import { getComponentSvc } from "@ibgib/web-gib/dist/ui/component/ibgib-component-service.mjs";
+import { getColorStrings, } from "@ibgib/web-gib/dist/helpers.mjs";
+import {
+    alertUser, copyToClipboard, highlightElement, promptForText,
+    shadowRoot_getElementById,
+} from "@ibgib/web-gib/dist/helpers.web.mjs";
+import { askForPersistStorage, } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 
 import { GLOBAL_LOG_A_LOT, } from "../../../constants.mjs";
 import {
-    alertUser,
-    copyToClipboard,
-    getColorStrings,
+    getComponentCtorArg,
     getDefaultFnGetAPIKey,
-    getDeterministicColorInfo, getGlobalMetaspace_waitIfNeeded,
-    getIbGibGlobalThis_BlankGib, highlightElement, promptForText,
-    shadowRoot_getElementById,
+    getIbGibGlobalThis_BlankGib, getIbGibGlobalThis_Common,
 } from "../../../helpers.web.mjs";
-import { askForPersistStorage, storageGet, } from "../../../storage/storage-helpers.web.mjs";
 import { LensMode, ProjectIbGib_V1 } from "../../../common/project/project-types.mjs";
-import { IbGibDynamicComponentInstanceBase_ParentOfTabs, IbGibDynamicComponentMetaBase } from "../../../ui/component/ibgib-dynamic-component-bases.mjs";
-import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts, ChildInfoBase } from "../../../ui/component/component-types.mjs";
-import { appendToTimeline, mut8Timeline } from "../../../api/timeline/timeline-api.mjs";
 import { isProjectIbGib_V1 } from "../../../common/project/project-helper.mjs";
 import { AGENT_AVAILABLE_FUNCTIONS_PROJECTAGENT, AGENT_AVAILABLE_FUNCTIONS_PROJECTCHILDTEXTAGENT, PROJECT_CHILD_TEXT_REL8N_NAME, } from "../../../common/project/project-constants.mjs";
-import { getComponentSvc } from "../../../ui/component/ibgib-component-service.mjs";
 import { RAW_COMPONENT_NAME, RawComponentInstance } from "../../common/raw/raw-component-one-file.mjs";
 import { TEXTEDITOR_COMPONENT_NAME, TextEditorComponentInstance } from "../../common/text-editor/text-editor-component-one-file.mjs";
 import { registerDomainIbGibWithAgentIndex } from "../../../witness/agent/agent-helpers.mjs";
@@ -66,7 +76,7 @@ export class ProjectComponentMeta extends IbGibDynamicComponentMetaBase {
     componentName: string = PROJECT_COMPONENT_NAME;
 
     constructor() {
-        super();
+        super(getComponentCtorArg());
         customElements.define(this.componentName, ProjectComponentInstance);
     }
 
@@ -1227,6 +1237,49 @@ export class ProjectComponentInstance
             const ibGib = this.activeChildInfo.component.ibGib;
             if (!ibGib) { throw new Error(`(UNEXPECTED) active tab's component's ibgib falsy? (E: a6917818f2ee9bf51326982886347825)`); }
             return ibGib;
+        } catch (error) {
+            console.error(`${lc} ${extractErrorMsg(error)}`);
+            throw error;
+        } finally {
+            if (logalot) { console.log(`${lc} complete.`); }
+        }
+    }
+
+    protected async openChronology({
+        ibGibAddr,
+        ibGib,
+    }: {
+        ibGibAddr?: IbGibAddr,
+        ibGib?: IbGib_V1,
+    }): Promise<void> {
+        const lc = `${this.lc}[${this.openChronology.name}]`;
+        try {
+            if (logalot) { console.log(`${lc} starting... (I: 14059d1a68c83b0c28da18f876c9b825)`); }
+
+            if (!ibGibAddr && !ibGib) { throw new Error(`(UNEXPECTED) both ibGibAddr and ibGib falsy? (E: 2ef0c8e5c7ed3b6a4b88cfd2974e8725)`); }
+            if (ibGibAddr && ibGib) {
+                if (ibGibAddr !== getIbGibAddr({ ibGib })) {
+                    console.warn(`${lc} ibGibAddr !== getIbGibAddr({ibGib}) ? This is expectd to be equal, but maybe it's a tjp thing? (W: cd1842c17a082173ca28e908cb25a825). Overriding/Going with ibGib itself`)
+                    ibGibAddr = getIbGibAddr({ ibGib }); // override
+                }
+            }
+            ibGibAddr ??= getIbGibAddr({ ibGib });
+
+            let chronologysComponent = getIbGibGlobalThis_Common().chronologysComponent;
+
+            // wait for it if it isn't defined yet
+            let count = 0;
+            while (!chronologysComponent) {
+                console.warn(`${lc} global chronologysComponent is expected to be truthy by now. delaying (W: e43b814165489d87e8865451c66d5825)`)
+                count++;
+                if (count > 100) {
+                    debugger; // error in web1 component expectation
+                    throw new Error(`(UNEXPECTED) global chronologysComponent is falsy? (E: 407c48599e385fe10beb695849e7f125)`);
+                }
+                await delay(100);
+            }
+
+            await chronologysComponent.openIbGibAddr({ ibGibAddr, });
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
             throw error;

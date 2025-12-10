@@ -12,6 +12,9 @@ import { IbGib_V1 } from "@ibgib/ts-gib/dist/V1/types.mjs";
 import { validateIbGibAddr } from "@ibgib/ts-gib/dist/V1/validate-helper.mjs";
 import { getIbAndGib, getIbGibAddr } from "@ibgib/ts-gib/dist/helper.mjs";
 import { MetaspaceService } from "@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs";
+import { mut8Timeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
+import { tellUserFunctionInfo } from '@ibgib/web-gib/dist/api/commands/chat/tell-user.mjs';
+import { helloWorldFunctionInfo } from '@ibgib/web-gib/dist/api/commands/chat/hello-world.mjs';
 
 import {
     GLOBAL_LOG_A_LOT,
@@ -20,17 +23,14 @@ import {
     alertUser,
     getGlobalMetaspace_waitIfNeeded, highlightElement, promptForConfirm, promptForText, shadowRoot_getElementById,
 } from "../../../helpers.web.mjs";
-import { tellUserFunctionInfo } from "../../../api/commands/chat/tell-user.mjs";
 import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "../../../ui/component/ibgib-dynamic-component-bases.mjs";
 import {
     ElementsBase, IbGibDynamicComponentInstance,
     IbGibDynamicComponentInstanceInitOpts,
 } from "../../../ui/component/component-types.mjs";
-import { helloWorldFunctionInfo } from "../../../api/commands/chat/hello-world.mjs";
 import { MinigameFiniteStateMachine, MinigameGamePhase, MinigameIbGib_V1 } from "../../../common/minigame/minigame-types.mjs";
 import { DEFAULT_ISO_639_LANGUAGE_CODES, DEFAULT_TYPING_GAMEMETA, DEFAULT_TYPING_GAMESTATE, ExpectedResponseType, MINIGAME_FOCUS_INFO, MINIGAME_STIMULTI_TO_ADD_INFO, MinigameGameVariant_Typing } from "../../../common/minigame/typing/typing-constants.mjs";
 import { Minigame_TypingGameState, Minigame_TypingGameMeta, MinigameTypingRawStats, Minigame_TypingStimulus, TypingEntryAndElementsInfo, FocusAndElementsInfo, } from "../../../common/minigame/typing/typing-types.mjs";
-import { mut8Timeline } from "../../../api/timeline/timeline-api.mjs";
 import { AnalysisEngine, } from "../../../common/text-analysis/analysis-engine.mjs";
 import { CorpusAnalyzer } from "../../../common/text-analysis/corpus-analyzer.mjs";
 import {

@@ -214,7 +214,7 @@ export function getHeadingInfo(nodeInfo: DOMElementInfo): NodeHeadingInfo {
             // we'll just do the lowest for now, and consider the child
             // paragraphs as spilled content.
             score = HEADING_SCORE_H6;
-            headingText = nodeInfo.content.find(x => typeof x === 'string')?.trim();
+            headingText = (nodeInfo.content.find(x => typeof x === 'string') as string | undefined)?.trim();
             if (!headingText) {
                 headingText =
                     getNodeTextContent_keepspaces(nodeInfo.content.at(0)! as DOMElementInfo);
@@ -469,7 +469,7 @@ function createSemanticChunks({
             const firstPreambleNode = preambleNodes.filter(x => typeof x !== 'string').at(0);
             let gibId: string;
             if (firstPreambleNode) {
-                gibId = firstPreambleNode.gibId;
+                gibId = (firstPreambleNode as DOMElementInfo).gibId; // tsc needs the cast, but guaranteed to not be string here
             } else {
                 // they're all just string nodes, so hmm...
                 // debugger; // all nodes are strings...i want to see if/when this hits in creating semantic chunks

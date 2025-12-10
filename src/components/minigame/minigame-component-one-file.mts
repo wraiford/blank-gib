@@ -10,6 +10,7 @@ import { getIbAndGib, getIbGibAddr } from "@ibgib/ts-gib/dist/helper.mjs";
 import { GIB_DELIMITER } from "@ibgib/ts-gib/dist/V1/constants.mjs";
 import { MetaspaceService } from "@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs";
 import { getTjpAddr } from "@ibgib/core-gib/dist/common/other/ibgib-helper.mjs";
+import { mut8Timeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
 
 import {
     GLOBAL_LOG_A_LOT,
@@ -29,7 +30,6 @@ import {
     ElementsBase, IbGibDynamicComponentInstance,
     IbGibDynamicComponentInstanceInitOpts,
 } from "../../ui/component/component-types.mjs";
-import { mut8Timeline } from "../../api/timeline/timeline-api.mjs";
 import { isMinigameIbGib_V1, } from "../../common/minigame/minigame-helper.mjs";
 import {
     AGENT_AVAILABLE_FUNCTIONS_MINIGAMEAGENT,

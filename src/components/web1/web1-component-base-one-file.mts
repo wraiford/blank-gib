@@ -4,6 +4,7 @@ import { getIbGibAddr } from "@ibgib/ts-gib/dist/helper.mjs";
 import { IbGib_V1 } from "@ibgib/ts-gib/dist/V1/types.mjs";
 import { createCommentIbGib } from "@ibgib/core-gib/dist/common/comment/comment-helper.mjs";
 import { getTjpAddr, toDto } from "@ibgib/core-gib/dist/common/other/ibgib-helper.mjs";
+import { appendToTimeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
 
 import { GLOBAL_LOG_A_LOT, HARDCODED_PROMPT_TAG_TEXT } from "../../constants.mjs";
 import { getAppShellSvc } from "../../ui/shell/app-shell-service.mjs";
@@ -16,7 +17,6 @@ import { LiveProxyIbGib } from "../../witness/live-proxy-ibgib/live-proxy-ibgib-
 import { getAgentsSvc } from "../../witness/agent/agents-service-v1.mjs";
 import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "../../ui/component/ibgib-dynamic-component-bases.mjs";
 import { FnHandleRouteType, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "../../ui/component/component-types.mjs";
-import { appendToTimeline } from "../../api/timeline/timeline-api.mjs";
 import { AGENT_AVAILABLE_FUNCTIONS_PRIMARYAGENT } from "../../witness/agent/agent-one-file.app.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;

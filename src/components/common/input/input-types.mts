@@ -1,7 +1,9 @@
 import { SpaceId } from "@ibgib/core-gib/dist/witness/space/space-types.mjs";
+import { AgentWitnessAny } from "@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs";
+import { LiveProxyIbGib } from "@ibgib/web-gib/dist/witness/live-proxy-ibgib/live-proxy-ibgib-one-file.mjs";
 
-import { AgentWitnessAny } from "../../../witness/agent/agent-one-file.mjs";
-import { LiveProxyIbGib } from "../../../witness/live-proxy-ibgib/live-proxy-ibgib-one-file.mjs";
+// import { AgentWitnessAny } from "../../../witness/agent/agent-one-file.mjs";
+// import { LiveProxyIbGib } from "../../../witness/live-proxy-ibgib/live-proxy-ibgib-one-file.mjs";
 
 /**
  * information about the current context of an input component.

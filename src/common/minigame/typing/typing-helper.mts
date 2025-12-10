@@ -1,6 +1,7 @@
 import { delay, extractErrorMsg, getSaferSubstring, getTimestamp, getTimestampInTicks, getUUID, pickRandom, pickRandom_Letters, pretty, unique } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 import { Ib, IbGibAddr, TransformResult } from '@ibgib/ts-gib/dist/types.mjs';
 import { getIbGibAddr } from '@ibgib/ts-gib/dist/helper.mjs';
+import { getLatestTimelineIbGibDto_nonLocking, mut8Timeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
 
 import { GLOBAL_LOG_A_LOT } from '../../../constants.mjs';
 import {
@@ -10,7 +11,6 @@ import {
     FocusAndElementsInfo
 } from './typing-types.mjs';
 import { MinigameData_V1, MinigameIbGib_V1 } from '../minigame-types.mjs';
-import { getLatestTimelineIbGibDto_nonLocking, mut8Timeline } from '../../../api/timeline/timeline-api.mjs';
 import { alertUser, getGlobalMetaspace_waitIfNeeded, highlightElement, shadowRoot_getElementById } from '../../../helpers.web.mjs';
 import { MinigameGameType } from '../minigame-constants.mjs';
 import { AnalysisResult } from '../../text-analysis/types.mjs';

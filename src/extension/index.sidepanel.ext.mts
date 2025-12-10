@@ -1,10 +1,11 @@
+import { ROOT_ADDR } from '@ibgib/ts-gib/dist/V1/constants.mjs';
+
 import { initIbGibGlobalThis_BlankGibExt } from './helpers.mjs';
 import { getComponentSvc } from '../ui/component/ibgib-component-service.mjs';
 import { SidepanelComponentMeta, SIDEPANEL_COMPONENT_NAME } from './component/sidepanel/sidepanel-component-one-file.mjs';
 import { RabbitHoleCommentComponentMeta } from './component/rabbit-hole-comment/rabbit-hole-comment-component-one-file.mjs';
-import { ROOT_ADDR } from '@ibgib/ts-gib/dist/V1/constants.mjs';
 import { bootstrapMetaspace } from './bootstrap.ext.mjs';
-import { initBlankGibStorage } from '../storage/storage-helpers.web.mjs';
+import { initBlankGibStorage } from "../helpers.web.mjs";
 
 console.log('sidepanel.mts loading...');
 

@@ -12,6 +12,7 @@ import { getLatestAddrs, parseSpaceIb, persistTransformResult } from '@ibgib/cor
 import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.mjs';
 import { getTimestampInfo } from '@ibgib/core-gib/dist/common/other/ibgib-helper.mjs';
 import { MetaspaceService } from '@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs';
+import { appendToTimeline, mut8Timeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
 
 import { GLOBAL_LOG_A_LOT } from '../../constants.mjs';
 import {
@@ -22,7 +23,6 @@ import {
 import {
     ProjectData_V1, ProjectIbGib_V1, ProjectIbInfo, ProjectAddlMetadataInfo,
 } from './project-types.mjs';
-import { appendToTimeline, mut8Timeline } from '../../api/timeline/timeline-api.mjs';
 import { getAgentsSvc } from '../../witness/agent/agents-service-v1.mjs';
 import { AGENT_SPECIAL_IBGIB_TYPE_PROJECTAGENT } from '../../agent-texts/project-agent-texts.mjs';
 

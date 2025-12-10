@@ -9,7 +9,7 @@ import {
     BLANK_GIB_INDEXEDDB_LOCAL_SPACE_NAME_PREFIX,
 } from "../constants.mjs";
 import { Metaspace_Webspace } from "../witness/space/metaspace/metaspace-webspace/metaspace-webspace.mjs";
-import { storageGet } from "../storage/storage-helpers.web.mjs";
+import { storageGet } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 import { getIbGibGlobalThis_BlankGibExt, initIbGibGlobalThis_BlankGibExt } from "./helpers.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;

@@ -45,7 +45,7 @@ import {
     BlankCanvasAppData_V1, BlankCanvasAppRel8ns_V1,
     DEFAULT_BLANK_CANVAS_APP_DATA_V1, DEFAULT_BLANK_CANVAS_APP_REL8NS_V1,
 } from "./witness/app/blank-canvas/blank-canvas-types.mjs";
-import { storageGet } from "./storage/storage-helpers.web.mjs";
+import { storageGet } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 import { LiveProxyIbGib } from "./witness/live-proxy-ibgib/live-proxy-ibgib-one-file.mjs";
 import { AUTO_GENERATED_VERSION } from "./AUTO-GENERATED-version.mjs";
 import { registerDeprecatedFunctionNamesAndFunctionInfos_Web } from "./api/function-infos.web.mjs";

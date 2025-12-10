@@ -11,19 +11,32 @@ import { isPrimitive } from "@ibgib/ts-gib/dist/V1/index.mjs";
 import { getIbAndGib, getIbGibAddr } from "@ibgib/ts-gib/dist/helper.mjs";
 import { MetaspaceService } from "@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs";
 import { getTjpAddr } from "@ibgib/core-gib/dist/common/other/ibgib-helper.mjs";
+import {
+    getDeterministicColorInfo, getGlobalMetaspace_waitIfNeeded,
+} from "@ibgib/web-gib/dist/helpers.mjs";
+import {
+    IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase,
+    IbGibDynamicComponentInstanceBase_ParentOfTabs,
+} from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
+import {
+    ElementsBase, ChildInfoBase, IbGibDynamicComponentInstance,
+    IbGibDynamicComponentInstanceInitOpts,
+} from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
+import { getComponentSvc } from "@ibgib/web-gib/dist/ui/component/ibgib-component-service.mjs";
+import { getColorStrings, } from "@ibgib/web-gib/dist/helpers.mjs";
+import {
+    alertUser, copyToClipboard, highlightElement, promptForText,
+    shadowRoot_getElementById,
+} from "@ibgib/web-gib/dist/helpers.web.mjs";
+import { askForPersistStorage, } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
+import { tellUserFunctionInfo } from "@ibgib/web-gib/dist/api/commands/chat/tell-user.mjs";
+import { helloWorldFunctionInfo } from "@ibgib/web-gib/dist/api/commands/chat/hello-world.mjs";
 
 import {
     GLOBAL_LOG_A_LOT, ARMY_STORE, BEE_KEY, BLANK_GIB_DB_NAME,
 } from "../../../constants.mjs";
-import {
-    getGlobalMetaspace_waitIfNeeded, getIbGibGlobalThis_BlankGib,
-    shadowRoot_getElementById,
-} from "../../../helpers.web.mjs";
-import { storageGet, } from "../../../storage/storage-helpers.web.mjs";
-import { tellUserFunctionInfo } from "../../../api/commands/chat/tell-user.mjs";
-import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "../../../ui/component/ibgib-dynamic-component-bases.mjs";
-import { IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "../../../ui/component/component-types.mjs";
-import { helloWorldFunctionInfo } from "../../../api/commands/chat/hello-world.mjs";
+import { getComponentCtorArg, getIbGibGlobalThis_BlankGib, } from "../../../helpers.web.mjs";
+import { storageGet, } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -49,7 +62,7 @@ export class RawComponentMeta extends IbGibDynamicComponentMetaBase {
     componentName: string = RAW_COMPONENT_NAME;
 
     constructor() {
-        super();
+        super(getComponentCtorArg());
         customElements.define(this.componentName, RawComponentInstance);
     }
 

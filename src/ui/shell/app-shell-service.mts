@@ -19,7 +19,7 @@ import {
     highlightElement, isExecutingInBlankGibWebAppProper, promptForAPIKey,
     promptForConfirm, updateAPIKeyInStorage,
 } from "../../helpers.web.mjs";
-import { storageGet, storagePut } from "../../storage/storage-helpers.web.mjs";
+import { storageGet, storagePut } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 import {
     ID_APP_SHELL, ID_HEADER_PANEL, ID_PANEL_CONTAINER, ID_LEFT_PANEL,
     ID_LEFT_PANEL_CONTENT, ID_LEFT_PANEL_FOOTER, ID_LEFT_PANEL_HEADER,
@@ -46,7 +46,8 @@ import { CHRONOLOGYS_COMPONENT_NAME, ChronologysComponentInstance, ChronologysCo
 import { ChronologyComponentMeta } from "../../components/common/chronology/chronology-component-one-file.mjs";
 import { RawComponentMeta } from "../../components/common/raw/raw-component-one-file.mjs";
 import { TextEditorComponentMeta } from "../../components/common/text-editor/text-editor-component-one-file.mjs";
-import { getExistingUIInfo } from "../ui-helpers.mjs";
+// import { getExistingUIInfo } from "../ui-helpers.mjs";
+import { getExistingUIInfo } from "@ibgib/web-gib/dist/ui/ui-helpers.mjs";
 import { MinigameComponentMeta } from "../../components/minigame/minigame-component-one-file.mjs";
 import { TypingComponentMeta } from "../../components/minigame/typing/typing-component-one-file.mjs";
 import { PROJECTS_EXPLORER_COMPONENT_NAME, ProjectsExplorerComponentInstance, ProjectsExplorerComponentMeta } from "../../components/projects/projects-explorer/projects-explorer-component-one-file.mjs";
@@ -1220,7 +1221,10 @@ export class AppShellService {
         try {
             if (logalot) { console.log(`${lc} starting... (I: 7ff768702108c6f7495f6e4eae06a825)`); }
             // restore the theme if it exists
-            const existingUIInfo = await getExistingUIInfo();
+            const existingUIInfo = await getExistingUIInfo({
+                dbName: BLANK_GIB_DB_NAME,
+                storeName: ARMY_STORE,
+            });
             if (existingUIInfo) {
                 for (const [variableName, value] of Object.entries(existingUIInfo.cssVariableOverrides)) {
                     document.documentElement.style.setProperty(variableName, value);

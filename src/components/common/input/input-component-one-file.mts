@@ -10,6 +10,7 @@ import { ROOT } from "@ibgib/ts-gib/dist/V1/constants.mjs";
 import { MetaspaceService } from "@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs";
 import { CommentIbGib_V1 } from "@ibgib/core-gib/dist/common/comment/comment-types.mjs";
 import { createCommentIbGib } from "@ibgib/core-gib/dist/common/comment/comment-helper.mjs";
+import { appendToTimeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
 
 import {
     ARMY_STORE,
@@ -19,11 +20,10 @@ import {
 } from "../../../constants.mjs";
 import { InputInfo } from "./input-types.mjs";
 import { getGlobalMetaspace_waitIfNeeded, getDeterministicColorInfo, promptForAPIKey, updateAPIKeyInStorage } from "../../../helpers.web.mjs";
-import { storageGet, } from "../../../storage/storage-helpers.web.mjs";
+import { storageGet, } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 import { getAddlMetadataTextForAgentText } from "../../../witness/agent/agent-one-file.mjs";
 import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "../../../ui/component/ibgib-dynamic-component-bases.mjs";
 import { IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "../../../ui/component/component-types.mjs";
-import { appendToTimeline } from "../../../api/timeline/timeline-api.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;
 

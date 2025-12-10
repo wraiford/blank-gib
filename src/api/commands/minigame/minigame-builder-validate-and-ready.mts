@@ -3,6 +3,7 @@ import { validateIbGibAddr } from "@ibgib/ts-gib/dist/V1/validate-helper.mjs";
 import { getIbAndGib, } from "@ibgib/ts-gib/dist/helper.mjs";
 import { IbGibAddr, } from "@ibgib/ts-gib/dist/types.mjs";
 import { isPrimitive } from "@ibgib/ts-gib/dist/V1/transforms/transform-helper.mjs";
+import { mut8Timeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
 
 import { GLOBAL_LOG_A_LOT } from "../../../constants.mjs";
 import { APIFunctionInfo } from "../../api-types.mjs";
@@ -16,7 +17,6 @@ import {
 } from "../../../common/minigame/minigame-constants.mjs";
 import { MinigameGamePhase, MinigameIbGib_V1 } from "../../../common/minigame/minigame-types.mjs";
 import { validateMinigameIsReady } from "../../../common/minigame/minigame-helper.mjs";
-import { mut8Timeline } from "../../timeline/timeline-api.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;
 

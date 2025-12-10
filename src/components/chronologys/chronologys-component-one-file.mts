@@ -13,12 +13,23 @@ import { fnObs } from "@ibgib/core-gib/dist/common/pubsub/observer/observer-help
 import { IbGibTimelineUpdateInfo } from "@ibgib/core-gib/dist/common/other/other-types.mjs";
 import { getTjpAddr } from "@ibgib/core-gib/dist/common/other/ibgib-helper.mjs";
 import { execInSpaceWithLocking } from "@ibgib/core-gib/dist/witness/space/space-helper.mjs";
+import { mut8Timeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
+import { getGlobalMetaspace_waitIfNeeded,getDeterministicColorInfo, } from "@ibgib/web-gib/dist/helpers.mjs";
+import { shadowRoot_getElementById } from '@ibgib/web-gib/dist/helpers.web.mjs';
+import { tellUserFunctionInfo } from '@ibgib/web-gib/dist/api/commands/chat/tell-user.mjs';
+import {
+    IbGibDynamicComponentInstanceBase_ParentOfTabs, IbGibDynamicComponentMetaBase
+} from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
+import {
+    ElementsBase, IbGibDynamicComponentInstance,
+    IbGibDynamicComponentInstanceInitOpts, ChildInfoBase
+} from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
+import { getComponentSvc } from "@ibgib/web-gib/dist/ui/component/ibgib-component-service.mjs";
 
 import { GLOBAL_LOG_A_LOT, } from "../../constants.mjs";
 import { AgentWitnessAny, } from "../../witness/agent/agent-one-file.mjs";
 import {
-    getGlobalMetaspace_waitIfNeeded, getDeterministicColorInfo,
-    shadowRoot_getElementById,
+    getComponentCtorArg,
     getDefaultFnGetAPIKey,
     getIbGibGlobalThis_BlankGib,
 } from "../../helpers.web.mjs";
@@ -27,26 +38,16 @@ import {
     AGENT_INITIAL_CHAT_HI_PLEASEINTRO_YOURSELF,
     AGENT_SYSTEM_PROMPT_COMMON_INSTRUCTIONS,
 } from "../../agent-texts/common-agent-texts.mjs";
-import { tellUserFunctionInfo } from "../../api/commands/chat/tell-user.mjs";
 import { CHRONOLOGY_COMPONENT_NAME, ChronologyComponentInstance } from "../common/chronology/chronology-component-one-file.mjs";
 import { simpleIbGibRouterSingleton } from "../../ui/router/router-one-file.mjs";
 import { getAgents } from "../../witness/agent/agent-helpers.mjs";
 import { getAgentsSvc } from "../../witness/agent/agents-service-v1.mjs";
-import {
-    IbGibDynamicComponentInstanceBase_ParentOfTabs, IbGibDynamicComponentMetaBase
-} from "../../ui/component/ibgib-dynamic-component-bases.mjs";
-import {
-    ElementsBase, IbGibDynamicComponentInstance,
-    IbGibDynamicComponentInstanceInitOpts, ChildInfoBase
-} from "../../ui/component/component-types.mjs";
-import { getComponentSvc } from "../../ui/component/ibgib-component-service.mjs";
 import { isProjectIbGib_V1 } from "../../common/project/project-helper.mjs";
 import { getAppShellSvc } from "../../ui/shell/app-shell-service.mjs";
 import { CHAT_WITH_AGENT_PLACEHOLDER_AGENT } from "../../witness/app/blank-canvas/blank-canvas-constants.mjs";
 import { SettingsType } from "../../common/settings/settings-constants.mjs";
 import { getDefaultSettings, getSectionName } from "../../common/settings/settings-helpers.mjs";
 import { Settings_Chronologys } from "../../common/settings/settings-types.mjs";
-import { mut8Timeline } from "../../api/timeline/timeline-api.mjs";
 import { AGENT_AVAILABLE_FUNCTIONS_PROJECTAGENT, AGENT_AVAILABLE_FUNCTIONS_PROJECTCHILDTEXTAGENT } from "../../common/project/project-constants.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;
@@ -85,7 +86,7 @@ export class ChronologysComponentMeta extends IbGibDynamicComponentMetaBase {
     componentName: string = CHRONOLOGYS_COMPONENT_NAME;
 
     constructor() {
-        super();
+        super(getComponentCtorArg());
         customElements.define(this.componentName, ChronologysComponentInstance);
     }
 

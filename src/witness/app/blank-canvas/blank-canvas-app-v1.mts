@@ -55,7 +55,7 @@ import {
     CHAT_WITH_AGENT_NEED_API_KEY,
 } from './blank-canvas-constants.mjs';
 import { RequestCommentIbGib_V1 } from '../../../types.mjs';
-import { storageGet, storagePut } from '../../../storage/storage-helpers.web.mjs';
+import { storageGet, storagePut } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 import {
     AGENT_INITIAL_CHAT_TEXT_PRIMARYAGENT,
     AGENT_INITIAL_SYSTEM_TEXT_PRIMARYAGENT,
