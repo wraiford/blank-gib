@@ -32,6 +32,17 @@ import {
     shadowRoot_getElementById,
 } from "@ibgib/web-gib/dist/helpers.web.mjs";
 import { askForPersistStorage, } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
+import { LensMode, ProjectIbGib_V1 } from "@ibgib/web-gib/dist/common/project/project-types.mjs";
+import { isProjectIbGib_V1 } from "@ibgib/web-gib/dist/common/project/project-helper.mjs";
+import {
+    AGENT_AVAILABLE_FUNCTIONS_PROJECTAGENT, AGENT_AVAILABLE_FUNCTIONS_PROJECTCHILDTEXTAGENT, PROJECT_CHILD_TEXT_REL8N_NAME,
+} from "@ibgib/web-gib/dist/common/project/project-constants.mjs";
+import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
+import { GeminiModel } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
+import { registerDomainIbGibWithAgentIndex } from "@ibgib/web-gib/dist/witness/agent/agent-helpers.mjs";
+import { IbGibSettings, Settings_General, Settings_Project, } from "@ibgib/web-gib/dist/common/settings/settings-types.mjs";
+import { getSectionName, getSettingsSection } from "@ibgib/web-gib/dist/common/settings/settings-helpers.mjs";
+import { SettingsType } from "@ibgib/web-gib/dist/common/settings/settings-constants.mjs";
 
 import { GLOBAL_LOG_A_LOT, } from "../../../constants.mjs";
 import {
@@ -39,20 +50,10 @@ import {
     getDefaultFnGetAPIKey,
     getIbGibGlobalThis_BlankGib, getIbGibGlobalThis_Common,
 } from "../../../helpers.web.mjs";
-import { LensMode, ProjectIbGib_V1 } from "../../../common/project/project-types.mjs";
-import { isProjectIbGib_V1 } from "../../../common/project/project-helper.mjs";
-import { AGENT_AVAILABLE_FUNCTIONS_PROJECTAGENT, AGENT_AVAILABLE_FUNCTIONS_PROJECTCHILDTEXTAGENT, PROJECT_CHILD_TEXT_REL8N_NAME, } from "../../../common/project/project-constants.mjs";
 import { RAW_COMPONENT_NAME, RawComponentInstance } from "../../common/raw/raw-component-one-file.mjs";
 import { TEXTEDITOR_COMPONENT_NAME, TextEditorComponentInstance } from "../../common/text-editor/text-editor-component-one-file.mjs";
-import { registerDomainIbGibWithAgentIndex } from "../../../witness/agent/agent-helpers.mjs";
-import { getAgentsSvc } from "../../../witness/agent/agents-service-v1.mjs";
-import { GeminiModel } from "../../../witness/agent/gemini/gemini-constants.mjs";
 import { AGENT_INITIAL_CHAT_TEXT_PROJECTCHILDTEXTAGENT, AGENT_INITIAL_SYSTEM_TEXT_PROJECTCHILDTEXTAGENT, AGENT_SPECIAL_IBGIB_TYPE_PROJECTCHILDTEXTAGENT } from "../../../agent-texts/project-child-text-agent-texts.mjs";
-import { IbGibSettings, Settings_General, Settings_Project, } from "../../../common/settings/settings-types.mjs";
-import { getSectionName, getSettingsSection } from "../../../common/settings/settings-helpers.mjs";
-import { SettingsType } from "../../../common/settings/settings-constants.mjs";
 import { isMinigameIbGib_V1 } from "../../../common/minigame/minigame-helper.mjs";
-import { MINIGAME_ATOM, MinigameGameVariant } from "../../../common/minigame/minigame-constants.mjs";
 import { MINIGAME_COMPONENT_NAME } from "../../minigame/minigame-component-one-file.mjs";
 import { minigameBuilderStartFunctionInfo, MinigameBuilderStartResult } from "../../../api/commands/minigame/minigame-builder-start.mjs";
 import { MinigameIbGib_V1 } from "../../../common/minigame/minigame-types.mjs";

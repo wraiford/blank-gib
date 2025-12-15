@@ -1,7 +1,7 @@
 import { ROOT_ADDR } from '@ibgib/ts-gib/dist/V1/constants.mjs';
+import { getComponentSvc } from '@ibgib/web-gib/dist/ui/component/ibgib-component-service.mjs';
 
 import { initIbGibGlobalThis_BlankGibExt } from './helpers.mjs';
-import { getComponentSvc } from '../ui/component/ibgib-component-service.mjs';
 import { SidepanelComponentMeta, SIDEPANEL_COMPONENT_NAME } from './component/sidepanel/sidepanel-component-one-file.mjs';
 import { RabbitHoleCommentComponentMeta } from './component/rabbit-hole-comment/rabbit-hole-comment-component-one-file.mjs';
 import { bootstrapMetaspace } from './bootstrap.ext.mjs';

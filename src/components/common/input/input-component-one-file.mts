@@ -14,7 +14,7 @@ import { appendToTimeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs
 import { getDeterministicColorInfo, getGlobalMetaspace_waitIfNeeded, } from "@ibgib/web-gib/dist/helpers.mjs";
 import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
 import { IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts, } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
-import { getAddlMetadataTextForAgentText } from '@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs';
+import { getAddlMetadataTextForAgentText } from '@ibgib/web-gib/dist/witness/agent/agent-helpers.mjs';
 import { storageGet, } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 import { promptForAPIKey, updateAPIKeyInStorage } from '@ibgib/web-gib/dist/helpers.web.mjs';
 

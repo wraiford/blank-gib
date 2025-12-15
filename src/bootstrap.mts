@@ -24,6 +24,8 @@ import { TagIbGib_V1 } from "@ibgib/core-gib/dist/common/tag/tag-types.mjs";
 import { SPACE_NAME_REGEXP } from "@ibgib/core-gib/dist/witness/space/space-constants.mjs";
 import { alertUser, promptForSecret, promptForText, } from "@ibgib/web-gib/dist/helpers.web.mjs";
 import { Metaspace_Webspace } from "@ibgib/web-gib/dist/witness/space/metaspace/metaspace-webspace/metaspace-webspace.mjs";
+import { LiveProxyIbGib } from "@ibgib/web-gib/dist/witness/live-proxy-ibgib/live-proxy-ibgib-one-file.mjs";
+import { storageGet } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 
 import {
     GLOBAL_LOG_A_LOT,
@@ -37,19 +39,16 @@ import {
     createRequestCommentIbGib, validateArgInfos, validateParamInfos
 } from "./witness/app/blank-canvas/blank-canvas-helper.mjs";
 import { RequestCommentIbGib_V1 } from "./types.mjs";
-import {
-    getIbGibGlobalThis_BlankGib,
-} from "./helpers.web.mjs";
+import { getIbGibGlobalThis_BlankGib, } from "./helpers.web.mjs";
 import type { IbGibGlobalThis_Common, } from "./types.mjs"
 import { BlankCanvasApp_V1, BlankCanvasApp_V1_Factory } from "./witness/app/blank-canvas/blank-canvas-app-v1.mjs";
 import {
     BlankCanvasAppData_V1, BlankCanvasAppRel8ns_V1,
     DEFAULT_BLANK_CANVAS_APP_DATA_V1, DEFAULT_BLANK_CANVAS_APP_REL8NS_V1,
 } from "./witness/app/blank-canvas/blank-canvas-types.mjs";
-import { storageGet } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
-import { LiveProxyIbGib } from "./witness/live-proxy-ibgib/live-proxy-ibgib-one-file.mjs";
 import { AUTO_GENERATED_VERSION } from "./AUTO-GENERATED-version.mjs";
 import { registerDeprecatedFunctionNamesAndFunctionInfos_Web } from "./api/function-infos.web.mjs";
+import { getIbGibGlobalThis_IbGib } from "@ibgib/web-gib/dist/helpers.mjs";
 
 console.log(`[blank-gib bootstrap] version: ${AUTO_GENERATED_VERSION}`);
 
@@ -180,15 +179,8 @@ async function bootstrapBlankCanvas_execFromArgs({
     try {
         if (logalot) { console.log(`${lc} starting... (I: 85e346005ff482a116e3352fbd962a24)`); }
 
-        const resRequestCommentIbGib = await createRequestCommentIbGib({
-            args,
-            interpretedArgInfos: argInfos,
-            // space:        // no metaspace yet
-            // saveInSpace?: // no metaspace yet
-        });
-
         // "Three" cases:
-        // 1. init a new metaspace
+        // 1. init a new metaspace (one-time action)
         // 2. start an interactive repl session
         // 3. exec some other rcli cmd as a one-off
 
@@ -201,12 +193,20 @@ async function bootstrapBlankCanvas_execFromArgs({
             argInfos,
         });
         // await initIbGibGlobalThis();
+        const ibgibGlobalThis_core = getIbGibGlobalThis_IbGib();
+        ibgibGlobalThis_core.metaspace = metaspace;
         const ibgibGlobalThis = getIbGibGlobalThis_BlankGib();
         ibgibGlobalThis.metaspace = metaspace;
         await ensureTagsExist({ metaspace });
 
         registerDeprecatedFunctionNamesAndFunctionInfos_Web();
 
+        const resRequestCommentIbGib = await createRequestCommentIbGib({
+            args,
+            interpretedArgInfos: argInfos,
+            // space:        // no metaspace yet
+            // saveInSpace?: // no metaspace yet
+        });
         if (logalot) { console.log(`${lc} save resRequestCommentIbGib starting... (I: 683091820d4abc5a68e14177944d0e24)`); }
         await metaspace.persistTransformResult({ resTransform: resRequestCommentIbGib });
         if (logalot) { console.log(`${lc} save resRequestCommentIbGib complete. (I: bf860bc6bfaaf5ca4842204453423424)`); }

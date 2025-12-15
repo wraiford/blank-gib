@@ -1,4 +1,5 @@
-import { IbGibDynamicComponentMeta } from "../../ui/component/component-types.mjs";
+import { IbGibDynamicComponentMeta } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
+
 import { Web1ComponentMeta_About } from "./about/web1-about-component-one-file.mjs";
 import { Web1ComponentMeta_Blog } from "./blog/web1-blog-component-one-file.mjs";
 import { Web1ComponentMeta_Contact } from "./contact/web1-contact-component-one-file.mjs";

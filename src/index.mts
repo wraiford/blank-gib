@@ -1,9 +1,16 @@
 import { delay, extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 
+// console.timeLog(lc, 'initIbGibGlobalThis complete');
+
 import { GLOBAL_LOG_A_LOT } from './constants.mjs';
 import {
-    dynamicallyLoadBootstrapScript, initIbGibGlobalThis, initBlankGibStorage,
+    dynamicallyLoadBootstrapScript,
+    // initIbGibGlobalThis,
+    initBlankGibStorage,
 } from './helpers.web.mjs';
+
+// await initIbGibGlobalThis();
+
 import { simpleIbGibRouterSingleton as router } from './ui/router/router-one-file.mjs';
 import { getAppShellSvc } from './ui/shell/app-shell-service.mjs';
 // import { initRegisterServiceWorker } from './init-service-worker.mjs';
@@ -24,8 +31,6 @@ async function spinOffStartup(): Promise<void> {
                 console.timeLog(lc, 'DOMContentLoaded fired');
                 // await initRegisterServiceWorker();
                 // console.timeLog(lc, 'initRegisterServiceWorker complete');
-                await initIbGibGlobalThis();
-                console.timeLog(lc, 'initIbGibGlobalThis complete');
                 await initBlankGibStorage();
                 console.timeLog(lc, 'initBlankGibStorage complete');
                 const shellLayoutSvc = getAppShellSvc();

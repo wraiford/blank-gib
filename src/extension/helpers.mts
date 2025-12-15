@@ -13,6 +13,8 @@ import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.
 import { appendToTimeline, mut8Timeline } from '@ibgib/core-gib/dist/timeline/timeline-api.mjs';
 import { createCommentIbGib, parseCommentIb } from '@ibgib/core-gib/dist/common/comment/comment-helper.mjs';
 import { getTjpAddr } from '@ibgib/core-gib/dist/common/other/ibgib-helper.mjs';
+import { ProjectIbGib_V1 } from '@ibgib/web-gib/dist/common/project/project-types.mjs';
+import { PROJECT_MAX_NAME_LENGTH } from '@ibgib/web-gib/dist/common/project/project-constants.mjs';
 
 import { GLOBAL_LOG_A_LOT } from '../constants.mjs';
 import { IbGibGlobalThis_BlankGibExt } from "./types.ext.mjs";
@@ -31,9 +33,7 @@ import {
     TRANSLATION_TEXT_ATOM,
 } from './constants.mjs';
 import { DOMElementInfo, PageContentInfo } from './page-analyzer/page-analyzer-types.mjs';
-import { ProjectIbGib_V1 } from '../common/project/project-types.mjs';
 import { ChunkCommentAddlMetadataInfo, ChunkCommentData_V1, TranslationTextKeyInfo, } from './types.mjs';
-import { PROJECT_MAX_NAME_LENGTH } from '../common/project/project-constants.mjs';
 import { getNodeTextContent_keepspaces } from './page-analyzer/page-analyzer-helpers.mjs';
 
 const lc = '[extension][helpers]';

@@ -4,9 +4,8 @@ import { APIFunctionInfo } from "@ibgib/web-gib/dist/api/api-types.mjs";
 import { SETTINGS_ATOM } from "@ibgib/web-gib/dist/common/settings/settings-constants.mjs";
 import { TextAPIFunctionInfos } from "@ibgib/web-gib/dist/api/commands/text/text-index.mjs";
 
-import { MinigameFunctionInfos } from "../../api/commands/minigame/minigame-index.mjs";
+// import { MinigameFunctionInfos } from "../../api/commands/minigame/minigame-index.mjs";
 import { MinigameGameVariant_Typing } from "./typing/typing-constants.mjs";
-import { delay } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
 
 export const MINIGAME_ATOM = 'minigame';
 export const MINIGAME_NAME_REGEXP = /^[a-zA-Z0-9_\-. ]{1,128}$/;
@@ -37,15 +36,16 @@ export const AGENT_AVAILABLE_FUNCTIONS_MINIGAMEAGENT: APIFunctionInfo<any>[] = [
     // ...MinigameFunctionInfos,
 ];
 // ugly hack for some circular dependency that I can't find
-setTimeout(async () => {
-    while (!MinigameFunctionInfos) {
-        await delay(100);
-        debugger;
-    }
-    MinigameFunctionInfos.forEach(x => {
-        AGENT_AVAILABLE_FUNCTIONS_MINIGAMEAGENT.push(x);
-    }); // hasn't initialized yet
-});
+// had to comment this out, really getting into solving this circular dependency mess 2025/12/15
+// setTimeout(async () => {
+//     while (!MinigameFunctionInfos) {
+//         await delay(100);
+//         debugger;
+//     }
+//     MinigameFunctionInfos.forEach(x => {
+//         AGENT_AVAILABLE_FUNCTIONS_MINIGAMEAGENT.push(x);
+//     }); // hasn't initialized yet
+// });
 
 // #region MinigameGameType
 export const MINIGAME_GAMETYPE_TYPING = 'typing';

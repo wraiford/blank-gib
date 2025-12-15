@@ -17,6 +17,7 @@ import {
 import { AUTO_GENERATED_VERSION } from "./AUTO-GENERATED-version.mjs";
 import { IbGibGlobalThis_BlankGib, IbGibGlobalThis_Common } from "./types.mjs";
 import { ProjectComponentInstance } from "./components/projects/project/project-component-one-file.mjs";
+import { IbGibGlobalThisInfo } from "@ibgib/web-gib/dist/types.mjs";
 
 
 /**
@@ -96,6 +97,9 @@ export function getIbGibGlobalThis_Common(): IbGibGlobalThis_Common {
 }
 
 export function getIbGibGlobalThis_BlankGib(): IbGibGlobalThis_BlankGib {
+    if (!(globalThis as any).ibgib?.blankgib) {
+        initIbGibGlobalThis();
+    }
     return (globalThis as any).ibgib.blankgib as IbGibGlobalThis_BlankGib;
 }
 
@@ -110,7 +114,7 @@ export function getIbGibGlobalThis_BlankGib(): IbGibGlobalThis_BlankGib {
  *
  * @see {@link IbGibGlobalThis_BlankGib}
  */
-export async function initIbGibGlobalThis(): Promise<void> {
+export function initIbGibGlobalThis(): void {
     const lc = `[${initIbGibGlobalThis.name}]`;
     try {
         if (logalot) { console.log(`${lc} starting... (I: c71f63b0dcc3a6380e60765fb73b7924)`); }
@@ -118,7 +122,11 @@ export async function initIbGibGlobalThis(): Promise<void> {
         if (!!(globalThis as any).ibgib) {
             console.log(`${lc} globalThis.ibgib already truthy. (I: f26d8b274bd5734bb954427b4f091325)`);
         } else {
-            (globalThis as any).ibgib = {};
+            (globalThis as any).ibgib = {
+                dbName_hack: BLANK_GIB_DB_NAME,
+                apiKeyName_hack: BEE_KEY,
+                storeName_hack: ARMY_STORE,
+            } satisfies IbGibGlobalThisInfo;
         }
 
         if (!!(globalThis as any).ibgib.blankgib) {
@@ -135,6 +143,9 @@ export async function initIbGibGlobalThis(): Promise<void> {
                     });
                     return apiKey ?? '';
                 },
+                dbName_hack: BLANK_GIB_DB_NAME,
+                apiKeyName_hack: BEE_KEY,
+                storeName_hack: ARMY_STORE,
             } satisfies IbGibGlobalThis_BlankGib;
         }
 
@@ -727,24 +738,24 @@ export async function initIbGibGlobalThis(): Promise<void> {
 //     }
 // }
 
-// /**
-//  * If this is Dynamically import bootstrapBlankCanvasApp AFTER initial layout,
-//  * so we don't incur the speed penalty of loading all of the ibgib-related code.
-//  */
-// export async function dynamicallyLoadBootstrapScript(): Promise<void> {
-//     const lc = `[${dynamicallyLoadBootstrapScript.name}]`;
-//     try {
-//         if (logalot) { console.log(`${lc} starting... (I: 2308b22b90dbad13086d0c0d6ef9a325)`); }
-//         // const globalIbGib = getIbGibGlobalThis_BlankGib();
-//         const module = await import('./bootstrap.mjs');
-//         await module.bootstrapBlankCanvasApp();
-//     } catch (error) {
-//         console.error(`${lc} ${extractErrorMsg(error)}`);
-//         throw error;
-//     } finally {
-//         if (logalot) { console.log(`${lc} complete.`); }
-//     }
-// }
+/**
+ * If this is Dynamically import bootstrapBlankCanvasApp AFTER initial layout,
+ * so we don't incur the speed penalty of loading all of the ibgib-related code.
+ */
+export async function dynamicallyLoadBootstrapScript(): Promise<void> {
+    const lc = `[${dynamicallyLoadBootstrapScript.name}]`;
+    try {
+        if (logalot) { console.log(`${lc} starting... (I: 2308b22b90dbad13086d0c0d6ef9a325)`); }
+        // const globalIbGib = getIbGibGlobalThis_BlankGib();
+        const module = await import('./bootstrap.mjs');
+        await module.bootstrapBlankCanvasApp();
+    } catch (error) {
+        console.error(`${lc} ${extractErrorMsg(error)}`);
+        throw error;
+    } finally {
+        if (logalot) { console.log(`${lc} complete.`); }
+    }
+}
 
 // export function getUserPreferredColorScheme(): 'light' | 'dark' {
 //     const lc = `[${getUserPreferredColorScheme.name}]`;
@@ -1391,12 +1402,13 @@ export function getComponentCtorArg(): IbGibDynamicComponentMetaCtorOpts {
             try {
                 let maxTries = 100_000; // 10 seconds?
                 let counter = 0;
-                let bootstrapPromise = getIbGibGlobalThis_BlankGib().bootstrapPromise;
-                while (bootstrapPromise === undefined) {
+                let bootstrapPromise: Promise<void> | undefined = undefined;
+                do {
+                    bootstrapPromise = getIbGibGlobalThis_BlankGib()?.bootstrapPromise;
                     counter++;
                     if (counter > maxTries) { break; }
                     await delay(10);
-                }
+                } while (bootstrapPromise === undefined)
                 if (bootstrapPromise === undefined) { throw new Error(`couldn't get bootstrapPromise. tried waiting...hmmm.... (E: e42858f27238666cdeb59ce8e1898825)`); }
                 await bootstrapPromise;
                 resolve();

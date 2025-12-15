@@ -10,13 +10,13 @@
  */
 
 import { extractErrorMsg } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
+import { APIFunctionInfo } from "@ibgib/web-gib/dist/api/api-types.mjs";
+import { registerDeprecatedFunctionInfoName, registerFunctionInfos } from "@ibgib/web-gib/dist/api/api-index.mjs";
+import { IbGibAPIFunctionInfos } from "@ibgib/web-gib/dist/api/commands/ibgib/ibgib-index.mjs";
+import { TextAPIFunctionInfos } from "@ibgib/web-gib/dist/api/commands/text/text-index.mjs";
 
 import { GLOBAL_LOG_A_LOT } from "../constants.mjs";
-import { APIFunctionInfo } from "../api/api-types.mjs";
-import { registerDeprecatedFunctionInfoName, registerFunctionInfos } from "../api/api-index.mjs";
 import { UIAgentFunctionInfos } from "../api/commands/ui/ui-index.mjs";
-import { IbGibAPIFunctionInfos } from "../api/commands/ibgib/ibgib-index.mjs";
-import { TextAPIFunctionInfos } from "../api/commands/text/text-index.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;
 

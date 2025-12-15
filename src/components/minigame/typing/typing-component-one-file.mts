@@ -16,7 +16,7 @@ import { mut8Timeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
 import { tellUserFunctionInfo } from '@ibgib/web-gib/dist/api/commands/chat/tell-user.mjs';
 import { helloWorldFunctionInfo } from '@ibgib/web-gib/dist/api/commands/chat/hello-world.mjs';
 import { alertUser, highlightElement, promptForConfirm, promptForText, shadowRoot_getElementById, } from "@ibgib/web-gib/dist/helpers.web.mjs";
-import { getGlobalMetaspace_waitIfNeeded, } from "@ibgib/web-gib/dist/helpers.mjs";
+import { getGlobalMetaspace_waitIfNeeded, debounce, } from "@ibgib/web-gib/dist/helpers.mjs";
 import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
 import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts, } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
 
@@ -40,7 +40,6 @@ import {
 import { DEFAULT_TOKEN_CONSTRUCT_RULE } from "../../../common/text-analysis/analysis-engine-constants.mjs";
 import { minigameBuilderValidateAndReadyFunctionInfo, MinigameBuilderValidateAndReadyResult } from "../../../api/commands/minigame/minigame-builder-validate-and-ready.mjs";
 import { minigameBuilderEditStimuliFunctionInfo } from "../../../api/commands/minigame/minigame-builder-edit-stimuli.mjs";
-import { debounce } from "../../../helpers.mjs";
 import { getComponentCtorArg } from '../../../helpers.web.mjs';
 
 const logalot = GLOBAL_LOG_A_LOT;

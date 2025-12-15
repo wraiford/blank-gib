@@ -1,14 +1,13 @@
-
 import { extractErrorMsg, pretty, pickRandom_Letters } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
 import { MetaspaceService } from "@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs";
 import { SPACE_NAME_REGEXP } from "@ibgib/core-gib/dist/witness/space/space-constants.mjs";
+import { Metaspace_Webspace } from "@ibgib/web-gib/dist/witness/space/metaspace/metaspace-webspace/metaspace-webspace.mjs";
 
 import {
     GLOBAL_LOG_A_LOT, BLANK_GIB_DB_NAME, ARMY_STORE,
     BLANK_GIB_INDEXEDDB_KEY_LOCAL_SPACE_NAME,
     BLANK_GIB_INDEXEDDB_LOCAL_SPACE_NAME_PREFIX,
 } from "../constants.mjs";
-import { Metaspace_Webspace } from "../witness/space/metaspace/metaspace-webspace/metaspace-webspace.mjs";
 import { storageGet } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 import { getIbGibGlobalThis_BlankGibExt, initIbGibGlobalThis_BlankGibExt } from "./helpers.mjs";
 

@@ -30,12 +30,12 @@ import { askForPersistStorage, } from "@ibgib/web-gib/dist/storage/storage-helpe
 import { tellUserFunctionInfo } from "@ibgib/web-gib/dist/api/commands/chat/tell-user.mjs";
 import { helloWorldFunctionInfo } from "@ibgib/web-gib/dist/api/commands/chat/hello-world.mjs";
 import { storageGet, } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
+import { debounce } from "@ibgib/web-gib/dist/helpers.mjs";
 
 import {
     GLOBAL_LOG_A_LOT, ARMY_STORE, BEE_KEY, BLANK_GIB_DB_NAME,
 } from "../../../constants.mjs";
 import { getComponentCtorArg, getIbGibGlobalThis_BlankGib, } from "../../../helpers.web.mjs";
-import { debounce } from "../../../helpers.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;
 

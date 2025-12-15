@@ -5,6 +5,7 @@ import { getLatestTimelineIbGibDto_nonLocking, mut8Timeline } from "@ibgib/core-
 import { alertUser, highlightElement, shadowRoot_getElementById } from '@ibgib/web-gib/dist/helpers.web.mjs';
 import { getGlobalMetaspace_waitIfNeeded, } from '@ibgib/web-gib/dist/helpers.mjs';
 import { AgentWitnessAny } from '@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs';
+import { debounce, deleteAt, getShortenedStringWithEllipsis, insertAt } from '@ibgib/web-gib/dist/helpers.mjs';
 
 import { GLOBAL_LOG_A_LOT } from '../../../constants.mjs';
 import {
@@ -15,7 +16,6 @@ import {
 import { MinigameData_V1, MinigameIbGib_V1 } from '../minigame-types.mjs';
 import { MinigameGameType } from '../minigame-constants.mjs';
 import { AnalysisResult } from '../../text-analysis/types.mjs';
-import { debounce, deleteAt, getShortenedStringWithEllipsis, insertAt } from '../../../helpers.mjs';
 import { AnalysisEngine } from '../../text-analysis/analysis-engine.mjs';
 import { DEFAULT_TOKEN_CONSTRUCT_RULE } from '../../text-analysis/analysis-engine-constants.mjs';
 import { CorpusAnalyzer } from '../../text-analysis/corpus-analyzer.mjs';

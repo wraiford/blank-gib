@@ -14,7 +14,8 @@ import { tellUserFunctionInfo } from "@ibgib/web-gib/dist/api/commands/chat/tell
 import { getGlobalMetaspace_waitIfNeeded } from "@ibgib/web-gib/dist/helpers.mjs";
 import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
 import { IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
-import { AgentWitnessAny, parseAddlMetadataTextForAgentText, } from "@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs";
+import { parseAddlMetadataTextForAgentText, } from "@ibgib/web-gib/dist/witness/agent/agent-helpers.mjs";
+import { AgentWitnessAny, } from "@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs";
 import { TextSource } from "@ibgib/web-gib/dist/witness/agent/agent-constants.mjs";
 import { ProjectIbGib_V1 } from "@ibgib/web-gib/dist/common/project/project-types.mjs";
 import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
@@ -383,7 +384,7 @@ export class ChronologyComponentInstance
             if (textSrc === 'ai') {
                 // right now we're encoding it in "other" agent text addl
                 // metadata.  see tell-user.mts tellUserImpl and
-                // agent-one-file.mts getAddlMetadataTextForAgentText.
+                // agent-helpers.mts getAddlMetadataTextForAgentText.
                 const agentName = safeIbCommentMetadataText?.split('_').at(2) ?? 'Agent';
                 identityInfoP.textContent = `🤖 ${agentName}`;
                 chatEntry.classList.add('agent-message');

@@ -11,7 +11,9 @@ import { CommentIbGib_V1 } from '@ibgib/core-gib/dist/common/comment/comment-typ
 import { getLatestTimelineIbGibDto_nonLocking, mut8Timeline } from '@ibgib/core-gib/dist/timeline/timeline-api.mjs';
 import { fnObs } from '@ibgib/core-gib/dist/common/pubsub/observer/observer-helper.mjs';
 import { IbGibSpaceAny } from '@ibgib/core-gib/dist/witness/space/space-base-v1.mjs';
+import { debounce } from '@ibgib/web-gib/dist/helpers.mjs';
 import { promptForConfirm, shadowRoot_getElementById } from "@ibgib/web-gib/dist/helpers.web.mjs";
+import { LiveProxyIbGib } from '@ibgib/web-gib/dist/witness/live-proxy-ibgib/live-proxy-ibgib-one-file.mjs';
 import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
 import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
 import { getComponentSvc } from '@ibgib/web-gib/dist/ui/component/ibgib-component-service.mjs';
@@ -23,9 +25,7 @@ import {
     getSummaryTextKeyForIbGib, getTitleFromSummarizer, getTocHeader_FromIbGib,
     getTranslationTextKeyForIbGib,
 } from '../../helpers.mjs';
-import { debounce } from '../../../helpers.mjs';
 import { PROJECT_TJP_ADDR_PROPNAME, } from '../../constants.mjs';
-import { LiveProxyIbGib } from '../../../witness/live-proxy-ibgib/live-proxy-ibgib-one-file.mjs';
 import { updateThinkingEntry } from '../../thinking-log.mjs';
 import { SummarizerLength, SummarizerType } from '../../chrome-ai.mjs';
 import {

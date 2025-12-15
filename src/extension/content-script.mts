@@ -1,8 +1,7 @@
 import { extractErrorMsg } from "@ibgib/helper-gib/dist/helpers/utils-helper.mjs";
-import { ROOT } from "@ibgib/ts-gib/dist/V1/constants.mjs";
+import { highlightElement, unhighlightElement } from "@ibgib/web-gib/dist/helpers.web.mjs";
 
 import { getPageContentInfo_fromContentScript } from "./page-analyzer/page-analyzer.mjs";
-import { highlightElement, unhighlightElement } from "../helpers.web.mjs";
 
 const logalot = true;
 const lcFile = `[content-script.mts]`;

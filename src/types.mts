@@ -2,11 +2,12 @@ import { CommentData_V1 } from "@ibgib/core-gib/dist/common/comment/comment-type
 import { MetaspaceService } from "@ibgib/core-gib/dist/witness/space/metaspace/metaspace-types.mjs";
 import { RCLIArgInfo } from "@ibgib/helper-gib/dist/rcli/rcli-types.mjs";
 import { IbGibRel8ns_V1, IbGib_V1 } from "@ibgib/ts-gib/dist/V1/types.mjs";
+import { LiveProxyIbGib } from "@ibgib/web-gib/dist/witness/live-proxy-ibgib/live-proxy-ibgib-one-file.mjs";
 
-import { LiveProxyIbGib } from "./witness/live-proxy-ibgib/live-proxy-ibgib-one-file.mjs";
 import { ChronologysComponentInstance } from "./components/chronologys/chronologys-component-one-file.mjs";
 import { ProjectsComponentInstance } from "./components/projects/projects-component-one-file.mjs";
 import { ProjectsExplorerComponentInstance } from "./components/projects/projects-explorer/projects-explorer-component-one-file.mjs";
+import { IbGibGlobalThisInfo } from "@ibgib/web-gib/dist/types.mjs";
 
 // src/types.mts
 // ... other imports
@@ -134,35 +135,35 @@ export interface Renderable {
     render(timeMs: number): void;
 }
 
-/**
- * Fundamental construct capable of processing data and producing results.
- *
- * ## design notes
- *
- * * provides a single point of interaction to enable aspect-oriented behavior
- * * often is an implementation of an observer pattern.
- *
- * ## notes
- *
- * This is a simplified version of the `Witness` interface in the ibgib libs,
- * which we will eventually transition to.
- */
-export interface Witness {
-    /**
-     * identifier. will use this more when we incorporate ibgib more fully.
-     */
-    gib: string;
-    /**
-     * Processes an input and returns a result.
-     *
-     * In the more fully described ibgib lib, this takes in an IbGib_V1 and
-     * returns a Promise<IbGib_V1>
-     *
-     * @param arg The input to be processed.
-     * @returns A Promise that resolves to the result of the processing.
-     */
-    witness(arg: any): Promise<any>;
-}
+// /**
+//  * Fundamental construct capable of processing data and producing results.
+//  *
+//  * ## design notes
+//  *
+//  * * provides a single point of interaction to enable aspect-oriented behavior
+//  * * often is an implementation of an observer pattern.
+//  *
+//  * ## notes
+//  *
+//  * This is a simplified version of the `Witness` interface in the ibgib libs,
+//  * which we will eventually transition to.
+//  */
+// export interface Witness {
+//     /**
+//      * identifier. will use this more when we incorporate ibgib more fully.
+//      */
+//     gib: string;
+//     /**
+//      * Processes an input and returns a result.
+//      *
+//      * In the more fully described ibgib lib, this takes in an IbGib_V1 and
+//      * returns a Promise<IbGib_V1>
+//      *
+//      * @param arg The input to be processed.
+//      * @returns A Promise that resolves to the result of the processing.
+//      */
+//     witness(arg: any): Promise<any>;
+// }
 
 
 /**
@@ -222,11 +223,11 @@ export interface SpaceShimGlobalInfo {
     cwd: string;
 }
 
-export interface IbGibGlobalThis_Common {
-    /**
-     * only truthy after bootstrap loaded
-     */
-    metaspace?: MetaspaceService;
+export interface IbGibGlobalThis_Common extends IbGibGlobalThisInfo {
+    // /**
+    //  * only truthy after bootstrap loaded
+    //  */
+    // metaspace?: MetaspaceService;
     /**
      * if true, then we've already started the bootstrap process.
      *

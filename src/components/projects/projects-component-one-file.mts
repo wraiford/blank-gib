@@ -42,17 +42,18 @@ import {
 import { AgentWitnessAny, } from "@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs";
 import { GeminiModel } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
 import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
+import { createProjectIbGib,isProjectIbGib_V1 } from "@ibgib/web-gib/dist/common/project/project-helper.mjs";
+import { DEFAULT_PROJECT_DESCRIPTION, ProjectIbGib_V1 } from "@ibgib/web-gib/dist/common/project/project-types.mjs";
+import { IbGibSettings, SettingsWithTabs } from "@ibgib/web-gib/dist/common/settings/settings-types.mjs";
+import { SettingsType } from "@ibgib/web-gib/dist/common/settings/settings-constants.mjs";
+import {
+    AGENT_AVAILABLE_FUNCTIONS_PROJECTAGENT, PROJECT_NAME_REGEXP,
+} from "@ibgib/web-gib/dist/common/project/project-constants.mjs";
 
 import {
     GLOBAL_LOG_A_LOT, ARMY_STORE, BEE_KEY, BLANK_GIB_DB_NAME,
 } from "../../constants.mjs";
 import { getComponentCtorArg, getIbGibGlobalThis_BlankGib, } from "../../helpers.web.mjs";
-import { createProjectIbGib, isProjectIbGib_V1, } from "../../common/project/project-helper.mjs";
-import { DEFAULT_PROJECT_DESCRIPTION, ProjectIbGib_V1 } from "../../common/project/project-types.mjs";
-import {
-    AGENT_AVAILABLE_FUNCTIONS_PROJECTAGENT,
-    PROJECT_NAME_REGEXP,
-} from "../../common/project/project-constants.mjs";
 import {
     AGENT_INITIAL_CHAT_TEXT_PROJECTAGENT,
     AGENT_INITIAL_SYSTEM_TEXT_PROJECTAGENT,
@@ -68,8 +69,6 @@ import {
     AGENT_INITIAL_CHAT_TEXT_PROJECTSAGENT,
     AGENT_INITIAL_SYSTEM_TEXT_PROJECTSAGENT
 } from "../../agent-texts/projects-agent-texts.mjs";
-import { IbGibSettings, SettingsWithTabs } from "../../common/settings/settings-types.mjs";
-import { SettingsType } from "../../common/settings/settings-constants.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;
 
