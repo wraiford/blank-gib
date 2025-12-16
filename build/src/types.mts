@@ -9,6 +9,12 @@ export abstract class Build {
     protected lc: string = `${lcFile}[${Build.name}]`;
 
     /**
+     * Set to true if building for production.
+     * This is set by checking for a `--prod` command line arg.
+     */
+    protected isProd: boolean;
+
+    /**
      * Name of the build, which will be the output subfolder, e.g., `app`, `ext`
      */
     protected abstract name: string;
@@ -24,6 +30,14 @@ export abstract class Build {
      * Any static assets that need to be copied. These are relative to the project root.
      */
     protected abstract assetPaths: string[];
+
+    constructor() {
+        const lc = `${this.lc}[ctor]`;
+        // get `--prod` flag from cli args
+        this.isProd = process.argv.includes('--prod');
+        console.log(`${lc} isProd: ${this.isProd}`);
+    }
+
 
     async build(): Promise<void> {
         const lc = `${this.lc}[${this.build.name}]`;
@@ -90,26 +104,37 @@ export abstract class Build {
     async bundle(): Promise<void> {
         const lc = `${this.lc}[${this.bundle.name}]`;
         try {
-            console.log(`${lc} starting...`);
+            console.log(`${lc} starting... (isProd: ${this.isProd})`);
             if (!this.entryPoints || this.entryPoints.length === 0) {
                 console.log(`${lc} no entryPoints. skipping.`);
                 return;
             }
             if (!this.outdir) { throw new Error('outdir required.'); }
 
-            const buildResult = await esbuild.build({
+            // Common build options
+            const options: esbuild.BuildOptions = {
                 entryPoints: this.entryPoints,
                 outdir: this.outdir,
                 bundle: true,
                 platform: 'browser',
                 format: 'esm',
                 target: 'esnext',
-                minify: false, // makes debugging easier
-                sourcemap: 'inline',
                 loader: { '.html': 'text', '.css': 'text' },
                 outExtension: { '.js': '.mjs' },
                 keepNames: true,
-            });
+            };
+
+            // Prod vs. Dev specific options
+            if (this.isProd) {
+                options.minify = true;
+                options.sourcemap = true; // external source maps
+            } else {
+                options.minify = false;
+                options.sourcemap = 'inline'; // inline source maps
+            }
+
+            const buildResult = await esbuild.build(options);
+
 
             if (buildResult.errors.length > 0) {
                 const errorMsgs = buildResult.errors.map(x => `esbuild error: ${x.text} at ${x.location?.file}:${x.location?.line}:${x.location?.column}`).join('\n');

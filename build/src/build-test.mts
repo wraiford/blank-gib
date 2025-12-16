@@ -19,6 +19,12 @@ class BuildTest extends Build {
     protected outdir: string = constants.DIST_DIR; // output to same dir as app
     protected assetPaths: string[] = [];
 
+    constructor() {
+        super();
+        const lc = `${this.lc}[ctor]`;
+        console.log(`${lc} isProd: ${this.isProd}`);
+    }
+
     async getEntryPoints(): Promise<string[]> {
         const lc = `${this.lc}[${this.getEntryPoints.name}]`;
         try {
@@ -56,21 +62,31 @@ class BuildTest extends Build {
     async bundle(): Promise<void> {
         const lc = `${this.lc}[${this.bundle.name}]`;
         try {
-            console.log(`${lc} starting...`);
+            console.log(`${lc} starting... (isProd: ${this.isProd})`);
 
-            const buildResult = await esbuild.build({
+            // Common build options
+            const options: esbuild.BuildOptions = {
                 entryPoints: this.entryPoints,
                 outdir: this.outdir,
                 bundle: true,
-                platform: 'node', // <--- THIS IS THE FIX
+                platform: 'node', // override base build platform
                 format: 'esm',
                 target: 'esnext',
-                minify: false,
-                sourcemap: 'inline',
                 loader: { '.html': 'text', '.css': 'text' },
                 outExtension: { '.js': '.mjs' },
                 keepNames: true,
-            });
+            };
+
+            // Prod vs. Dev specific options
+            if (this.isProd) {
+                options.minify = true;
+                options.sourcemap = true; // external source maps
+            } else {
+                options.minify = false;
+                options.sourcemap = 'inline'; // inline source maps
+            }
+
+            const buildResult = await esbuild.build(options);
 
             if (buildResult.errors.length > 0) {
                 const errorMsgs = buildResult.errors.map(x => `esbuild error: ${x.text} at ${x.location?.file}:${x.location?.line}:${x.location?.column}`).join('\n');

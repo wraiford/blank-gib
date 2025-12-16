@@ -17,6 +17,13 @@ class BuildApp extends Build {
         `${constants.SRC_DIR}/assets`,
     ];
 
+    constructor() {
+        super();
+        const lc = `${this.lc}[ctor]`;
+        console.log(`${lc} isProd: ${this.isProd}`);
+    }
+
+
     async createDynamicFiles(): Promise<void> {
         const lc = `${this.lc}[${this.createDynamicFiles.name}]`;
         try {

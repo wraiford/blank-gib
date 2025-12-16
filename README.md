@@ -2,12 +2,6 @@
 
 WIP
 
-## hackathon people
-
-The entry for the [Google Chrome Built-in API Hackathon 2025](https://googlechromeai2025.devpost.com/) is the extension. Please refer to the [extension README.md](/src/extension/README.md) for details in addition to the Build section found below.
-
-I've also created a `hackathon_entry` tag that I believe to be the src at time of submission. _Note however, the build command should first be `npm run build` and not ~~`npm run build:ext`~~, but the tag was made before that correction. It's best to refer to the main branch for documentation if possible._
-
 ## src notes
 
 ### *.ext.mts, *.web.mts, *.app.mts
@@ -18,44 +12,35 @@ I've also created a `hackathon_entry` tag that I believe to be the src at time o
 
 ## Build
 
-The build process uses `esbuild` to create two different targets: one for the
-web app and one for the browser extension. The build scripts are located in
-`apps/blank-gib/build`. The build system itself is in TypeScript, so first the
-build systems compiles itself with `tsc`, and then the targets are built with
-`esbuild`.
+The build process uses `esbuild` to create different targets for the web app and the browser extension. The build scripts are located in `apps/blank-gib/build`. This build system is written in TypeScript, so it first compiles itself using `tsc`, and then it uses `esbuild` to build the actual application and extension.
 
-Always refer to the files themselves for the current settings, but the following is a sketch ATOW of those targets.
+You can create both development and production builds.
 
-### `build-app.mts`
+### Build Scripts
 
+All build scripts are run from the `apps/blank-gib` directory.
 
-* **Entry Point**: `src/index.mts`
-* **Output Directory**: `dist`
-* **Assets**: `src/index.html`, `src/root.css`, `src/styles.css`, and the `src/assets` directory are copied to the output directory.
-* **Dynamic Files**: It creates a directory `dist/apps/web1/gib`.
+*   **Build the build scripts themselves:**
+    *   `npm run build:build-scripts`
+    *   You need to run this whenever you make a change to the files in `apps/blank-gib/build/src`.
 
-### `build-ext.mts` (browser extension)
+*   **Application Builds:**
+    *   `npm run build:app` (Development): Creates a build with inline source maps and no minification. Ideal for debugging. The output is in the `dist` folder.
+    *   `npm run build:app:prod` (Production): Creates a minified build with external source maps. This is optimized for production. The output is in the `dist` folder.
 
-* **Entry Points**:
-  * `src/extension/background.mts`
-  * `src/extension/sidepanel.mts`
-  * `src/extension/content-script.mts`
-* **Output Directory**: `dist-ext`
-* **Assets**:
-  * `src/root.css`
-  * `src/extension/styles.css`
-  * `src/extension/sidepanel.html`
-  * `src/assets`
-  * `src/extension/page-analyzer/page-content-extractor.js`
-* **Dynamic Files**: It generates the `manifest.json` file by reading the `package.json` version and a template manifest.
+*   **Extension Builds:**
+    *   `npm run build:ext` (Development): Creates a development build for the browser extension. The output is in the `dist-ext` folder.
+    *   `npm run build:ext:prod` (Production): Creates a minified production build for the browser extension. The output is in the `dist-ext` folder.
 
-### Common Build Logic (`types.mts`)
+### How It Works
 
-Both build scripts extend a base `Build` class in `apps/blank-gib/build/src/types.mts`. This class handles the common logic for:
+The core logic is in the `Build` class (`apps/blank-gib/build/src/types.mts`). This base class handles:
+*   Parsing command-line arguments (like `--prod`).
+*   Setting up `esbuild` options for development vs. production.
+*   Copying static assets.
+*   Bundling the code.
 
-* Copying static assets to the output directory.
-* Creating dynamic files (like `manifest.json`).
-* Bundling the application using `esbuild`.
+The `build-app.mts` and `build-ext.mts` scripts extend this `Build` class to define the specific entry points and asset paths for the application and the extension, respectively. When the `--prod` flag is passed, the base `Build` class automatically adjusts the `esbuild` configuration to create a production-ready build.
 
 ## UI Architecture: Custom @ibgib component framework
 
