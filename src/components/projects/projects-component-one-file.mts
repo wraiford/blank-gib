@@ -47,7 +47,7 @@ import { DEFAULT_PROJECT_DESCRIPTION, ProjectIbGib_V1 } from "@ibgib/web-gib/dis
 import { IbGibSettings, SettingsWithTabs } from "@ibgib/web-gib/dist/common/settings/settings-types.mjs";
 import { SettingsType } from "@ibgib/web-gib/dist/common/settings/settings-constants.mjs";
 import {
-    AGENT_AVAILABLE_FUNCTIONS_PROJECTAGENT, PROJECT_NAME_REGEXP,
+    AGENT_AVAILABLE_FUNCTIONS_PROJECTAGENT, AGENT_SPECIAL_IBGIB_TYPE_PROJECTAGENT, PROJECT_NAME_REGEXP,
 } from "@ibgib/web-gib/dist/common/project/project-constants.mjs";
 
 import {
@@ -57,7 +57,6 @@ import { getComponentCtorArg, getIbGibGlobalThis_BlankGib, } from "../../helpers
 import {
     AGENT_INITIAL_CHAT_TEXT_PROJECTAGENT,
     AGENT_INITIAL_SYSTEM_TEXT_PROJECTAGENT,
-    AGENT_SPECIAL_IBGIB_TYPE_PROJECTAGENT,
     CHAT_WITH_AGENT_PLACEHOLDER_PROJECTAGENT,
 } from "../../agent-texts/project-agent-texts.mjs";
 import {

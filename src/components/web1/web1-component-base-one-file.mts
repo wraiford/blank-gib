@@ -9,7 +9,7 @@ import { getAddlMetadataTextForAgentText, taggifyForPrompt, } from "@ibgib/web-g
 import { AgentWitnessAny, } from "@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs";
 import { getGlobalMetaspace_waitIfNeeded, } from "@ibgib/web-gib/dist/helpers.mjs";
 import { highlightElement, unhighlightElement } from "@ibgib/web-gib/dist/helpers.web.mjs";
-import { TextSource } from "@ibgib/web-gib/dist/witness/agent/agent-constants.mjs";
+import { AGENT_SPECIAL_IBGIB_TYPE_PRIMARYAGENT, TextSource } from "@ibgib/web-gib/dist/witness/agent/agent-constants.mjs";
 import { LiveProxyIbGib } from "@ibgib/web-gib/dist/witness/live-proxy-ibgib/live-proxy-ibgib-one-file.mjs";
 import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
 import {
@@ -24,7 +24,6 @@ import { AGENT_AVAILABLE_FUNCTIONS_PRIMARYAGENT } from "@ibgib/web-gib/dist/witn
 import { GLOBAL_LOG_A_LOT, HARDCODED_PROMPT_TAG_TEXT } from "../../constants.mjs";
 import { getAppShellSvc } from "../../ui/shell/app-shell-service.mjs";
 import { CHAT_WITH_AGENT_PLACEHOLDER_PRIMARYAGENT } from "../../witness/app/blank-canvas/blank-canvas-constants.mjs";
-import { AGENT_SPECIAL_IBGIB_TYPE_PRIMARYAGENT, } from "../../agent-texts/primary-agent-texts.mjs";
 import { getComponentCtorArg, getIbGibGlobalThis_BlankGib } from "../../helpers.web.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;

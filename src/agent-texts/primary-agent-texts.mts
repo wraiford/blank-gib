@@ -10,7 +10,7 @@ import {
  * @see {@link MetaspaceService.getSpecialIbGib}
  * @see {@link MetaspaceService.getSpecialRel8dIbGibs}
  */
-export const AGENT_SPECIAL_IBGIB_TYPE_PRIMARYAGENT = 'primaryagent';
+// export const AGENT_SPECIAL_IBGIB_TYPE_PRIMARYAGENT = 'primaryagent';
 export const AGENT_SPECIAL_IBGIB_NAME_PRIMARYAGENT = 'Robbie';
 
 export const AGENT_GOAL_PRIMARYAGENT = [

@@ -63,7 +63,7 @@
     "@ibgib/encrypt-gib": "^0.2.32",
     "@ibgib/helper-gib": "^0.0.31",
     "@ibgib/ts-gib": "^0.5.24",
-    "@ibgib/web-gib": "^0.0.11"
+    "@ibgib/web-gib": "^0.0.13"
   },
   "devDependencies": {
     "@types/chrome": "^0.1.12",

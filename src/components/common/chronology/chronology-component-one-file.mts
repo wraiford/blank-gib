@@ -19,6 +19,7 @@ import { AgentWitnessAny, } from "@ibgib/web-gib/dist/witness/agent/agent-one-fi
 import { TextSource } from "@ibgib/web-gib/dist/witness/agent/agent-constants.mjs";
 import { ProjectIbGib_V1 } from "@ibgib/web-gib/dist/common/project/project-types.mjs";
 import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
+import { AGENT_SPECIAL_IBGIB_TYPE_PRIMARYAGENT } from '@ibgib/web-gib/dist/witness/agent/agent-constants.mjs';
 
 import { GLOBAL_LOG_A_LOT, } from "../../../constants.mjs";
 import { getComponentCtorArg, getIbGibGlobalThis_BlankGib, } from "../../../helpers.web.mjs";
@@ -27,7 +28,6 @@ import {
     AGENT_GOAL_COMMON, AGENT_INITIAL_CHAT_HI_PLEASEINTRO_YOURSELF,
     AGENT_SYSTEM_PROMPT_COMMON_INSTRUCTIONS,
 } from "../../../agent-texts/common-agent-texts.mjs";
-import { AGENT_SPECIAL_IBGIB_TYPE_PRIMARYAGENT, } from "../../../agent-texts/primary-agent-texts.mjs";
 import { simpleIbGibRouterSingleton } from "../../../ui/router/router-one-file.mjs";
 import { isMinigameIbGib_V1 } from "../../../common/minigame/minigame-helper.mjs";
 import { MinigameIbGib_V1 } from "../../../common/minigame/minigame-types.mjs";

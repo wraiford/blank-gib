@@ -35,6 +35,7 @@ import { storageGet, storagePut } from "@ibgib/web-gib/dist/storage/storage-help
 import { getAgentsSvc } from '@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs';
 import { getAgents, getTag_Agents } from '@ibgib/web-gib/dist/witness/agent/agent-helpers.mjs';
 import { AGENT_AVAILABLE_FUNCTIONS_PRIMARYAGENT } from '@ibgib/web-gib/dist/witness/agent/agent-one-file.app.mjs';
+import { AGENT_SPECIAL_IBGIB_TYPE_PRIMARYAGENT } from '@ibgib/web-gib/dist/witness/agent/agent-constants.mjs';
 
 import { GLOBAL_LOG_A_LOT, ARMY_STORE, BEE_KEY, BLANK_GIB_DB_NAME, } from '../../../constants.mjs';
 import {
@@ -65,7 +66,6 @@ import {
     AGENT_INITIAL_CHAT_TEXT_PRIMARYAGENT,
     AGENT_INITIAL_SYSTEM_TEXT_PRIMARYAGENT,
     AGENT_SPECIAL_IBGIB_NAME_PRIMARYAGENT,
-    AGENT_SPECIAL_IBGIB_TYPE_PRIMARYAGENT,
 } from '../../../agent-texts/primary-agent-texts.mjs';
 import { ROUTER_APP_NAME_TAGS } from '../../../common/app-constants.mjs';
 import { ID_TAG_NAV } from '../../../ui/shell/shell-constants.mjs';
