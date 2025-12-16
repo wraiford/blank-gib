@@ -22,7 +22,7 @@ import {
     getDeterministicColorInfo, getGlobalMetaspace_waitIfNeeded,
 } from "@ibgib/web-gib/dist/helpers.mjs";
 import {
-    IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase,
+    IbGibDynamicComponentMetaBase,
     IbGibDynamicComponentInstanceBase_ParentOfTabs,
 } from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
 import {
@@ -40,9 +40,9 @@ import {
     getAgentForDomainIbGib, getAgents, registerDomainIbGibWithAgentIndex
 } from "@ibgib/web-gib/dist/witness/agent/agent-helpers.mjs";
 import { AgentWitnessAny, } from "@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs";
-import { GeminiModel } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
+import { GEMINI_DEFAULT_MODEL_STR, } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
 import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
-import { createProjectIbGib,isProjectIbGib_V1 } from "@ibgib/web-gib/dist/common/project/project-helper.mjs";
+import { createProjectIbGib, isProjectIbGib_V1 } from "@ibgib/web-gib/dist/common/project/project-helper.mjs";
 import { DEFAULT_PROJECT_DESCRIPTION, ProjectIbGib_V1 } from "@ibgib/web-gib/dist/common/project/project-types.mjs";
 import { IbGibSettings, SettingsWithTabs } from "@ibgib/web-gib/dist/common/settings/settings-types.mjs";
 import { SettingsType } from "@ibgib/web-gib/dist/common/settings/settings-constants.mjs";
@@ -343,7 +343,7 @@ export class ProjectsComponentInstance
                 superSpace: undefined, // uses default local user space as the super space
                 name: `ProjectAgent-${this.instanceId}`,
                 api: 'gemini',
-                model: GeminiModel.GEMINI_2_0_FLASH,
+                model: GEMINI_DEFAULT_MODEL_STR,
                 availableFunctions: clone(AGENT_AVAILABLE_FUNCTIONS_PROJECTAGENT),
                 initialSystemText: [
                     AGENT_INITIAL_SYSTEM_TEXT_PROJECTAGENT,
@@ -1100,7 +1100,7 @@ export class ProjectsComponentInstance
                     superSpace: undefined, // uses default local user space as the super space
                     name: `ProjectsAgent-${this.instanceId}`,
                     api: 'gemini',
-                    model: GeminiModel.GEMINI_2_0_FLASH,
+                    model: GEMINI_DEFAULT_MODEL_STR,
                     availableFunctions: [
                         ...AGENT_AVAILABLE_FUNCTIONS_PROJECTSAGENT,
                     ],

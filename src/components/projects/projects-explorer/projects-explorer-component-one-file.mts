@@ -22,7 +22,7 @@ import {
     highlightElement,
     shadowRoot_getElementById,
 } from "@ibgib/web-gib/dist/helpers.web.mjs";
-import { GeminiModel } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
+import { GEMINI_DEFAULT_MODEL_STR, } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
 import { tellUserFunctionInfo } from "@ibgib/web-gib/dist/api/commands/chat/tell-user.mjs";
 import { getProjects, parseProjectIb, } from "@ibgib/web-gib/dist/common/project/project-helper.mjs";
 import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
@@ -726,7 +726,7 @@ export class ProjectsExplorerComponentInstance
                     superSpace: undefined, // uses default local user space as the super space
                     name: `ProjectsAgent-${this.instanceId}`,
                     api: 'gemini',
-                    model: GeminiModel.GEMINI_2_0_FLASH,
+                    model: GEMINI_DEFAULT_MODEL_STR,
                     availableFunctions: [
                         ...AGENT_AVAILABLE_FUNCTIONS_PROJECTSAGENT,
                     ],

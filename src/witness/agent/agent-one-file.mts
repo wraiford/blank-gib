@@ -63,7 +63,7 @@
 //     // purpose: '',
 //     superSpaceId: '',
 //     availableFunctionNameOrIds: [],
-//     model: GeminiModel.GEMINI_2_0_FLASH,
+//     model: GEMINI_DEFAULT_MODEL_STR,
 //     // model: GeminiModel.GEMINI_1_5_PRO,
 //     api: 'gemini',
 //     type: AGENT_SPECIAL_IBGIB_TYPE_PRIMARYAGENT,

@@ -310,7 +310,7 @@ export abstract class Web1ComponentInstanceBase
                 //         superSpace: space, // uses default local user space as the super space
                 //         name: `PrimaryAgent-${this.instanceId}`,
                 //         api: 'gemini',
-                //         model: GeminiModel.GEMINI_2_0_FLASH,
+                //         model: GEMINI_DEFAULT_MODEL_STR,
                 //         availableFunctions: clone(AGENT_AVAILABLE_FUNCTIONS_PRIMARYAGENT),
                 //         initialSystemText: [
                 //             AGENT_INITIAL_SYSTEM_TEXT_PRIMARYAGENT,

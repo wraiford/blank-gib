@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 import { delay, extractErrorMsg, getSaferSubstring, pretty } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 import { getIbGibAddr } from '@ibgib/ts-gib/dist/helper.mjs';
@@ -16,7 +16,7 @@ import { getTjpAddr } from '@ibgib/core-gib/dist/common/other/ibgib-helper.mjs';
 import { ProjectIbGib_V1 } from '@ibgib/web-gib/dist/common/project/project-types.mjs';
 import { PROJECT_MAX_NAME_LENGTH } from '@ibgib/web-gib/dist/common/project/project-constants.mjs';
 
-import { GLOBAL_LOG_A_LOT } from '../constants.mjs';
+import { ARMY_STORE, BEE_KEY, BLANK_GIB_DB_NAME, GLOBAL_LOG_A_LOT } from '../constants.mjs';
 import { IbGibGlobalThis_BlankGibExt } from "./types.ext.mjs";
 import { SummarizerInfo, SummarizerType, SummarizerLength } from './chrome-ai.mjs';
 /**
@@ -51,13 +51,20 @@ export async function initIbGibGlobalThis_BlankGibExt(): Promise<void> {
         if (!!(globalThis as any).ibgib) {
             console.log(`${lc} globalThis.ibgib already truthy.`);
         } else {
-            (globalThis as any).ibgib = {};
+            (globalThis as any).ibgib = {
+                dbName_hack: BLANK_GIB_DB_NAME,
+                apiKeyName_hack: BEE_KEY,
+                storeName_hack: ARMY_STORE,
+            };
         }
 
         if (!!(globalThis as any).ibgib.blankgib_ext) {
             console.log(`${lc} globalThis.ibgib.blankgib_ext already truthy.`);
         } else {
             (globalThis as any).ibgib.blankgib_ext = {
+                dbName_hack: BLANK_GIB_DB_NAME,
+                apiKeyName_hack: BEE_KEY,
+                storeName_hack: ARMY_STORE,
                 // version: AUTO_GENERATED_VERSION, // don't have this in extension
             } satisfies IbGibGlobalThis_BlankGibExt;
         }
@@ -210,7 +217,7 @@ export async function testOtherApis(): Promise<void> {
 
         const apiKey = ''; // what happens if empty?
         try {
-            const ai = new GoogleGenerativeAI(apiKey);
+            const ai = new GoogleGenAI({ apiKey });
             if (ai) {
                 console.log(`${lc} @google/generative-ai test truthy ai`);
             } else {

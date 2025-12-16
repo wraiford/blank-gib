@@ -11,11 +11,11 @@ import { MetaspaceService } from "@ibgib/core-gib/dist/witness/space/metaspace/m
 import { tellUserFunctionInfo } from '@ibgib/web-gib/dist/api/commands/chat/tell-user.mjs';
 import { getGlobalMetaspace_waitIfNeeded, } from "@ibgib/web-gib/dist/helpers.mjs";
 import { IbGibDynamicComponentInstanceBase, IbGibDynamicComponentMetaBase } from "@ibgib/web-gib/dist/ui/component/ibgib-dynamic-component-bases.mjs";
-import { ElementsBase, IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts, } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
+import { IbGibDynamicComponentInstance, IbGibDynamicComponentInstanceInitOpts, } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
 import { AgentWitnessAny, } from "@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs";
 import { getAgents } from "@ibgib/web-gib/dist/witness/agent/agent-helpers.mjs";
 import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
-import { GeminiModel } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
+import { GEMINI_DEFAULT_MODEL_STR, } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
 import { storageGet, } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 
 import {
@@ -212,7 +212,7 @@ export class CanvasComponentInstance
                     superSpace: undefined, // uses default local user space as the super space
                     name: `CanvasAgent-${this.instanceId}`,
                     api: 'gemini',
-                    model: GeminiModel.GEMINI_2_0_FLASH,
+                    model: GEMINI_DEFAULT_MODEL_STR,
                     availableFunctions: clone(AGENT_AVAILABLE_FUNCTIONS_CANVASAGENT),
                     initialSystemText: [
                         AGENT_INITIAL_SYSTEM_TEXT_CANVASAGENT,

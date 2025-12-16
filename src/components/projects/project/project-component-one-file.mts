@@ -38,10 +38,10 @@ import {
     AGENT_AVAILABLE_FUNCTIONS_PROJECTAGENT, AGENT_AVAILABLE_FUNCTIONS_PROJECTCHILDTEXTAGENT, PROJECT_CHILD_TEXT_REL8N_NAME,
 } from "@ibgib/web-gib/dist/common/project/project-constants.mjs";
 import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
-import { GeminiModel } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
+import { GEMINI_DEFAULT_MODEL_STR, } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
 import { registerDomainIbGibWithAgentIndex } from "@ibgib/web-gib/dist/witness/agent/agent-helpers.mjs";
-import { IbGibSettings, Settings_General, Settings_Project, } from "@ibgib/web-gib/dist/common/settings/settings-types.mjs";
-import { getSectionName, getSettingsSection } from "@ibgib/web-gib/dist/common/settings/settings-helpers.mjs";
+import { Settings_General, Settings_Project, } from "@ibgib/web-gib/dist/common/settings/settings-types.mjs";
+import { getSectionName, } from "@ibgib/web-gib/dist/common/settings/settings-helpers.mjs";
 import { SettingsType } from "@ibgib/web-gib/dist/common/settings/settings-constants.mjs";
 
 import { GLOBAL_LOG_A_LOT, } from "../../../constants.mjs";
@@ -56,8 +56,6 @@ import { AGENT_INITIAL_CHAT_TEXT_PROJECTCHILDTEXTAGENT, AGENT_INITIAL_SYSTEM_TEX
 import { isMinigameIbGib_V1 } from "../../../common/minigame/minigame-helper.mjs";
 import { MINIGAME_COMPONENT_NAME } from "../../minigame/minigame-component-one-file.mjs";
 import { minigameBuilderStartFunctionInfo, MinigameBuilderStartResult } from "../../../api/commands/minigame/minigame-builder-start.mjs";
-import { MinigameIbGib_V1 } from "../../../common/minigame/minigame-types.mjs";
-import { getAppShellSvc } from "../../../ui/shell/app-shell-service.mjs";
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -1182,7 +1180,7 @@ export class ProjectComponentInstance
                 superSpace: undefined, // uses default local user space as the super space
                 name: `TextAgent-${this.instanceId}`,
                 api: 'gemini',
-                model: GeminiModel.GEMINI_2_0_FLASH,
+                model: GEMINI_DEFAULT_MODEL_STR,
                 availableFunctions: clone(AGENT_AVAILABLE_FUNCTIONS_PROJECTCHILDTEXTAGENT),
                 initialSystemText: [
                     AGENT_INITIAL_SYSTEM_TEXT_PROJECTCHILDTEXTAGENT,

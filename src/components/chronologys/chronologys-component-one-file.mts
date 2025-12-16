@@ -29,7 +29,7 @@ import { getGlobalMetaspace_waitIfNeeded, } from "@ibgib/web-gib/dist/helpers.mj
 import { AgentWitnessAny, } from "@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs";
 import { getAgents } from "@ibgib/web-gib/dist/witness/agent/agent-helpers.mjs";
 import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
-import { GeminiModel } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
+import { GEMINI_DEFAULT_MODEL_STR, } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
 import { isProjectIbGib_V1 } from "@ibgib/web-gib/dist/common/project/project-helper.mjs";
 import { SettingsType } from "@ibgib/web-gib/dist/common/settings/settings-constants.mjs";
 import { getDefaultSettings, getSectionName } from "@ibgib/web-gib/dist/common/settings/settings-helpers.mjs";
@@ -887,7 +887,7 @@ export class ChronologysComponentInstance
                     superSpace: undefined, // uses default local user space as the super space
                     name: `ChronologysAgent-${this.instanceId}`,
                     api: 'gemini',
-                    model: GeminiModel.GEMINI_2_0_FLASH,
+                    model: GEMINI_DEFAULT_MODEL_STR,
                     availableFunctions: [
                         ...AGENT_AVAILABLE_FUNCTIONS_CHRONOLOGYSAGENT,
                     ],

@@ -203,7 +203,7 @@
 //          */
 //         // const projectAgent = await createNewAgent({
 //         //     api: 'gemini',
-//         //     model: GeminiModel.GEMINI_2_0_FLASH,
+//         //     model: GEMINI_DEFAULT_MODEL_STR,
 //         //     availableFunctions: ProjectAgentFunctionInfos,
 //         //     initialChatText: [
 //         //         ``,

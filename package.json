@@ -55,12 +55,12 @@
   "author": "William Raiford",
   "license": "ISC",
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
+    "@google/genai": "^1.33.0",
     "@ibgib/core-gib": "^0.1.3",
     "@ibgib/encrypt-gib": "^0.2.32",
     "@ibgib/helper-gib": "^0.0.31",
     "@ibgib/ts-gib": "^0.5.24",
-    "@ibgib/web-gib": "^0.0.5"
+    "@ibgib/web-gib": "^0.0.11"
   },
   "devDependencies": {
     "@types/chrome": "^0.1.12",

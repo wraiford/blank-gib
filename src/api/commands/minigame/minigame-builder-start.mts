@@ -7,7 +7,7 @@ import { getGibInfo, isPrimitive } from "@ibgib/ts-gib/dist/V1/transforms/transf
 import { getTjpAddr } from "@ibgib/core-gib/dist/common/other/ibgib-helper.mjs";
 import { appendToTimeline } from "@ibgib/core-gib/dist/timeline/timeline-api.mjs";
 import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
-import { GeminiModel } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
+import { GEMINI_DEFAULT_MODEL_STR, GeminiModel } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
 import { registerDomainIbGibWithAgentIndex } from "@ibgib/web-gib/dist/witness/agent/agent-helpers.mjs";
 import { getGlobalMetaspace_waitIfNeeded, } from "@ibgib/web-gib/dist/helpers.mjs";
 import { APIFunctionInfo } from "@ibgib/web-gib/dist/api/api-types.mjs";
@@ -329,7 +329,7 @@ async function minigameBuilderStartImpl(opts: MinigameBuilderStartOpts): Promise
             superSpace: undefined, // uses default local user space as the super space
             name: `MinigameAgent-${minigameTjpGib}`,
             api: 'gemini',
-            model: GeminiModel.GEMINI_2_0_FLASH,
+            model: GEMINI_DEFAULT_MODEL_STR,
             availableFunctions: clone(AGENT_AVAILABLE_FUNCTIONS_MINIGAMEAGENT),
             initialSystemText: [
                 AGENT_INITIAL_SYSTEM_TEXT_MINIGAMEAGENT,

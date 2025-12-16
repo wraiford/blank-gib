@@ -25,7 +25,7 @@ import { IbGibRobbotAny } from '@ibgib/core-gib/dist/witness/robbot/robbot-base-
 import { TAG_REL8N_NAME, } from '@ibgib/core-gib/dist/common/tag/tag-constants.mjs';
 import { SpecialIbGibType } from '@ibgib/core-gib/dist/common/other/other-types.mjs';
 import { TagIbGib_V1 } from '@ibgib/core-gib/dist/common/tag/tag-types.mjs';
-import { GeminiModel } from '@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs';
+import { GEMINI_DEFAULT_MODEL_STR, } from '@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs';
 import { AgentWitnessAny, } from '@ibgib/web-gib/dist/witness/agent/agent-one-file.mjs';
 import {
     promptForConfirm, alertUser, promptForText, promptForSecret,
@@ -207,46 +207,46 @@ export class BlankCanvasApp_V1 extends AppBase_V1<
         try {
             if (logalot) { console.log(`${lc} starting... (I: 615e2dc21cef2376211f35c8c3ff8f25)`); }
 
-            /**
-             * silly helper to load src for agent
-             */
-            async function getText(fileURL: string): Promise<string | null> {
-                try {
-                    const response = await fetch(fileURL);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const text = await response.text();
-                    return text;
-                } catch (error) {
-                    console.error("Could not fetch the file:", error);
-                    return null;
-                }
-            }
+            // #region load source texts no longer works with esbuild and refactor web-gib
 
-            const srcPaths = [
-                '/ui/component/component-types.mjs',
-                '/ui/component/ibgib-component-service.mjs',
-                '/ui/component/ibgib-dynamic-component-bases.mjs',
-            ];
-            const srcTexts: string[] = [];
-            for (const srcPath of srcPaths) {
-                const srcText = (await getText(srcPath)) || '';
-                if (!srcText) {
-                    console.error(`${lc} (UNEXPECTED) src for component file (${srcPath}) couldn't be loaded? is file path (${srcPath}) not there anymore? (E: 915bd9c45db3f45882a9beba5f00ab25)`);
-                }
-                srcTexts.push(srcText);
-            }
-            // let srcComponentOneFile = (await getText(srcComponentOneFilePath)) || '';
-            // if (!srcComponentOneFile) {
-            //     console.error(`${lc} (UNEXPECTED) srcComponentOneFile couldn't be loaded? is file path (${srcComponentOneFilePath}) not there anymore? (E: 915bd9c45db3f45882a9beba5f00ab25)`);
-            //     srcComponentOneFile = `[${srcComponentOneFilePath} not found. Moved? Doh!]`;
+            // /**
+            //  * silly helper to load src for agent
+            //  */
+            // async function getText(fileURL: string): Promise<string | null> {
+            //     try {
+            //         const response = await fetch(fileURL);
+            //         if (!response.ok) {
+            //             throw new Error(`HTTP error! status: ${response.status}`);
+            //         }
+            //         const text = await response.text();
+            //         return text;
+            //     } catch (error) {
+            //         console.error("Could not fetch the file:", error);
+            //         return null;
+            //     }
             // }
+
+            // const srcPaths = [
+            //     '/ui/component/component-types.mjs',
+            //     '/ui/component/ibgib-component-service.mjs',
+            //     '/ui/component/ibgib-dynamic-component-bases.mjs',
+            // ];
+            // const srcTexts: string[] = [];
+            // for (const srcPath of srcPaths) {
+            //     const srcText = (await getText(srcPath)) || '';
+            //     if (!srcText) {
+            //         console.error(`${lc} (UNEXPECTED) src for component file (${srcPath}) couldn't be loaded? is file path (${srcPath}) not there anymore? (E: 915bd9c45db3f45882a9beba5f00ab25)`);
+            //     }
+            //     srcTexts.push(srcText);
+            // }
+
+            // #endregion load source texts no longer works with esbuild and refactor web-gib
+
             const text = [
                 AGENT_INITIAL_SYSTEM_TEXT_PRIMARYAGENT,
                 `The current preferred color scheme is ${getUserPreferredColorScheme()}. This website is designed with 'light' by default. You should go ahead and ask if they'd like to set it to a darker theme in the intro if their preference is 'dark'. You may also offer to change it to a different light theme even if it's already light.`,
-                'Here is the src for the component architecture: ',
-                ...srcTexts,
+                // 'Here is the src for the component architecture: ',
+                // ...srcTexts,
                 '\n',
             ].join('\n');
             return text;
@@ -303,7 +303,7 @@ export class BlankCanvasApp_V1 extends AppBase_V1<
                     // initialSystemText: AGENT_INITIAL_SYSTEM_TEXT_PRIMARYAGENT,
                     initialSystemText: await this.getAgentSystemText(),
                     initialChatText: AGENT_INITIAL_CHAT_TEXT_PRIMARYAGENT,
-                    model: GeminiModel.GEMINI_2_0_FLASH,
+                    model: GEMINI_DEFAULT_MODEL_STR,
                     type: AGENT_SPECIAL_IBGIB_TYPE_PRIMARYAGENT,
                     addToAgentsTag: true,
                 });
