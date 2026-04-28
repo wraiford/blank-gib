@@ -1,4 +1,6 @@
 import { tagTextToIb } from "@ibgib/core-gib/dist/common/other/ibgib-helper.mjs";
+import { ZERO_SPACE_ID } from "@ibgib/core-gib/dist/witness/space/space-constants.mjs";
+import { IbGibAmbientContextConfig } from "@ibgib/web-gib/dist/app-bootstrap/types.mjs";
 
 export const GLOBAL_LOG_A_LOT = false;
 export const GLOBAL_TIMER_NAME = '[blank^gib timer]';
@@ -22,6 +24,17 @@ export const BLANK_GIB_INDEXEDDB_KEY_LOCAL_SPACE_NAME = 'local_space_name';
  * plus some random id.
  */
 export const BLANK_GIB_INDEXEDDB_LOCAL_SPACE_NAME_PREFIX = 'ibgib_dot_com';
+
+/**
+ * Ambient context configuration for the blank-gib app.
+ * Uses existing constant values to maintain storage compatibility.
+ */
+export const APP_CONFIG: IbGibAmbientContextConfig = {
+    dbName: BLANK_GIB_DB_NAME,
+    storeName: ARMY_STORE,
+    apiKeyName: BEE_KEY,
+    additionalStoreNames: [ZERO_SPACE_ID], // ZERO_SPACE_ID from core-gib is usually 'zero_space'
+};
 
 /**
  * regex for what we think of as a gemini api key.

@@ -201,51 +201,17 @@ export interface RequestCommentIbGib_V1 extends IbGib_V1<RequestCommentData_V1, 
     oneOff: boolean;
 }
 
-/**
- * We are porting over swaths of code from the RCLI ibgib package.  This means
- * that we are faking things like pathing, cwd. This info is being conceived as
- * a per-space phenomenon atow (11/2024).
- */
-export interface SpaceShimGlobalInfo {
-    /**
-     * initial `cwd()` when the rcli is started from the commandline.
-     *
-     * ## notes
-     *
-     * i am using this as the context path that the user is typing in commands from.
-     * when this changes, i.e. when we get some kind of pass-through `cd` command
-     * from within the interactive repl, thi
-     */
-    initialCwd: string;
-    /**
-     * mimic a global cwd context for the entire blank canvas app.
-     */
-    cwd: string;
-}
+import { 
+    IbGibGlobalThis_Common as _IbGibGlobalThis_Common,
+    IbGibGlobalThis_IbGibApp,
+    SpaceShimGlobalInfo as _SpaceShimGlobalInfo,
+} from "@ibgib/web-gib/dist/app-bootstrap/types.mjs";
 
-export interface IbGibGlobalThis_Common extends IbGibGlobalThisInfo {
-    // /**
-    //  * only truthy after bootstrap loaded
-    //  */
-    // metaspace?: MetaspaceService;
-    /**
-     * if true, then we've already started the bootstrap process.
-     *
-     * note that there is no "bootstrapComplete" property, rather, you should
-     * await {@link bootstrapPromise}.
-     */
-    bootstrapStarted?: boolean;
-    /**
-     * if {@link bootstrapStarted}, then this promise should be truthy and set
-     * to the promise from the bootstrap function.
-     */
-    bootstrapPromise?: Promise<void>;
-    /**
-     * atow (04/2025) there should only be one chronologys component and it
-     * should not be destroyed for the duration of the page.
-     */
-    chronologysComponent?: ChronologysComponentInstance;
-}
+/** @deprecated use IbGibGlobalThis_Common from @ibgib/web-gib/dist/app-bootstrap/types.mjs instead */
+export interface IbGibGlobalThis_Common extends _IbGibGlobalThis_Common { }
+
+/** @deprecated use SpaceShimGlobalInfo from @ibgib/web-gib/dist/app-bootstrap/types.mjs instead */
+export interface SpaceShimGlobalInfo extends _SpaceShimGlobalInfo { }
 
 /**
  * globalThis state specific only to ibgib.
@@ -254,35 +220,7 @@ export interface IbGibGlobalThis_Common extends IbGibGlobalThisInfo {
  *
  * I want to be able to store the initial cwd and not have to pass this around.
  */
-export interface IbGibGlobalThis_BlankGib extends IbGibGlobalThis_Common {
-    /**
-     * should be initialized
-     */
-    version?: string;
-    /**
-     * @see {@link SpaceShimGlobalInfo}
-     */
-    spaceShim: { [spaceId: string]: SpaceShimGlobalInfo };
-    /**
-     * If true, then a boolean verbose flag has been set
-     */
-    verbose?: boolean;
-    /**
-     * kluge that always looks in storage/indexeddb for the api key if it
-     * exists.  obviously this won't extend for other non-gemini api keys. ah
-     * well.
-     *
-     * @returns API key if found, else empty string
-     */
-    fnDefaultGetAPIKey: () => Promise<string>;
-    /**
-     * when we bootstrap the app, this is the first "command" comment ibgib.
-     */
-    initialCommentIbGib?: IbGib_V1;
-    /**
-     * live proxy version of {@link initialCommentIbGib}
-     */
-    initialCommentIbGibProxy?: LiveProxyIbGib;
+export interface IbGibGlobalThis_BlankGib extends IbGibGlobalThis_IbGibApp {
     /**
      * all web1 components share the same context ibgib. so when the app starts
      * up and if there is a web1 page landed on (i.e. a web1 component), then

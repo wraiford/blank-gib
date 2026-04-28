@@ -1,19 +1,16 @@
-import { delay, extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
+import { extractErrorMsg } from '@ibgib/helper-gib/dist/helpers/utils-helper.mjs';
 
-// console.timeLog(lc, 'initIbGibGlobalThis complete');
-
-import { GLOBAL_LOG_A_LOT } from './constants.mjs';
+import { GLOBAL_LOG_A_LOT, APP_CONFIG } from './constants.mjs';
 import {
     dynamicallyLoadBootstrapScript,
-    // initIbGibGlobalThis,
+    initIbGibGlobalThis,
     initBlankGibStorage,
 } from './helpers.web.mjs';
 
-// await initIbGibGlobalThis();
-
 import { simpleIbGibRouterSingleton as router } from './ui/router/router-one-file.mjs';
-import { getAppShellSvc } from './ui/shell/app-shell-service.mjs';
-// import { initRegisterServiceWorker } from './init-service-worker.mjs';
+
+// 1. Initialize global namespace immediately
+initIbGibGlobalThis(APP_CONFIG);
 
 const logalot = GLOBAL_LOG_A_LOT;
 
@@ -29,17 +26,16 @@ async function spinOffStartup(): Promise<void> {
         document.addEventListener('DOMContentLoaded', async () => {
             try {
                 console.timeLog(lc, 'DOMContentLoaded fired');
-                // await initRegisterServiceWorker();
-                // console.timeLog(lc, 'initRegisterServiceWorker complete');
+
+                // Initialize storage
                 await initBlankGibStorage();
                 console.timeLog(lc, 'initBlankGibStorage complete');
-                const shellLayoutSvc = getAppShellSvc();
-                console.timeLog(lc, 'getShellLayoutSvc complete (not initialized yet tho)');
-                // await shellLayoutSvc.initialize(); // happens in ctor now
-                console.timeLog(lc, 'initLayout complete');
-                // await delay(9999999999);
+
+                // Initialize Router
                 router.loadCurrentURLPath();
                 console.timeLog(lc, 'loadCurrentURLPath complete');
+
+                // Load Bootstrap (ibGib Engine, metaspace, etc.)
                 await dynamicallyLoadBootstrapScript();
                 console.timeLog(lc, 'dynamicallyLoadBootstrapScript complete');
                 console.timeEnd(lc);

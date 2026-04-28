@@ -11,8 +11,10 @@ import { getExistingUIInfo } from "@ibgib/web-gib/dist/ui/ui-helpers.mjs";
 import { getComponentSvc, IbGibComponentService } from "@ibgib/web-gib/dist/ui/component/ibgib-component-service.mjs";
 import { IbGibDynamicComponentMeta } from "@ibgib/web-gib/dist/ui/component/component-types.mjs";
 import { getGlobalMetaspace_waitIfNeeded, getMaskedSecret } from "@ibgib/web-gib/dist/helpers.mjs";
+import { IbGibAppShell } from "@ibgib/web-gib/dist/app-bootstrap/types.mjs";
 
 import {
+    APP_CONFIG,
     ARMY_STORE, BEE_KEY, BLANK_GIB_DB_NAME, CONFIG_OPTION_GEMINI_API_KEY_LOCATION_HELP, GLOBAL_LOG_A_LOT,
     HTML_META_APP_ID_CONTENT,
     HTML_META_APP_ID_NAME,
@@ -81,7 +83,7 @@ interface PanelStates {
     footerPanel: PanelState;
 }
 
-export class AppShellService {
+export class AppShellService implements IbGibAppShell {
     /** log context */
     private lc: string = `[${AppShellService.name}]`;
 
@@ -1590,20 +1592,30 @@ export class AppShellService {
     }
 
     // #endregion public api
+
+    /**
+     * Called by the bootstrap engine when the ibGib engine and metaspace
+     * are fully initialized and ready for interaction.
+     */
+    public onEngineReady(): void {
+        const lc = `${this.lc}[${this.onEngineReady.name}]`;
+        if (logalot) { console.log(`${lc} Engine ready. (I: 231be7a1fcadb7f0659e491411f34f25)`); }
+        // satisfying IbGibAppShell interface
+    }
 }
 
 /**
- * Singleton {@link AppShellService} instance.
- *
- * This provides access to app shell's panels for, e.g.,
- * expand/maximize/collapse functionality.
+ * Returns the singleton {@link AppShellService} instance, stored on the
+ * globalThis.ibgib.blankgib.shell slot.
  */
-let appShellSvc: AppShellService;
 export function getAppShellSvc(): AppShellService {
-    if (!appShellSvc) {
-        appShellSvc = new AppShellService();
+    const lc = `[getAppShellSvc]`;
+    const ibGibGlobalThis = getIbGibGlobalThis_BlankGib(APP_CONFIG);
+    if (!ibGibGlobalThis.shell) {
+        if (logalot) { console.log(`${lc} initializing AppShellService singleton on globalThis... (I: 279ef6e902c2e0e470126938f32a2c25)`); }
+        ibGibGlobalThis.shell = new AppShellService();
     }
-    return appShellSvc;
+    return ibGibGlobalThis.shell as AppShellService;
 }
 
 // fnObs
