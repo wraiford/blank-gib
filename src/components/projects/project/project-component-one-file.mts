@@ -34,9 +34,11 @@ import {
 import { askForPersistStorage, } from "@ibgib/web-gib/dist/storage/storage-helpers.web.mjs";
 import { LensMode, ProjectIbGib_V1 } from "@ibgib/web-gib/dist/common/project/project-types.mjs";
 import { isProjectIbGib_V1 } from "@ibgib/web-gib/dist/common/project/project-helper.mjs";
+import { PROJECT_CHILD_TEXT_REL8N_NAME, } from "@ibgib/web-gib/dist/common/project/project-constants.mjs";
 import {
-    AGENT_AVAILABLE_FUNCTIONS_PROJECTAGENT, AGENT_AVAILABLE_FUNCTIONS_PROJECTCHILDTEXTAGENT, PROJECT_CHILD_TEXT_REL8N_NAME,
-} from "@ibgib/web-gib/dist/common/project/project-constants.mjs";
+    AGENT_AVAILABLE_FUNCTIONS_PROJECTAGENT,
+    AGENT_AVAILABLE_FUNCTIONS_PROJECTCHILDTEXTAGENT,
+} from "@ibgib/web-gib/dist/common/project/project-agent-functions.mjs";
 import { getAgentsSvc } from "@ibgib/web-gib/dist/witness/agent/agents-service-v1.mjs";
 import { GEMINI_DEFAULT_MODEL_STR, } from "@ibgib/web-gib/dist/witness/agent/gemini/gemini-constants.mjs";
 import { registerDomainIbGibWithAgentIndex } from "@ibgib/web-gib/dist/witness/agent/agent-helpers.mjs";

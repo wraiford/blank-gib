@@ -47,8 +47,11 @@ import { DEFAULT_PROJECT_DESCRIPTION, ProjectIbGib_V1 } from "@ibgib/web-gib/dis
 import { IbGibSettings, SettingsWithTabs } from "@ibgib/web-gib/dist/common/settings/settings-types.mjs";
 import { SettingsType } from "@ibgib/web-gib/dist/common/settings/settings-constants.mjs";
 import {
-    AGENT_AVAILABLE_FUNCTIONS_PROJECTAGENT, AGENT_SPECIAL_IBGIB_TYPE_PROJECTAGENT, PROJECT_NAME_REGEXP,
+    AGENT_SPECIAL_IBGIB_TYPE_PROJECTAGENT, PROJECT_NAME_REGEXP,
 } from "@ibgib/web-gib/dist/common/project/project-constants.mjs";
+import {
+    AGENT_AVAILABLE_FUNCTIONS_PROJECTAGENT,
+} from "@ibgib/web-gib/dist/common/project/project-agent-functions.mjs";
 
 import {
     GLOBAL_LOG_A_LOT, ARMY_STORE, BEE_KEY, BLANK_GIB_DB_NAME,

@@ -313,7 +313,6 @@ export class BlankCanvasApp_V1 extends AppBase_V1<
             }
 
             if (!this.primaryAgent) { throw new Error(`(UNEXPECTED) this.primaryAgent still falsy even after creating a new one? (E: 6362dfcdd51e95b66a3a731c777ed725)`); }
-            // this.initializeUIUserInputForPrimaryAgent();
 
         } catch (error) {
             console.error(`${lc} ${extractErrorMsg(error)}`);
@@ -1124,60 +1123,6 @@ export class BlankCanvasApp_V1 extends AppBase_V1<
 
 
     }
-
-    // private initializeUIUserInputForPrimaryAgent(): void {
-    //     const lc = `${this.lc}[${this.initializeUIUserInputForPrimaryAgent.name}]`;
-    //     try {
-    //         if (logalot) { console.log(`${lc} starting... (I: 01899912ba1dd310bfb26291ecd24125)`); }
-
-    //         if (!this.primaryAgent) { throw new Error(`(UNEXPECTED) this.primaryAgent falsy? (E: f7715578afad09926fc0267183221825)`); }
-
-    //         // Get references to the input element and the chat log div
-    //         const primaryAgentInput = document.getElementById(ID_PRIMARY_AGENT_INPUT) as HTMLTextAreaElement;
-    //         const primaryAgentChatLog = document.getElementById(ID_PRIMARY_AGENT_CHAT_LOG) as HTMLDivElement;
-    //         const inputSendBtnEl = document.getElementById(ID_PRIMARY_AGENT_INPUT_SEND_BTN) as HTMLButtonElement;
-
-    //         if (!primaryAgentInput) {
-    //             console.error(`${lc} (UNEXPECTED) Could not find #${ID_PRIMARY_AGENT_INPUT} HTML element. (E: 56b16f720a97038c021a3b254a78d125)`);
-    //         }
-    //         if (!inputSendBtnEl) {
-    //             console.error(`${lc} (UNEXPECTED) #${ID_PRIMARY_AGENT_INPUT_SEND_BTN} HTML element? (E: cc79ba330dc9fbb72629a164a4cc9125)`);
-    //         }
-
-    //         // Add an event listener to the input element
-    //         primaryAgentInput.placeholder = CHAT_WITH_AGENT_PLACEHOLDER_PRIMARYAGENT;
-    //         primaryAgentInput.readOnly = false;
-    //         primaryAgentInput.addEventListener('keydown', async (event) => {
-    //             if (event.key === 'Enter' && event.ctrlKey === true) {
-    //                 event.preventDefault(); // Prevent default behavior (new line)
-    //                 await this.handleSubmit({ primaryAgentInput, primaryAgentChatLog });
-    //             }
-    //         });
-
-    //         inputSendBtnEl.addEventListener('click', async (event) => {
-    //             await this.handleSubmit({ primaryAgentInput, primaryAgentChatLog });
-    //         });
-
-
-    //         // init the primary agent chat log
-    //         // if (!primaryAgentChatLog) {
-    //         //     console.error(`${lc} (UNEXPECTED) Could not find #${ID_PRIMARY_AGENT_CHAT_LOG} HTML element. (E: 42b54a972e053b3f026c8d861a68f725)`);
-    //         // }
-    //         const agent = this.primaryAgent;
-    //         this.primaryAgent.fnOutputText = async (text) => {
-    //             await agent.addTexts({ infos: [{ textSrc: 'ai', text, }], });
-    //             const chatEntry = document.createElement('p');
-    //             chatEntry.textContent = `agent> ${text}`;
-    //             primaryAgentChatLog.appendChild(chatEntry);
-    //             primaryAgentChatLog.lastElementChild?.scrollIntoView({ behavior: 'smooth' });
-    //         };
-    //     } catch (error) {
-    //         console.error(`${lc} ${extractErrorMsg(error)}`);
-    //         throw error;
-    //     } finally {
-    //         if (logalot) { console.log(`${lc} complete.`); }
-    //     }
-    // }
 
     /**
      * When the app starts up, we get the user's tags and load them in the left pane.

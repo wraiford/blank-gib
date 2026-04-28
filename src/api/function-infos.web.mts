@@ -15,7 +15,6 @@ import { registerDeprecatedFunctionInfoName, registerFunctionInfos } from "@ibgi
 import { IbGibAPIFunctionInfos } from "@ibgib/web-gib/dist/api/commands/ibgib/ibgib-index.mjs";
 import { ChatAPIFunctionInfos } from "@ibgib/web-gib/dist/api/commands/chat/chat-index.mjs";
 import { TextAPIFunctionInfos } from "@ibgib/web-gib/dist/api/commands/text/text-index.mjs";
-// import { ProjectFunctionInfos } from "../common/project/project-constants.mjs";
 
 import { GLOBAL_LOG_A_LOT } from "../constants.mjs";
 import { RenderAgentFunctionInfos } from "./commands/renderable/renderable-index.mjs";
@@ -41,7 +40,6 @@ const AllFunctionInfos_Web: Map<string, APIFunctionInfo<any>> = new Map([
     fetchWeb1PageFunctionInfo,
 
     ...RenderAgentFunctionInfos,
-    // ...ProjectFunctionInfos,
     ...UIAgentFunctionInfos,
     ...IbGibAPIFunctionInfos,
     ...MinigameFunctionInfos,

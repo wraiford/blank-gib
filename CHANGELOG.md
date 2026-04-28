@@ -1,12 +1,24 @@
-# blank-gib - CHANGELOG
+# @ibgib/blank-gib changelog
 
-I'm begrudgingly starting this changelog file in lieu of having ibgib itself for
-versioning and meta-versioning. So this will be a manual set of notes of what
-I'm doing per upgrade. This should be automatically created per "commit", and
-really this should just be a regular part of the "chat" that is this project.
-We'll get there eventually!
+_note: as you implement features/fixes/etc., please document them here under the "Working Version" section. These will be moved to a concrete version number during the next publish._
 
-## v0.15.12
+## Working Version
+* chore: centralized build orchestration
+  * migrated build, clean, and test logic to the root `@ibgib/build-gib` orchestrator.
+  * refactored `web1-links-component` to use native rendering instead of an iframe.
+  * implemented premium styling for links list using root CSS variables.
+  * updated curated links with motivation, NPM (reverse order), and social sections.
+  * added X account (`https://x.com/ibgibDOTcom`) to social links.
+  * implemented dynamic link rendering with "copy to clipboard" functionality.
+  * added YouTube embedded player support for video links in the curated list.
+  * infra: containerized deployment architecture
+    * implemented `Dockerfile` and optimized `nginx.conf` for serving .mjs modules.
+    * configured Traefik labels for automatic routing and SSL termination.
+  * pruned legacy `package.json` scripts and archived them in `docs/ARCHIVE_SCRIPTS.md`.
+  * updated `prepare:publish` to use the centralized build engine.
+  * documented the new **Monorepo Build Policy** in the README.
+
+## 0.15.12
 * progress: keystone respecs passing Suite A - D
   * still working on low level improvements
   * stopping now at the point before breaking out validate code to also

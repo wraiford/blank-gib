@@ -37,7 +37,7 @@ import { Settings_Chronologys } from "@ibgib/web-gib/dist/common/settings/settin
 import {
     AGENT_AVAILABLE_FUNCTIONS_PROJECTAGENT,
     AGENT_AVAILABLE_FUNCTIONS_PROJECTCHILDTEXTAGENT,
-} from "@ibgib/web-gib/dist/common/project/project-constants.mjs";
+} from "@ibgib/web-gib/dist/common/project/project-agent-functions.mjs";
 
 import { GLOBAL_LOG_A_LOT, } from "../../constants.mjs";
 import { getComponentCtorArg, getDefaultFnGetAPIKey, getIbGibGlobalThis_BlankGib, } from "../../helpers.web.mjs";

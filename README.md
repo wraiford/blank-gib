@@ -10,34 +10,25 @@ WIP
 * .web.mts - web (not node)
 * .app.mts - blank-gib app (not the web extension)
 
-## Build
+## Build (Monorepo Policy)
 
-The build process uses `esbuild` to create different targets for the web app and the browser extension. The build scripts are located in `apps/blank-gib/build`. This build system is written in TypeScript, so it first compiles itself using `tsc`, and then it uses `esbuild` to build the actual application and extension.
+> [!IMPORTANT]
+> This project is part of a monorepo. Build and development tasks are centralized in the monorepo root via the `@ibgib/build-gib` orchestrator.
 
-You can create both development and production builds.
+### Development & Build
+Run these from the monorepo root:
+* `npm run build:blank-gib` - Performs a full clean and build.
+* `npm run serve:blank-gib` - Starts the development server with live reload and automatic asset copying.
 
-### Build Scripts
+### Deployment
+This application is deployed using **Docker Compose** and **Traefik**. For detailed instructions on local HTTPS setup and production deployment to AWS EC2, see the **[🚀 Deployment & Infrastructure Guide](../../docs/DEPLOYMENT.md)**.
 
-All build scripts are run from the `apps/blank-gib` directory.
-
-*   **Build the build scripts themselves:**
-    *   `npm run build:build-scripts`
-    *   You need to run this whenever you make a change to the files in `apps/blank-gib/build/src`.
-
-*   **Application Builds:**
-    *   `npm run build:app` (Development): Creates a build with inline source maps and no minification. Ideal for debugging. The output is in the `dist` folder.
-    *   `npm run build:app:prod` (Production): Creates a minified build with external source maps. This is optimized for production. The output is in the `dist` folder.
-
-*   **Extension Builds:**
-    *   `npm run build:ext` (Development): Creates a development build for the browser extension. The output is in the `dist-ext` folder.
-    *   `npm run build:ext:prod` (Production): Creates a minified production build for the browser extension. The output is in the `dist-ext` folder.
+### Legacy Scripts
+Individual package scripts have been streamlined to avoid redundancy. Previous scripts are archived in `docs/ARCHIVE_SCRIPTS.md` at the monorepo root.
 
 ### How It Works
-
-The core logic is in the `Build` class (`apps/blank-gib/build/src/types.mts`). This base class handles:
-*   Parsing command-line arguments (like `--prod`).
-*   Setting up `esbuild` options for development vs. production.
-*   Copying static assets.
-*   Bundling the code.
-
-The `build-app.mts` and `build-ext.mts` scripts extend this `Build` class to define the specific entry points and asset paths for the application and the extension, respectively. When the `--prod` flag is passed, the base `Build` class automatically adjusts the `esbuild` configuration to create a production-ready build.
+The build process is orchestrated by `build/src/concrete-build/build-blank-gib.mts` in the monorepo root. It handles:
+*   Pre-build cleaning (via the centralized clean tool).
+*   Dynamic file generation (versioning, asset manifests).
+*   `esbuild` bundling for the web app and extension.
+*   Asset management and live watching.
