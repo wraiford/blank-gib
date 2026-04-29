@@ -3,6 +3,14 @@
 _note: as you implement features/fixes/etc., please document them here under the "Working Version" section. These will be moved to a concrete version number during the next publish._
 
 ## Working Version
+
+## 0.15.13
+* refactor: blank-gib bootstrap refactored
+  * implemented `script.mts` for early UI Shell initialization, improving perceived performance.
+  * modernized `index.mts` to use the new multi-phase bootstrap orchestration.
+  * broke early component loading chain in `helpers.web.mts` by removing premature component imports.
+  * updated `index.html` to include the new `script.mjs` entry point.
+  * verified build pipeline with new `script.mts` entry point.
 * chore: centralized build orchestration
   * migrated build, clean, and test logic to the root `@ibgib/build-gib` orchestrator.
   * refactored `web1-links-component` to use native rendering instead of an iframe.
