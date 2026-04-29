@@ -4,7 +4,7 @@ _note: as you implement features/fixes/etc., please document them here under the
 
 ## Working Version
 
-## 0.15.13
+## 0.15.13-14
 * refactor: blank-gib bootstrap refactored
   * implemented `script.mts` for early UI Shell initialization, improving perceived performance.
   * modernized `index.mts` to use the new multi-phase bootstrap orchestration.
